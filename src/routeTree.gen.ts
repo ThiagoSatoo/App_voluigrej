@@ -11,6 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrocarSenhaRouteImport } from './routes/trocar-senha'
+import { Route as VoluntarioRouteImport } from './routes/voluntario'
+import { Route as VoluntarioIndexRouteImport } from './routes/voluntario.index'
+import { Route as VoluntarioDisponibilidadeRouteImport } from './routes/voluntario.disponibilidade'
+import { Route as VoluntarioEscalaRouteImport } from './routes/voluntario.escala'
+import { Route as VoluntarioHistoricoRouteImport } from './routes/voluntario.historico'
+import { Route as VoluntarioPerfilRouteImport } from './routes/voluntario.perfil'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +28,104 @@ const TrocarSenhaRoute = TrocarSenhaRouteImport.update({
   path: '/trocar-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VoluntarioRoute = VoluntarioRouteImport.update({
+  id: '/voluntario',
+  path: '/voluntario',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VoluntarioIndexRoute = VoluntarioIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
+const VoluntarioDisponibilidadeRoute =
+  VoluntarioDisponibilidadeRouteImport.update({
+    id: '/disponibilidade',
+    path: '/disponibilidade',
+    getParentRoute: () => VoluntarioRoute,
+  } as any)
+const VoluntarioEscalaRoute = VoluntarioEscalaRouteImport.update({
+  id: '/escala',
+  path: '/escala',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
+const VoluntarioHistoricoRoute = VoluntarioHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
+const VoluntarioPerfilRoute = VoluntarioPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/trocar-senha': typeof TrocarSenhaRoute
+  '/voluntario': typeof VoluntarioRouteWithChildren
+  '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
+  '/voluntario/escala': typeof VoluntarioEscalaRoute
+  '/voluntario/historico': typeof VoluntarioHistoricoRoute
+  '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/voluntario/': typeof VoluntarioIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/trocar-senha': typeof TrocarSenhaRoute
+  '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
+  '/voluntario/escala': typeof VoluntarioEscalaRoute
+  '/voluntario/historico': typeof VoluntarioHistoricoRoute
+  '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/voluntario': typeof VoluntarioIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/trocar-senha': typeof TrocarSenhaRoute
+  '/voluntario': typeof VoluntarioRouteWithChildren
+  '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
+  '/voluntario/escala': typeof VoluntarioEscalaRoute
+  '/voluntario/historico': typeof VoluntarioHistoricoRoute
+  '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/voluntario/': typeof VoluntarioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/trocar-senha'
+  fullPaths:
+    | '/'
+    | '/trocar-senha'
+    | '/voluntario'
+    | '/voluntario/disponibilidade'
+    | '/voluntario/escala'
+    | '/voluntario/historico'
+    | '/voluntario/perfil'
+    | '/voluntario/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/trocar-senha'
-  id: '__root__' | '/' | '/trocar-senha'
+  to:
+    | '/'
+    | '/trocar-senha'
+    | '/voluntario/disponibilidade'
+    | '/voluntario/escala'
+    | '/voluntario/historico'
+    | '/voluntario/perfil'
+    | '/voluntario'
+  id:
+    | '__root__'
+    | '/'
+    | '/trocar-senha'
+    | '/voluntario'
+    | '/voluntario/disponibilidade'
+    | '/voluntario/escala'
+    | '/voluntario/historico'
+    | '/voluntario/perfil'
+    | '/voluntario/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TrocarSenhaRoute: typeof TrocarSenhaRoute
+  VoluntarioRoute: typeof VoluntarioRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +144,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrocarSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/voluntario': {
+      id: '/voluntario'
+      path: '/voluntario'
+      fullPath: '/voluntario'
+      preLoaderRoute: typeof VoluntarioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voluntario/': {
+      id: '/voluntario/'
+      path: '/'
+      fullPath: '/voluntario/'
+      preLoaderRoute: typeof VoluntarioIndexRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
+    '/voluntario/disponibilidade': {
+      id: '/voluntario/disponibilidade'
+      path: '/disponibilidade'
+      fullPath: '/voluntario/disponibilidade'
+      preLoaderRoute: typeof VoluntarioDisponibilidadeRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
+    '/voluntario/escala': {
+      id: '/voluntario/escala'
+      path: '/escala'
+      fullPath: '/voluntario/escala'
+      preLoaderRoute: typeof VoluntarioEscalaRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
+    '/voluntario/historico': {
+      id: '/voluntario/historico'
+      path: '/historico'
+      fullPath: '/voluntario/historico'
+      preLoaderRoute: typeof VoluntarioHistoricoRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
+    '/voluntario/perfil': {
+      id: '/voluntario/perfil'
+      path: '/perfil'
+      fullPath: '/voluntario/perfil'
+      preLoaderRoute: typeof VoluntarioPerfilRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
   }
 }
+
+interface VoluntarioRouteChildren {
+  VoluntarioDisponibilidadeRoute: typeof VoluntarioDisponibilidadeRoute
+  VoluntarioEscalaRoute: typeof VoluntarioEscalaRoute
+  VoluntarioHistoricoRoute: typeof VoluntarioHistoricoRoute
+  VoluntarioPerfilRoute: typeof VoluntarioPerfilRoute
+  VoluntarioIndexRoute: typeof VoluntarioIndexRoute
+}
+
+const VoluntarioRouteChildren: VoluntarioRouteChildren = {
+  VoluntarioDisponibilidadeRoute: VoluntarioDisponibilidadeRoute,
+  VoluntarioEscalaRoute: VoluntarioEscalaRoute,
+  VoluntarioHistoricoRoute: VoluntarioHistoricoRoute,
+  VoluntarioPerfilRoute: VoluntarioPerfilRoute,
+  VoluntarioIndexRoute: VoluntarioIndexRoute,
+}
+
+const VoluntarioRouteWithChildren = VoluntarioRoute._addFileChildren(
+  VoluntarioRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TrocarSenhaRoute: TrocarSenhaRoute,
+  VoluntarioRoute: VoluntarioRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
