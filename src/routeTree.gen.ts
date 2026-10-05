@@ -10,33 +10,182 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SupervisorRouteImport } from './routes/supervisor'
+import { Route as TrocarSenhaRouteImport } from './routes/trocar-senha'
+import { Route as VoluntarioRouteImport } from './routes/voluntario'
+import { Route as SupervisorIndexRouteImport } from './routes/supervisor.index'
+import { Route as SupervisorDisponibilidadesRouteImport } from './routes/supervisor.disponibilidades'
+import { Route as SupervisorPeriodosRouteImport } from './routes/supervisor.periodos'
+import { Route as SupervisorVoluntariosRouteImport } from './routes/supervisor.voluntarios'
+import { Route as VoluntarioIndexRouteImport } from './routes/voluntario.index'
+import { Route as VoluntarioDisponibilidadeRouteImport } from './routes/voluntario.disponibilidade'
+import { Route as VoluntarioEscalaRouteImport } from './routes/voluntario.escala'
+import { Route as VoluntarioHistoricoRouteImport } from './routes/voluntario.historico'
+import { Route as VoluntarioPerfilRouteImport } from './routes/voluntario.perfil'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupervisorRoute = SupervisorRouteImport.update({
+  id: '/supervisor',
+  path: '/supervisor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrocarSenhaRoute = TrocarSenhaRouteImport.update({
+  id: '/trocar-senha',
+  path: '/trocar-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VoluntarioRoute = VoluntarioRouteImport.update({
+  id: '/voluntario',
+  path: '/voluntario',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupervisorIndexRoute = SupervisorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SupervisorRoute,
+} as any)
+const SupervisorDisponibilidadesRoute =
+  SupervisorDisponibilidadesRouteImport.update({
+    id: '/disponibilidades',
+    path: '/disponibilidades',
+    getParentRoute: () => SupervisorRoute,
+  } as any)
+const SupervisorPeriodosRoute = SupervisorPeriodosRouteImport.update({
+  id: '/periodos',
+  path: '/periodos',
+  getParentRoute: () => SupervisorRoute,
+} as any)
+const SupervisorVoluntariosRoute = SupervisorVoluntariosRouteImport.update({
+  id: '/voluntarios',
+  path: '/voluntarios',
+  getParentRoute: () => SupervisorRoute,
+} as any)
+const VoluntarioIndexRoute = VoluntarioIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
+const VoluntarioDisponibilidadeRoute =
+  VoluntarioDisponibilidadeRouteImport.update({
+    id: '/disponibilidade',
+    path: '/disponibilidade',
+    getParentRoute: () => VoluntarioRoute,
+  } as any)
+const VoluntarioEscalaRoute = VoluntarioEscalaRouteImport.update({
+  id: '/escala',
+  path: '/escala',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
+const VoluntarioHistoricoRoute = VoluntarioHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
+const VoluntarioPerfilRoute = VoluntarioPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/supervisor': typeof SupervisorRouteWithChildren
+  '/trocar-senha': typeof TrocarSenhaRoute
+  '/voluntario': typeof VoluntarioRouteWithChildren
+  '/supervisor/disponibilidades': typeof SupervisorDisponibilidadesRoute
+  '/supervisor/periodos': typeof SupervisorPeriodosRoute
+  '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
+  '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
+  '/voluntario/escala': typeof VoluntarioEscalaRoute
+  '/voluntario/historico': typeof VoluntarioHistoricoRoute
+  '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/supervisor/': typeof SupervisorIndexRoute
+  '/voluntario/': typeof VoluntarioIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/trocar-senha': typeof TrocarSenhaRoute
+  '/supervisor/disponibilidades': typeof SupervisorDisponibilidadesRoute
+  '/supervisor/periodos': typeof SupervisorPeriodosRoute
+  '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
+  '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
+  '/voluntario/escala': typeof VoluntarioEscalaRoute
+  '/voluntario/historico': typeof VoluntarioHistoricoRoute
+  '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/supervisor': typeof SupervisorIndexRoute
+  '/voluntario': typeof VoluntarioIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/supervisor': typeof SupervisorRouteWithChildren
+  '/trocar-senha': typeof TrocarSenhaRoute
+  '/voluntario': typeof VoluntarioRouteWithChildren
+  '/supervisor/disponibilidades': typeof SupervisorDisponibilidadesRoute
+  '/supervisor/periodos': typeof SupervisorPeriodosRoute
+  '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
+  '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
+  '/voluntario/escala': typeof VoluntarioEscalaRoute
+  '/voluntario/historico': typeof VoluntarioHistoricoRoute
+  '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/supervisor/': typeof SupervisorIndexRoute
+  '/voluntario/': typeof VoluntarioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/supervisor'
+    | '/trocar-senha'
+    | '/voluntario'
+    | '/supervisor/disponibilidades'
+    | '/supervisor/periodos'
+    | '/supervisor/voluntarios'
+    | '/voluntario/disponibilidade'
+    | '/voluntario/escala'
+    | '/voluntario/historico'
+    | '/voluntario/perfil'
+    | '/supervisor/'
+    | '/voluntario/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/trocar-senha'
+    | '/supervisor/disponibilidades'
+    | '/supervisor/periodos'
+    | '/supervisor/voluntarios'
+    | '/voluntario/disponibilidade'
+    | '/voluntario/escala'
+    | '/voluntario/historico'
+    | '/voluntario/perfil'
+    | '/supervisor'
+    | '/voluntario'
+  id:
+    | '__root__'
+    | '/'
+    | '/supervisor'
+    | '/trocar-senha'
+    | '/voluntario'
+    | '/supervisor/disponibilidades'
+    | '/supervisor/periodos'
+    | '/supervisor/voluntarios'
+    | '/voluntario/disponibilidade'
+    | '/voluntario/escala'
+    | '/voluntario/historico'
+    | '/voluntario/perfil'
+    | '/supervisor/'
+    | '/voluntario/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SupervisorRoute: typeof SupervisorRouteWithChildren
+  TrocarSenhaRoute: typeof TrocarSenhaRoute
+  VoluntarioRoute: typeof VoluntarioRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +197,136 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/supervisor': {
+      id: '/supervisor'
+      path: '/supervisor'
+      fullPath: '/supervisor'
+      preLoaderRoute: typeof SupervisorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trocar-senha': {
+      id: '/trocar-senha'
+      path: '/trocar-senha'
+      fullPath: '/trocar-senha'
+      preLoaderRoute: typeof TrocarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voluntario': {
+      id: '/voluntario'
+      path: '/voluntario'
+      fullPath: '/voluntario'
+      preLoaderRoute: typeof VoluntarioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/supervisor/': {
+      id: '/supervisor/'
+      path: '/'
+      fullPath: '/supervisor/'
+      preLoaderRoute: typeof SupervisorIndexRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
+    '/supervisor/disponibilidades': {
+      id: '/supervisor/disponibilidades'
+      path: '/disponibilidades'
+      fullPath: '/supervisor/disponibilidades'
+      preLoaderRoute: typeof SupervisorDisponibilidadesRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
+    '/supervisor/periodos': {
+      id: '/supervisor/periodos'
+      path: '/periodos'
+      fullPath: '/supervisor/periodos'
+      preLoaderRoute: typeof SupervisorPeriodosRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
+    '/supervisor/voluntarios': {
+      id: '/supervisor/voluntarios'
+      path: '/voluntarios'
+      fullPath: '/supervisor/voluntarios'
+      preLoaderRoute: typeof SupervisorVoluntariosRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
+    '/voluntario/': {
+      id: '/voluntario/'
+      path: '/'
+      fullPath: '/voluntario/'
+      preLoaderRoute: typeof VoluntarioIndexRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
+    '/voluntario/disponibilidade': {
+      id: '/voluntario/disponibilidade'
+      path: '/disponibilidade'
+      fullPath: '/voluntario/disponibilidade'
+      preLoaderRoute: typeof VoluntarioDisponibilidadeRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
+    '/voluntario/escala': {
+      id: '/voluntario/escala'
+      path: '/escala'
+      fullPath: '/voluntario/escala'
+      preLoaderRoute: typeof VoluntarioEscalaRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
+    '/voluntario/historico': {
+      id: '/voluntario/historico'
+      path: '/historico'
+      fullPath: '/voluntario/historico'
+      preLoaderRoute: typeof VoluntarioHistoricoRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
+    '/voluntario/perfil': {
+      id: '/voluntario/perfil'
+      path: '/perfil'
+      fullPath: '/voluntario/perfil'
+      preLoaderRoute: typeof VoluntarioPerfilRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
   }
 }
 
+interface SupervisorRouteChildren {
+  SupervisorDisponibilidadesRoute: typeof SupervisorDisponibilidadesRoute
+  SupervisorPeriodosRoute: typeof SupervisorPeriodosRoute
+  SupervisorVoluntariosRoute: typeof SupervisorVoluntariosRoute
+  SupervisorIndexRoute: typeof SupervisorIndexRoute
+}
+
+const SupervisorRouteChildren: SupervisorRouteChildren = {
+  SupervisorDisponibilidadesRoute: SupervisorDisponibilidadesRoute,
+  SupervisorPeriodosRoute: SupervisorPeriodosRoute,
+  SupervisorVoluntariosRoute: SupervisorVoluntariosRoute,
+  SupervisorIndexRoute: SupervisorIndexRoute,
+}
+
+const SupervisorRouteWithChildren = SupervisorRoute._addFileChildren(
+  SupervisorRouteChildren,
+)
+
+interface VoluntarioRouteChildren {
+  VoluntarioDisponibilidadeRoute: typeof VoluntarioDisponibilidadeRoute
+  VoluntarioEscalaRoute: typeof VoluntarioEscalaRoute
+  VoluntarioHistoricoRoute: typeof VoluntarioHistoricoRoute
+  VoluntarioPerfilRoute: typeof VoluntarioPerfilRoute
+  VoluntarioIndexRoute: typeof VoluntarioIndexRoute
+}
+
+const VoluntarioRouteChildren: VoluntarioRouteChildren = {
+  VoluntarioDisponibilidadeRoute: VoluntarioDisponibilidadeRoute,
+  VoluntarioEscalaRoute: VoluntarioEscalaRoute,
+  VoluntarioHistoricoRoute: VoluntarioHistoricoRoute,
+  VoluntarioPerfilRoute: VoluntarioPerfilRoute,
+  VoluntarioIndexRoute: VoluntarioIndexRoute,
+}
+
+const VoluntarioRouteWithChildren = VoluntarioRoute._addFileChildren(
+  VoluntarioRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SupervisorRoute: SupervisorRouteWithChildren,
+  TrocarSenhaRoute: TrocarSenhaRoute,
+  VoluntarioRoute: VoluntarioRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
