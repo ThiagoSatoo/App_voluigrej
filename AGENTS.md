@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Data layer
+- Screens read state via `useStore()` + `src/data/selectors.ts` and mutate only through `repo` in `src/data/repository.ts` — so the mock (localStorage) can be swapped for a real database without touching screens.
+- Auth is simulated client-side (`useRequireRole`) for the prototype; replace with real auth before production.
