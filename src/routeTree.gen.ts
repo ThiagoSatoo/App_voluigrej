@@ -14,8 +14,13 @@ import { Route as SupervisorRouteImport } from './routes/supervisor'
 import { Route as TrocarSenhaRouteImport } from './routes/trocar-senha'
 import { Route as VoluntarioRouteImport } from './routes/voluntario'
 import { Route as SupervisorIndexRouteImport } from './routes/supervisor.index'
+import { Route as SupervisorConfiguracoesRouteImport } from './routes/supervisor.configuracoes'
 import { Route as SupervisorDisponibilidadesRouteImport } from './routes/supervisor.disponibilidades'
+import { Route as SupervisorEscalaRouteImport } from './routes/supervisor.escala'
+import { Route as SupervisorHistoricoRouteImport } from './routes/supervisor.historico'
 import { Route as SupervisorPeriodosRouteImport } from './routes/supervisor.periodos'
+import { Route as SupervisorPresencaRouteImport } from './routes/supervisor.presenca'
+import { Route as SupervisorSorteioRouteImport } from './routes/supervisor.sorteio'
 import { Route as SupervisorVoluntariosRouteImport } from './routes/supervisor.voluntarios'
 import { Route as VoluntarioIndexRouteImport } from './routes/voluntario.index'
 import { Route as VoluntarioDisponibilidadeRouteImport } from './routes/voluntario.disponibilidade'
@@ -48,15 +53,40 @@ const SupervisorIndexRoute = SupervisorIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SupervisorRoute,
 } as any)
+const SupervisorConfiguracoesRoute = SupervisorConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => SupervisorRoute,
+} as any)
 const SupervisorDisponibilidadesRoute =
   SupervisorDisponibilidadesRouteImport.update({
     id: '/disponibilidades',
     path: '/disponibilidades',
     getParentRoute: () => SupervisorRoute,
   } as any)
+const SupervisorEscalaRoute = SupervisorEscalaRouteImport.update({
+  id: '/escala',
+  path: '/escala',
+  getParentRoute: () => SupervisorRoute,
+} as any)
+const SupervisorHistoricoRoute = SupervisorHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => SupervisorRoute,
+} as any)
 const SupervisorPeriodosRoute = SupervisorPeriodosRouteImport.update({
   id: '/periodos',
   path: '/periodos',
+  getParentRoute: () => SupervisorRoute,
+} as any)
+const SupervisorPresencaRoute = SupervisorPresencaRouteImport.update({
+  id: '/presenca',
+  path: '/presenca',
+  getParentRoute: () => SupervisorRoute,
+} as any)
+const SupervisorSorteioRoute = SupervisorSorteioRouteImport.update({
+  id: '/sorteio',
+  path: '/sorteio',
   getParentRoute: () => SupervisorRoute,
 } as any)
 const SupervisorVoluntariosRoute = SupervisorVoluntariosRouteImport.update({
@@ -96,8 +126,13 @@ export interface FileRoutesByFullPath {
   '/supervisor': typeof SupervisorRouteWithChildren
   '/trocar-senha': typeof TrocarSenhaRoute
   '/voluntario': typeof VoluntarioRouteWithChildren
+  '/supervisor/configuracoes': typeof SupervisorConfiguracoesRoute
   '/supervisor/disponibilidades': typeof SupervisorDisponibilidadesRoute
+  '/supervisor/escala': typeof SupervisorEscalaRoute
+  '/supervisor/historico': typeof SupervisorHistoricoRoute
   '/supervisor/periodos': typeof SupervisorPeriodosRoute
+  '/supervisor/presenca': typeof SupervisorPresencaRoute
+  '/supervisor/sorteio': typeof SupervisorSorteioRoute
   '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
   '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
   '/voluntario/escala': typeof VoluntarioEscalaRoute
@@ -109,8 +144,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/trocar-senha': typeof TrocarSenhaRoute
+  '/supervisor/configuracoes': typeof SupervisorConfiguracoesRoute
   '/supervisor/disponibilidades': typeof SupervisorDisponibilidadesRoute
+  '/supervisor/escala': typeof SupervisorEscalaRoute
+  '/supervisor/historico': typeof SupervisorHistoricoRoute
   '/supervisor/periodos': typeof SupervisorPeriodosRoute
+  '/supervisor/presenca': typeof SupervisorPresencaRoute
+  '/supervisor/sorteio': typeof SupervisorSorteioRoute
   '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
   '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
   '/voluntario/escala': typeof VoluntarioEscalaRoute
@@ -125,8 +165,13 @@ export interface FileRoutesById {
   '/supervisor': typeof SupervisorRouteWithChildren
   '/trocar-senha': typeof TrocarSenhaRoute
   '/voluntario': typeof VoluntarioRouteWithChildren
+  '/supervisor/configuracoes': typeof SupervisorConfiguracoesRoute
   '/supervisor/disponibilidades': typeof SupervisorDisponibilidadesRoute
+  '/supervisor/escala': typeof SupervisorEscalaRoute
+  '/supervisor/historico': typeof SupervisorHistoricoRoute
   '/supervisor/periodos': typeof SupervisorPeriodosRoute
+  '/supervisor/presenca': typeof SupervisorPresencaRoute
+  '/supervisor/sorteio': typeof SupervisorSorteioRoute
   '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
   '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
   '/voluntario/escala': typeof VoluntarioEscalaRoute
@@ -142,8 +187,13 @@ export interface FileRouteTypes {
     | '/supervisor'
     | '/trocar-senha'
     | '/voluntario'
+    | '/supervisor/configuracoes'
     | '/supervisor/disponibilidades'
+    | '/supervisor/escala'
+    | '/supervisor/historico'
     | '/supervisor/periodos'
+    | '/supervisor/presenca'
+    | '/supervisor/sorteio'
     | '/supervisor/voluntarios'
     | '/voluntario/disponibilidade'
     | '/voluntario/escala'
@@ -155,8 +205,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/trocar-senha'
+    | '/supervisor/configuracoes'
     | '/supervisor/disponibilidades'
+    | '/supervisor/escala'
+    | '/supervisor/historico'
     | '/supervisor/periodos'
+    | '/supervisor/presenca'
+    | '/supervisor/sorteio'
     | '/supervisor/voluntarios'
     | '/voluntario/disponibilidade'
     | '/voluntario/escala'
@@ -170,8 +225,13 @@ export interface FileRouteTypes {
     | '/supervisor'
     | '/trocar-senha'
     | '/voluntario'
+    | '/supervisor/configuracoes'
     | '/supervisor/disponibilidades'
+    | '/supervisor/escala'
+    | '/supervisor/historico'
     | '/supervisor/periodos'
+    | '/supervisor/presenca'
+    | '/supervisor/sorteio'
     | '/supervisor/voluntarios'
     | '/voluntario/disponibilidade'
     | '/voluntario/escala'
@@ -225,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupervisorIndexRouteImport
       parentRoute: typeof SupervisorRoute
     }
+    '/supervisor/configuracoes': {
+      id: '/supervisor/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/supervisor/configuracoes'
+      preLoaderRoute: typeof SupervisorConfiguracoesRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
     '/supervisor/disponibilidades': {
       id: '/supervisor/disponibilidades'
       path: '/disponibilidades'
@@ -232,11 +299,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupervisorDisponibilidadesRouteImport
       parentRoute: typeof SupervisorRoute
     }
+    '/supervisor/escala': {
+      id: '/supervisor/escala'
+      path: '/escala'
+      fullPath: '/supervisor/escala'
+      preLoaderRoute: typeof SupervisorEscalaRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
+    '/supervisor/historico': {
+      id: '/supervisor/historico'
+      path: '/historico'
+      fullPath: '/supervisor/historico'
+      preLoaderRoute: typeof SupervisorHistoricoRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
     '/supervisor/periodos': {
       id: '/supervisor/periodos'
       path: '/periodos'
       fullPath: '/supervisor/periodos'
       preLoaderRoute: typeof SupervisorPeriodosRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
+    '/supervisor/presenca': {
+      id: '/supervisor/presenca'
+      path: '/presenca'
+      fullPath: '/supervisor/presenca'
+      preLoaderRoute: typeof SupervisorPresencaRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
+    '/supervisor/sorteio': {
+      id: '/supervisor/sorteio'
+      path: '/sorteio'
+      fullPath: '/supervisor/sorteio'
+      preLoaderRoute: typeof SupervisorSorteioRouteImport
       parentRoute: typeof SupervisorRoute
     }
     '/supervisor/voluntarios': {
@@ -285,15 +380,25 @@ declare module '@tanstack/react-router' {
 }
 
 interface SupervisorRouteChildren {
+  SupervisorConfiguracoesRoute: typeof SupervisorConfiguracoesRoute
   SupervisorDisponibilidadesRoute: typeof SupervisorDisponibilidadesRoute
+  SupervisorEscalaRoute: typeof SupervisorEscalaRoute
+  SupervisorHistoricoRoute: typeof SupervisorHistoricoRoute
   SupervisorPeriodosRoute: typeof SupervisorPeriodosRoute
+  SupervisorPresencaRoute: typeof SupervisorPresencaRoute
+  SupervisorSorteioRoute: typeof SupervisorSorteioRoute
   SupervisorVoluntariosRoute: typeof SupervisorVoluntariosRoute
   SupervisorIndexRoute: typeof SupervisorIndexRoute
 }
 
 const SupervisorRouteChildren: SupervisorRouteChildren = {
+  SupervisorConfiguracoesRoute: SupervisorConfiguracoesRoute,
   SupervisorDisponibilidadesRoute: SupervisorDisponibilidadesRoute,
+  SupervisorEscalaRoute: SupervisorEscalaRoute,
+  SupervisorHistoricoRoute: SupervisorHistoricoRoute,
   SupervisorPeriodosRoute: SupervisorPeriodosRoute,
+  SupervisorPresencaRoute: SupervisorPresencaRoute,
+  SupervisorSorteioRoute: SupervisorSorteioRoute,
   SupervisorVoluntariosRoute: SupervisorVoluntariosRoute,
   SupervisorIndexRoute: SupervisorIndexRoute,
 }
