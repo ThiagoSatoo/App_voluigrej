@@ -70,9 +70,9 @@ function PeriodDetail({ period }: { period: Period }) {
   const total = period.needs.reduce((s, n) => s + n.slots, 0);
 
   const add = () => {
-    if (!date) return toast.error("Escolha uma data.");
+    if (!date) { toast.error("Escolha uma data."); return; }
     const [y, m] = date.split("-").map(Number);
-    if (y !== period.year || m !== period.month) return toast.error(`A data precisa estar em ${periodLabel(period)}.`);
+    if (y !== period.year || m !== period.month) { toast.error(`A data precisa estar em ${periodLabel(period)}.`); return; }
     repo.addNeed(period.id, { date, shift, slots });
     setDate("");
     toast.success("Necessidade adicionada");
@@ -169,7 +169,7 @@ function NewPeriodDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [deadline, setDeadline] = useState("2026-11-25");
   const create = () => {
     const r = repo.createPeriod({ month: Number(month), year: Number(year), openDate, deadline });
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) { toast.error(r.error); return; }
     toast.success("Período criado como rascunho");
     onClose();
   };
