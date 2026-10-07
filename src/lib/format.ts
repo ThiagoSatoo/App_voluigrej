@@ -47,4 +47,4 @@ export const ATTENDANCE_STATUS: Record<AttendanceStatus, { label: string; tone: 
   cancelado: { label: "Cancelado", tone: "muted" },
 };
 
-export type Tone = "muted" | "success" | "warning" | "accent" | "primary" | "destructive";
+export type Tone = "muted" | "success" | "warning" | "accent" | "primary" | "destructive" | "info";

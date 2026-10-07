@@ -3,6 +3,7 @@ import { Link, Outlet, createFileRoute, useNavigate } from "@tanstack/react-rout
 import {
   CalendarDays,
   CalendarRange,
+  ClipboardList,
   ClipboardCheck,
   HeartHandshake,
   History,
@@ -28,6 +29,7 @@ const nav = [
   { to: "/supervisor", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/supervisor/voluntarios", label: "Voluntários", icon: Users },
   { to: "/supervisor/periodos", label: "Períodos", icon: CalendarRange },
+  { to: "/supervisor/necessidades", label: "Necessidades", icon: ClipboardList },
   { to: "/supervisor/disponibilidades", label: "Disponibilidades", icon: ClipboardCheck },
   { to: "/supervisor/sorteio", label: "Sorteio", icon: Shuffle },
   { to: "/supervisor/escala", label: "Escala", icon: CalendarDays },

@@ -20,6 +20,7 @@ const toneClass: Record<Tone, string> = {
   warning: "bg-warning-soft text-accent-foreground",
   accent: "bg-accent-soft text-accent-foreground",
   primary: "bg-primary-soft text-primary",
+  info: "bg-info-soft text-info",
   destructive: "bg-destructive-soft text-destructive",
 };
 

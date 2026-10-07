@@ -40,7 +40,7 @@ export function hydrateStore() {
   if (hydrated) return;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) state = JSON.parse(raw);
+    if (raw) state = { ...createSeed(), ...JSON.parse(raw) };
   } catch {
     /* ignore */
   }
