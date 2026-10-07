@@ -6,6 +6,7 @@ import { PageHeader, Panel, Pill, StatCard } from "@/components/app/common";
 import { VolunteerAvatar } from "@/components/app/VolunteerAvatar";
 import { PERIOD_STATUS, fmtDM, fmtLong, periodLabel } from "@/lib/format";
 import { Progress } from "@/components/ui/progress";
+import { SupervisorAlerts } from "@/components/app/SupervisorAlerts";
 
 export const Route = createFileRoute("/supervisor/")({
   head: () => ({
@@ -32,6 +33,7 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader title={`Olá, ${state.settings.supervisorName}`} subtitle={`${state.settings.ministryName} · ${state.settings.churchName}`} />
+      <SupervisorAlerts />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard icon={Users} label="Total de voluntários" value={state.volunteers.length} />
