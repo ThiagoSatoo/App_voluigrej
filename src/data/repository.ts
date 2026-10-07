@@ -252,6 +252,100 @@ export const repo = {
     }));
   },
 
+  // ---------- Necessidades avulsas e candidaturas ----------
+  createOpportunity(d: { date: string; start: string; end: string; min: number; max: number; note?: string }): Result {
+    if (!d.date) return { ok: false, error: "Informe a data." };
+    if (!d.start || !d.end) return { ok: false, error: "Informe o horário inicial e final." };
+    if (d.end <= d.start) return { ok: false, error: "O horário final deve ser depois do inicial." };
+    if (d.min < 1) return { ok: false, error: "A quantidade mínima deve ser pelo menos 1." };
+    if (d.max < d.min) return { ok: false, error: "A quantidade máxima não pode ser menor que a mínima." };
+    setState((st) => ({
+      ...st,
+      opportunities: [...st.opportunities, { id: uid("o"), ...d, note: d.note?.trim() || undefined, status: "aberta", createdAt: now() }],
+    }));
+    return { ok: true };
+  },
+
+  removeOpportunity(id: string) {
+    setState((st) => ({
+      ...st,
+      opportunities: st.opportunities.filter((o) => o.id !== id),
+      applications: st.applications.filter((a) => a.opportunityId !== id),
+      notifications: st.notifications.filter((n) => n.opportunityId !== id),
+    }));
+  },
+
+  /** Replaces the volunteer's available days inside `weekDates` with `selected`. */
+  setWeekAvailability(volunteerId: string, weekDates: string[], selected: string[]) {
+    setState((st) => ({
+      ...st,
+      dayAvailability: [
+        ...st.dayAvailability.filter((d) => !(d.volunteerId === volunteerId && weekDates.includes(d.date))),
+        ...selected.map((date) => ({ volunteerId, date })),
+      ],
+    }));
+  },
+
+  applyTo(opportunityId: string, volunteerId: string): Result {
+    const s = getState();
+    const o = s.opportunities.find((x) => x.id === opportunityId);
+    if (!o || o.status !== "aberta") return { ok: false, error: "Esta escala não está mais aberta." };
+    const count = s.applications.filter((a) => a.opportunityId === opportunityId && a.status === "candidatado").length;
+    if (count >= o.max) return { ok: false, error: "O número máximo de candidatos já foi atingido." };
+    setState((st) => ({
+      ...st,
+      applications: [
+        ...st.applications.filter((a) => !(a.opportunityId === opportunityId && a.volunteerId === volunteerId)),
+        { id: uid("ap"), opportunityId, volunteerId, status: "candidatado", updatedAt: now() },
+      ],
+    }));
+    return { ok: true };
+  },
+
+  cancelApplication(opportunityId: string, volunteerId: string): Result {
+    const s = getState();
+    const o = s.opportunities.find((x) => x.id === opportunityId);
+    if (!o || o.status !== "aberta") return { ok: false, error: "A seleção já foi confirmada." };
+    const remaining = s.applications.filter((a) => a.opportunityId === opportunityId && a.status === "candidatado" && a.volunteerId !== volunteerId).length;
+    const v = s.volunteers.find((x) => x.id === volunteerId);
+    setState((st) => ({
+      ...st,
+      applications: st.applications.map((a) =>
+        a.opportunityId === opportunityId && a.volunteerId === volunteerId ? { ...a, status: "cancelado", updatedAt: now() } : a,
+      ),
+      notifications:
+        remaining < o.min
+          ? [
+              {
+                id: uid("nt"),
+                opportunityId,
+                message: `${v?.name ?? "Um voluntário"} cancelou a candidatura. A escala está abaixo do mínimo (${remaining}/${o.min}).`,
+                createdAt: now(),
+                read: false,
+              },
+              ...st.notifications,
+            ]
+          : st.notifications,
+    }));
+    return { ok: true };
+  },
+
+  confirmSelection(opportunityId: string, selectedIds: string[]) {
+    setState((st) => ({
+      ...st,
+      opportunities: st.opportunities.map((o) => (o.id === opportunityId ? { ...o, status: "confirmada" } : o)),
+      applications: st.applications.map((a) =>
+        a.opportunityId === opportunityId && a.status === "candidatado"
+          ? { ...a, status: selectedIds.includes(a.volunteerId) ? "selecionado" : "nao_selecionado", updatedAt: now() }
+          : a,
+      ),
+    }));
+  },
+
+  markNotificationRead(id: string) {
+    setState((st) => ({ ...st, notifications: st.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) }));
+  },
+
   // ---------- Configurações ----------
   updateSettings(patch: Partial<Settings>) {
     setState((st) => ({ ...st, settings: { ...st.settings, ...patch } }));

@@ -75,3 +75,26 @@ export const attendanceFor = (s: AppState, needId: string, volunteerId: string) 
 
 /** Priority rule: fewer recent (3m), then fewer in 12m. */
 export const byPriority = (a: Volunteer, b: Volunteer) => a.recent3m - b.recent3m || a.last12m - b.last12m;
+
+// ---------- Necessidades avulsas e candidaturas ----------
+import type { Opportunity } from "./types";
+import type { Tone } from "@/lib/format";
+
+export const sortOpportunities = (os: Opportunity[]) =>
+  [...os].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+
+export const activeApplicants = (s: AppState, opportunityId: string) =>
+  s.applications.filter((a) => a.opportunityId === opportunityId && (a.status === "candidatado" || a.status === "selecionado"));
+
+export const myApplication = (s: AppState, opportunityId: string, volunteerId: string) =>
+  s.applications.find((a) => a.opportunityId === opportunityId && a.volunteerId === volunteerId);
+
+export const availableDays = (s: AppState, volunteerId: string) =>
+  new Set(s.dayAvailability.filter((d) => d.volunteerId === volunteerId).map((d) => d.date));
+
+/** Red = below min, green = min reached, blue = max reached. */
+export function fillState(count: number, o: Pick<Opportunity, "min" | "max">): { tone: Tone; label: string } {
+  if (count >= o.max) return { tone: "info", label: "Máximo atingido" };
+  if (count >= o.min) return { tone: "success", label: "Mínimo atingido" };
+  return { tone: "destructive", label: "Abaixo do mínimo" };
+}

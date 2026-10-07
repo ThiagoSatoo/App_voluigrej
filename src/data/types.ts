@@ -117,4 +117,45 @@ export interface AppState {
   substitutions: Substitution[];
   session: Session | null;
   settings: Settings;
+  opportunities: Opportunity[];
+  dayAvailability: DayAvailability[];
+  applications: Application[];
+  notifications: AppNotification[];
+}
+
+// ---------- Necessidades avulsas e candidaturas ----------
+export interface Opportunity {
+  id: string;
+  date: string; // YYYY-MM-DD
+  start: string; // HH:mm
+  end: string; // HH:mm
+  min: number;
+  max: number;
+  note?: string;
+  status: "aberta" | "confirmada";
+  createdAt: string;
+}
+
+/** Dia em que o voluntário marcou estar disponível (não é candidatura). */
+export interface DayAvailability {
+  volunteerId: string;
+  date: string;
+}
+
+export type ApplicationStatus = "candidatado" | "cancelado" | "selecionado" | "nao_selecionado";
+
+export interface Application {
+  id: string;
+  opportunityId: string;
+  volunteerId: string;
+  status: ApplicationStatus;
+  updatedAt: string;
+}
+
+export interface AppNotification {
+  id: string;
+  opportunityId: string;
+  message: string;
+  createdAt: string;
+  read: boolean;
 }

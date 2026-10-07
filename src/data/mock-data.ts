@@ -1,4 +1,4 @@
-import type { AppState, Attendance, Availability, Draw, Need, Period, Volunteer } from "./types";
+import type { AppState, Application, DayAvailability, Opportunity, Attendance, Availability, Draw, Need, Period, Volunteer } from "./types";
 
 type Seed = [id: string, name: string, cpf: string, photo: number | null, r3: number, r12: number, active?: boolean];
 
@@ -159,7 +159,30 @@ export function createSeed(): AppState {
       });
     });
 
+  // Necessidades avulsas (fluxo de candidatura)
+  const opportunities: Opportunity[] = [
+    { id: "o1", date: "2026-10-14", start: "19:00", end: "21:00", min: 2, max: 4, note: "Culto de quarta", status: "aberta", createdAt: "2026-10-01T10:00:00" },
+    { id: "o2", date: "2026-10-18", start: "09:00", end: "12:00", min: 3, max: 5, note: "Culto de domingo", status: "aberta", createdAt: "2026-10-01T10:00:00" },
+    { id: "o3", date: "2026-10-21", start: "19:30", end: "21:30", min: 2, max: 3, note: "Ensaio geral", status: "aberta", createdAt: "2026-10-01T10:00:00" },
+    { id: "o4", date: "2026-10-25", start: "18:00", end: "21:00", min: 4, max: 6, note: "Conferência de jovens", status: "aberta", createdAt: "2026-10-01T10:00:00" },
+  ];
+  const dayAvailability: DayAvailability[] = [];
+  const apps: Application[] = [];
+  const avail = (vid: string, dates: string[]) => dates.forEach((date) => dayAvailability.push({ volunteerId: vid, date }));
+  const apply = (oid: string, vids: string[]) =>
+    vids.forEach((vid) => apps.push({ id: `ap-${oid}-${vid}`, opportunityId: oid, volunteerId: vid, status: "candidatado", updatedAt: "2026-10-04T09:00:00" }));
+  avail("v1", ["2026-10-14", "2026-10-18", "2026-10-21", "2026-10-25"]);
+  ["v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v15", "v16"].forEach((v) => avail(v, ["2026-10-14", "2026-10-18", "2026-10-21", "2026-10-25"]));
+  apply("o1", ["v4"]);
+  apply("o2", ["v2", "v3", "v5", "v7", "v8", "v16"]);
+  apply("o3", ["v6", "v9", "v10"]);
+  apply("o4", ["v2", "v3", "v15", "v16"]);
+
   return {
+    opportunities,
+    dayAvailability,
+    applications: apps,
+    notifications: [],
     volunteers,
     periods,
     availabilities,
