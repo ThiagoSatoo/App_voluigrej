@@ -112,7 +112,6 @@ function AvailableScales() {
         const mine = myApplication(state, o.id, meId);
         const open = o.status === "aberta";
         const applied = mine?.status === "candidatado";
-        const full = count >= o.max;
         return (
           <Panel key={o.id} className="p-4">
             <div className="flex items-start gap-3">
@@ -139,8 +138,8 @@ function AvailableScales() {
                 </div>
               )}
               {open && !applied && (
-                <Button size="lg" className="w-full" disabled={full} onClick={() => { const r = repo.applyTo(o.id, meId); r.ok ? toast.success("Candidatura enviada!") : toast.error(r.error); }}>
-                  {full ? "Vagas esgotadas" : "Quero participar"}
+                <Button size="lg" className="w-full" onClick={() => { const r = repo.applyTo(o.id, meId); r.ok ? toast.success("Candidatura enviada!") : toast.error(r.error); }}>
+                  Quero participar
                 </Button>
               )}
               {!open && !mine && <p className="text-sm text-muted-foreground">Seleção encerrada.</p>}

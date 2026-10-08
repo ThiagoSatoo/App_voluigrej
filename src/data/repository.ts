@@ -290,8 +290,6 @@ export const repo = {
     const s = getState();
     const o = s.opportunities.find((x) => x.id === opportunityId);
     if (!o || o.status !== "aberta") return { ok: false, error: "Esta escala não está mais aberta." };
-    const count = s.applications.filter((a) => a.opportunityId === opportunityId && a.status === "candidatado").length;
-    if (count >= o.max) return { ok: false, error: "O número máximo de candidatos já foi atingido." };
     setState((st) => ({
       ...st,
       applications: [

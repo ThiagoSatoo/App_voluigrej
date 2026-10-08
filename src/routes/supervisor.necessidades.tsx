@@ -162,7 +162,7 @@ function SelectionDialog({ opportunity: o, onClose }: { opportunity: Opportunity
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto rounded-2xl">
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl [&>*]:min-w-0">
         <DialogHeader><DialogTitle className="font-display">{confirmed ? "Resultado da seleção" : "Revisar seleção"}</DialogTitle></DialogHeader>
         <p className="text-sm text-muted-foreground">{fmtLong(o.date)} · {o.start}–{o.end} · mín. {o.min} / máx. {o.max}</p>
         {!confirmed && over && (
@@ -181,7 +181,7 @@ function SelectionDialog({ opportunity: o, onClose }: { opportunity: Opportunity
                     onCheckedChange={(c) => setSelected((s) => (c ? [...s, r.v.id] : s.filter((x) => x !== r.v.id)))}
                   />
                 )}
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <PersonRow
                     name={r.v.name}
                     photoUrl={r.v.photoUrl}
