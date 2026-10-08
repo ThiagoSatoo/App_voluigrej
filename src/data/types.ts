@@ -1,5 +1,4 @@
 // Domain types. These mirror the future database tables.
-export type Shift = "Manhã" | "Tarde" | "Noite";
 export type VolunteerStatus = "ativo" | "inativo";
 
 export interface Volunteer {
@@ -23,7 +22,8 @@ export type PeriodStatus = "rascunho" | "aberta" | "encerrada" | "sorteado" | "p
 export interface Need {
   id: string;
   date: string; // YYYY-MM-DD
-  shift: Shift;
+  start: string; // HH:mm
+  end: string; // HH:mm
   slots: number;
 }
 

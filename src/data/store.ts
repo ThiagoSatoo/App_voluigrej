@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { createSeed } from "./mock-data";
+import { migrateScheduleTimes } from "./migrate";
 import type { AppState } from "./types";
 
 /**
@@ -40,7 +41,10 @@ export function hydrateStore() {
   if (hydrated) return;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) state = { ...createSeed(), ...JSON.parse(raw) };
+    if (raw) {
+      state = migrateScheduleTimes({ ...createSeed(), ...JSON.parse(raw) });
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
   } catch {
     /* ignore */
   }

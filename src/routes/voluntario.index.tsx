@@ -1,5 +1,6 @@
+import { fmtTimeRange } from "@/lib/time";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { CalendarCheck, CalendarDays, ChevronRight, History, Sun, Sunset, UserRound } from "lucide-react";
+import { CalendarCheck, CalendarDays, ChevronRight, History, Clock, UserRound } from "lucide-react";
 import { useStore } from "@/data/store";
 import { availabilityPeriod, hasResponded, nextAssignment } from "@/data/selectors";
 import { VolunteerAvatar } from "@/components/app/VolunteerAvatar";
@@ -48,8 +49,8 @@ function VolunteerHome() {
             </div>
             <div className="mt-5 font-display text-2xl font-semibold">{fmtLong(next.need.date)}</div>
             <div className="mt-1 flex items-center gap-2 opacity-90">
-              {next.need.shift === "Manhã" ? <Sun className="h-4 w-4" /> : <Sunset className="h-4 w-4" />}
-              {next.need.shift}
+              <Clock className="h-4 w-4" />
+              {fmtTimeRange(next.need)}
             </div>
             <div className="mt-4 inline-flex rounded-full bg-primary-foreground/15 px-3 py-1 text-xs font-bold">Status: Escalado</div>
           </div>
@@ -89,7 +90,7 @@ function VolunteerHome() {
   );
 }
 
-function Shortcut({ to, icon: Icon, label }: { to: "/voluntario/disponibilidade" | "/voluntario/escala" | "/voluntario/historico" | "/voluntario/perfil"; icon: typeof Sun; label: string }) {
+function Shortcut({ to, icon: Icon, label }: { to: "/voluntario/disponibilidade" | "/voluntario/escala" | "/voluntario/historico" | "/voluntario/perfil"; icon: typeof Clock; label: string }) {
   return (
     <Link to={to} className="group flex flex-col justify-between gap-6 rounded-2xl border bg-card p-4 shadow-soft transition active:scale-[0.98]">
       <span className="grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent-foreground">

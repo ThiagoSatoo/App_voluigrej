@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays } from "lucide-react";
@@ -43,7 +44,7 @@ function SchedulePage() {
                   <DateBadge date={n.date} />
                   <div className="flex-1">
                     <div className="font-semibold">{fmtWeekday(n.date)} — {fmtDM(n.date)}</div>
-                    <div className="text-sm text-muted-foreground">{n.shift}</div>
+                    <div className="text-sm text-muted-foreground">{fmtTimeRange(n)}</div>
                   </div>
                   <Pill tone={slot.picks.length < n.slots ? "destructive" : "success"}>{slot.picks.length}/{n.slots}</Pill>
                 </div>

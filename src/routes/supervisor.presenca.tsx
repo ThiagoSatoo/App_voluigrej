@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Repeat, UserCheck } from "lucide-react";
@@ -47,11 +48,11 @@ function AttendancePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Presença" subtitle="Selecione a data/turno e registre." />
+      <PageHeader title="Presença" subtitle="Selecione a data/horário e registre." />
       <Select value={key} onValueChange={setKey}>
         <SelectTrigger className="h-12 rounded-xl bg-card"><SelectValue /></SelectTrigger>
         <SelectContent>
-          {options.map((o) => <SelectItem key={o.n.id} value={o.n.id}>{fmtDM(o.n.date)} · {fmtWeekday(o.n.date)} · {o.n.shift} ({periodLabel(o.p)})</SelectItem>)}
+          {options.map((o) => <SelectItem key={o.n.id} value={o.n.id}>{fmtDM(o.n.date)} · {fmtWeekday(o.n.date)} · {fmtTimeRange(o.n)} ({periodLabel(o.p)})</SelectItem>)}
         </SelectContent>
       </Select>
 

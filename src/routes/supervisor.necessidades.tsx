@@ -1,3 +1,4 @@
+import { TimeRangeFields } from "@/components/app/TimeRangeFields";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, ClipboardList, Clock, Plus, Trash2, Users } from "lucide-react";
@@ -102,7 +103,7 @@ function Box({ label, value }: { label: string; value: number }) {
 function NewNeedDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [date, setDate] = useState("");
   const [start, setStart] = useState("09:00");
-  const [end, setEnd] = useState("12:00");
+  const [end, setEnd] = useState("10:00");
   const [min, setMin] = useState(2);
   const [max, setMax] = useState(4);
   const [note, setNote] = useState("");
@@ -120,9 +121,8 @@ function NewNeedDialog({ open, onClose }: { open: boolean; onClose: () => void }
         <DialogHeader><DialogTitle className="font-display">Nova necessidade</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5"><Label>Data</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 rounded-xl" /></div>
+          <TimeRangeFields start={start} end={end} onStartChange={setStart} onEndChange={setEnd} />
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Início</Label><Input type="time" value={start} onChange={(e) => setStart(e.target.value)} className="h-11 rounded-xl" /></div>
-            <div className="space-y-1.5"><Label>Fim</Label><Input type="time" value={end} onChange={(e) => setEnd(e.target.value)} className="h-11 rounded-xl" /></div>
             <div className="space-y-1.5"><Label>Mínimo</Label><Input type="number" min={1} value={min} onChange={(e) => setMin(Number(e.target.value))} className="h-11 rounded-xl" /></div>
             <div className="space-y-1.5"><Label>Máximo</Label><Input type="number" min={1} value={max} onChange={(e) => setMax(Number(e.target.value))} className="h-11 rounded-xl" /></div>
           </div>

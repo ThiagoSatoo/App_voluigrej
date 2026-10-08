@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarX2, Check, Clock, Lock, X } from "lucide-react";
 import { toast } from "sonner";
@@ -13,9 +14,9 @@ export const Route = createFileRoute("/voluntario/disponibilidade")({
   head: () => ({
     meta: [
       { title: "Disponibilidade — Área do Voluntário" },
-      { name: "description", content: "Informe em quais datas e turnos você pode servir." },
+      { name: "description", content: "Informe em quais datas e horários você pode servir." },
       { property: "og:title", content: "Disponibilidade — Área do Voluntário" },
-      { property: "og:description", content: "Informe em quais datas e turnos você pode servir." },
+      { property: "og:description", content: "Informe em quais datas e horários você pode servir." },
     ],
   }),
   component: AvailabilityPage,
@@ -69,7 +70,7 @@ function AvailabilityPage() {
                 <DateBadge date={n.date} />
                 <div className="flex-1">
                   <div className="font-semibold">{fmtWeekday(n.date)}</div>
-                  <div className="text-sm text-muted-foreground">{n.shift}</div>
+                  <div className="text-sm text-muted-foreground">{fmtTimeRange(n)}</div>
                 </div>
                 {val === "disponivel" && <Pill tone="success">Disponível</Pill>}
                 {val === "indisponivel" && <Pill tone="destructive">Indisponível</Pill>}
