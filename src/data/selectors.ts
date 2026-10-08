@@ -2,7 +2,7 @@ import { DEMO_TODAY } from "@/lib/format";
 import type { AppState, Need, Period, Volunteer } from "./types";
 
 export const sortNeeds = (needs: Need[]) =>
-  [...needs].sort((a, b) => a.date.localeCompare(b.date) || a.shift.localeCompare(b.shift));
+  [...needs].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
 
 export const sortPeriods = (ps: Period[]) => [...ps].sort((a, b) => b.year - a.year || b.month - a.month);
 
