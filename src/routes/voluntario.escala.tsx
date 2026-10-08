@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays } from "lucide-react";
 import { useStore } from "@/data/store";
@@ -44,7 +45,7 @@ function MySchedule() {
                 <DateBadge date={a.need.date} />
                 <div className="flex-1">
                   <div className="font-semibold">{fmtWeekday(a.need.date)}</div>
-                  <div className="text-sm text-muted-foreground">{a.need.shift}</div>
+                  <div className="text-sm text-muted-foreground">{fmtTimeRange(a.need)}</div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
                   <VolunteerAvatar name={me.name} photoUrl={me.photoUrl} size="xs" />
@@ -64,7 +65,7 @@ function MySchedule() {
                 <DateBadge date={a.need.date} className="h-11 w-11" />
                 <div className="flex-1 text-sm">
                   <div className="font-semibold">{fmtWeekday(a.need.date)}</div>
-                  <div className="text-muted-foreground">{a.need.shift}</div>
+                  <div className="text-muted-foreground">{fmtTimeRange(a.need)}</div>
                 </div>
               </Panel>
             ))}

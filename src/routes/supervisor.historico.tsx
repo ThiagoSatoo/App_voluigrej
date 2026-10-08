@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { createFileRoute } from "@tanstack/react-router";
 import { Ban, CalendarCheck, CheckCircle2, Repeat, XCircle } from "lucide-react";
 import { useStore } from "@/data/store";
@@ -53,7 +54,7 @@ function HistoryPage() {
               return (
                 <div key={s.id} className="rounded-xl bg-secondary p-3 text-sm">
                   <b>{state.volunteers.find((v) => v.id === s.outId)?.name}</b> → <b>{state.volunteers.find((v) => v.id === s.inId)?.name}</b>
-                  <div className="text-xs text-muted-foreground">{n ? `${fmtDM(n.date)} ${n.shift} · ` : ""}{s.reason} · {fmtDateTime(s.at)} · {s.supervisor}</div>
+                  <div className="text-xs text-muted-foreground">{n ? `${fmtDM(n.date)} ${fmtTimeRange(n)} · ` : ""}{s.reason} · {fmtDateTime(s.at)} · {s.supervisor}</div>
                 </div>
               );
             })}

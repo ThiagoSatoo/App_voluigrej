@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarX2, ChevronDown, Lock } from "lucide-react";
@@ -67,7 +68,7 @@ function AvailabilityOverview() {
                     <DateBadge date={n.date} />
                     <div className="flex-1">
                       <div className="font-semibold">{fmtDM(n.date)} · {fmtWeekday(n.date)}</div>
-                      <div className="text-sm text-muted-foreground">{n.shift} · {n.slots} vagas</div>
+                      <div className="text-sm text-muted-foreground">{fmtTimeRange(n)} · {n.slots} vagas</div>
                     </div>
                     {avail.length < n.slots && <Pill tone="destructive">Insuficiente</Pill>}
                   </div>

@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { AlertCircle, CalendarDays, CheckCircle2, ChevronRight, ClipboardCheck, Shuffle, Target, UserCheck, Users } from "lucide-react";
 import { useStore } from "@/data/store";
@@ -49,7 +50,7 @@ function Dashboard() {
             </div>
             {next ? (
               <>
-                <div className="font-display text-lg font-semibold">{fmtLong(next.need.date)} · {next.need.shift}</div>
+                <div className="font-display text-lg font-semibold">{fmtLong(next.need.date)} · {fmtTimeRange(next.need)}</div>
                 <div className="mt-3 flex -space-x-2">
                   {next.slot.picks.map((p) => {
                     const v = state.volunteers.find((x) => x.id === p.volunteerId)!;

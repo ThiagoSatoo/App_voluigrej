@@ -1,3 +1,4 @@
+import { oneHourLater } from "@/lib/time";
 import type { AppState, Application, DayAvailability, Opportunity, Attendance, Availability, Draw, Need, Period, Volunteer } from "./types";
 
 type Seed = [id: string, name: string, cpf: string, photo: number | null, r3: number, r12: number, active?: boolean];
@@ -21,7 +22,7 @@ const people: Seed[] = [
   ["v16", "Patrícia Mendes", "78978978978", null, 0, 3],
 ];
 
-const need = (id: string, date: string, shift: Need["shift"], slots: number): Need => ({ id, date, shift, slots });
+const need = (id: string, date: string, start: string, slots: number): Need => ({ id, date, start, end: oneHourLater(start), slots });
 
 function seedDraw(
   id: string,
@@ -77,23 +78,23 @@ export function createSeed(): AppState {
   }));
 
   const sepNeeds = [
-    need("n-09-05", "2026-09-05", "Manhã", 4),
-    need("n-09-12", "2026-09-12", "Manhã", 5),
-    need("n-09-19", "2026-09-19", "Tarde", 3),
-    need("n-09-26", "2026-09-26", "Manhã", 4),
+    need("n-09-05", "2026-09-05", "09:00", 4),
+    need("n-09-12", "2026-09-12", "09:00", 5),
+    need("n-09-19", "2026-09-19", "14:00", 3),
+    need("n-09-26", "2026-09-26", "09:00", 4),
   ];
   const octNeeds = [
-    need("n-10-03", "2026-10-03", "Manhã", 4),
-    need("n-10-10", "2026-10-10", "Manhã", 5),
-    need("n-10-17", "2026-10-17", "Tarde", 3),
-    need("n-10-24", "2026-10-24", "Manhã", 5),
-    need("n-10-31", "2026-10-31", "Manhã", 4),
+    need("n-10-03", "2026-10-03", "09:00", 4),
+    need("n-10-10", "2026-10-10", "09:00", 5),
+    need("n-10-17", "2026-10-17", "14:00", 3),
+    need("n-10-24", "2026-10-24", "09:00", 5),
+    need("n-10-31", "2026-10-31", "09:00", 4),
   ];
   const novNeeds = [
-    need("n-11-07", "2026-11-07", "Manhã", 4),
-    need("n-11-14", "2026-11-14", "Manhã", 6),
-    need("n-11-21", "2026-11-21", "Tarde", 5),
-    need("n-11-28", "2026-11-28", "Manhã", 5),
+    need("n-11-07", "2026-11-07", "09:00", 4),
+    need("n-11-14", "2026-11-14", "09:00", 6),
+    need("n-11-21", "2026-11-21", "14:00", 5),
+    need("n-11-28", "2026-11-28", "09:00", 5),
   ];
 
   const periods: Period[] = [

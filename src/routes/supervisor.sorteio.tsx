@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, Info, Send, Shuffle } from "lucide-react";
@@ -102,8 +103,8 @@ function DrawPage() {
               const missing = n.slots - slot.picks.length;
               return (
                 <div key={slot.needId} className="rounded-2xl border p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-display font-semibold">{fmtDM(n.date)} — {n.shift}</h3>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-display font-semibold">{fmtDM(n.date)} — {fmtTimeRange(n)}</h3>
                     <Pill tone={missing > 0 ? "destructive" : "success"}>{slot.picks.length}/{n.slots} preenchidas</Pill>
                   </div>
                   {missing > 0 && (

@@ -1,3 +1,5 @@
+import { TimeRangeFields } from "@/components/app/TimeRangeFields";
+import { fmtTimeRange } from "@/lib/time";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarPlus, Minus, Plus, Trash2 } from "lucide-react";
@@ -5,7 +7,7 @@ import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { sortNeeds, sortPeriods } from "@/data/selectors";
-import type { Period, PeriodStatus, Shift } from "@/data/types";
+import type { Period, PeriodStatus } from "@/data/types";
 import { ConfirmDialog, DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +20,7 @@ export const Route = createFileRoute("/supervisor/periodos")({
   head: () => ({
     meta: [
       { title: "Períodos — Painel do Supervisor" },
-      { name: "description", content: "Crie períodos mensais e defina as necessidades de cada data e turno." },
+      { name: "description", content: "Crie períodos mensais e defina as necessidades de cada data e horário." },
       { property: "og:title", content: "Períodos — Painel do Supervisor" },
       { property: "og:description", content: "Crie períodos mensais e defina as necessidades." },
     ],
@@ -41,7 +43,7 @@ function PeriodsPage() {
 
   return (
     <div>
-      <PageHeader title="Períodos" subtitle="Cada mês tem suas próprias datas, turnos e vagas." actions={<Button onClick={() => setCreating(true)}><CalendarPlus /> Novo período</Button>} />
+      <PageHeader title="Períodos" subtitle="Cada mês tem suas próprias datas, horários e vagas." actions={<Button onClick={() => setCreating(true)}><CalendarPlus /> Novo período</Button>} />
       <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
         {periods.map((p) => (
           <button
@@ -63,7 +65,8 @@ function PeriodsPage() {
 function PeriodDetail({ period }: { period: Period }) {
   const [confirm, setConfirm] = useState(false);
   const [date, setDate] = useState("");
-  const [shift, setShift] = useState<Shift>("Manhã");
+  const [start, setStart] = useState("09:00");
+  const [end, setEnd] = useState("10:00");
   const [slots, setSlots] = useState(4);
   const editable = period.status === "rascunho" || period.status === "aberta";
   const action = NEXT_ACTION[period.status];
@@ -73,7 +76,8 @@ function PeriodDetail({ period }: { period: Period }) {
     if (!date) { toast.error("Escolha uma data."); return; }
     const [y, m] = date.split("-").map(Number);
     if (y !== period.year || m !== period.month) { toast.error(`A data precisa estar em ${periodLabel(period)}.`); return; }
-    repo.addNeed(period.id, { date, shift, slots });
+    const result = repo.addNeed(period.id, { date, start, end, slots });
+    if (!result.ok) { toast.error(result.error); return; }
     setDate("");
     toast.success("Necessidade adicionada");
   };
@@ -85,7 +89,7 @@ function PeriodDetail({ period }: { period: Period }) {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-2xl font-semibold uppercase">{periodLabel(period)}</h2>
-              <p className="text-sm text-muted-foreground">{period.needs.length} datas/turnos · {total} vagas</p>
+              <p className="text-sm text-muted-foreground">{period.needs.length} datas/horários · {total} vagas</p>
             </div>
             <Pill tone={PERIOD_STATUS[period.status].tone}>{PERIOD_STATUS[period.status].label}</Pill>
           </div>
@@ -108,14 +112,14 @@ function PeriodDetail({ period }: { period: Period }) {
         </Panel>
 
         <h3 className="font-semibold">Necessidades</h3>
-        {period.needs.length === 0 && <EmptyState icon={CalendarPlus} title="Sem necessidades" text="Adicione as datas, turnos e quantidade de voluntários." />}
+        {period.needs.length === 0 && <EmptyState icon={CalendarPlus} title="Sem necessidades" text="Adicione as datas, horários e quantidade de voluntários." />}
         <div className="space-y-2">
           {sortNeeds(period.needs).map((n) => (
-            <Panel key={n.id} className="flex items-center gap-3 p-3">
+            <Panel key={n.id} className="flex flex-wrap items-center gap-3 p-3">
               <DateBadge date={n.date} className="h-12 w-12" />
-              <div className="flex-1">
+              <div className="min-w-32 flex-1">
                 <div className="font-semibold">{fmtDMY(n.date)}</div>
-                <div className="text-xs text-muted-foreground">{fmtWeekday(n.date)} · {n.shift}</div>
+                <div className="text-xs text-muted-foreground">{fmtWeekday(n.date)} · {fmtTimeRange(n)}</div>
               </div>
               {editable ? (
                 <div className="flex items-center gap-1">
@@ -136,13 +140,7 @@ function PeriodDetail({ period }: { period: Period }) {
         <Panel className="h-fit space-y-3">
           <h3 className="font-semibold">Adicionar necessidade</h3>
           <div className="space-y-1.5"><Label className="text-xs">Data</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded-xl" /></div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Turno</Label>
-            <Select value={shift} onValueChange={(v) => setShift(v as Shift)}>
-              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-              <SelectContent>{(["Manhã", "Tarde", "Noite"] as Shift[]).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          <TimeRangeFields start={start} end={end} onStartChange={setStart} onEndChange={setEnd} />
           <div className="space-y-1.5"><Label className="text-xs">Voluntários necessários</Label><Input type="number" min={1} value={slots} onChange={(e) => setSlots(Math.max(1, Number(e.target.value)))} className="rounded-xl" /></div>
           <Button className="w-full" onClick={add}><Plus /> Adicionar</Button>
         </Panel>

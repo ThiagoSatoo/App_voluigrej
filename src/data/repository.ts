@@ -1,3 +1,4 @@
+import { validTimeRange } from "@/lib/time";
 import { getState, resetStore, setState } from "./store";
 import type {
   AttendanceStatus,
@@ -116,11 +117,13 @@ export const repo = {
     setState((st) => ({ ...st, periods: st.periods.map((p) => (p.id === id ? { ...p, status } : p)) }));
   },
 
-  addNeed(periodId: string, n: Omit<Need, "id">) {
+  addNeed(periodId: string, n: Omit<Need, "id">): Result {
+    if (!validTimeRange(n.start, n.end)) return { ok: false, error: "Informe um horário final posterior ao início, no mesmo dia." };
     setState((st) => ({
       ...st,
       periods: st.periods.map((p) => (p.id === periodId ? { ...p, needs: [...p.needs, { ...n, id: uid("n") }] } : p)),
     }));
+    return { ok: true };
   },
 
   updateNeedSlots(periodId: string, needId: string, slots: number) {

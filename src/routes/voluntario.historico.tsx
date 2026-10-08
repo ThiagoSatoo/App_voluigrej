@@ -1,3 +1,4 @@
+import { fmtTimeRange } from "@/lib/time";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, ClipboardList, Repeat, XCircle } from "lucide-react";
 import { useStore } from "@/data/store";
@@ -42,7 +43,7 @@ function MyHistory() {
             <Panel key={a.id} className="flex items-center justify-between gap-3 p-4">
               <div>
                 <div className="font-semibold">{fmtLong(need!.date)}</div>
-                <div className="text-xs text-muted-foreground">{need!.shift} · registrado em {fmtDateTime(a.recordedAt)}</div>
+                <div className="text-xs text-muted-foreground">{need ? fmtTimeRange(need) : ""} · registrado em {fmtDateTime(a.recordedAt)}</div>
               </div>
               <Pill tone={ATTENDANCE_STATUS[a.status].tone}>{ATTENDANCE_STATUS[a.status].label}</Pill>
             </Panel>
