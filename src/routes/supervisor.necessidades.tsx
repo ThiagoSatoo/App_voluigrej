@@ -162,7 +162,7 @@ function SelectionDialog({ opportunity: o, onClose }: { opportunity: Opportunity
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl">
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl [&>*]:min-w-0">
         <DialogHeader><DialogTitle className="font-display">{confirmed ? "Resultado da seleção" : "Revisar seleção"}</DialogTitle></DialogHeader>
         <p className="text-sm text-muted-foreground">{fmtLong(o.date)} · {o.start}–{o.end} · mín. {o.min} / máx. {o.max}</p>
         {!confirmed && over && (
