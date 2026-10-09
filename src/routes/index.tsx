@@ -13,6 +13,8 @@ import { formatCpfInput } from "@/lib/format";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Entrar — Escala de Voluntários" },
       { name: "description", content: "Acesse a escala de voluntários: disponibilidade, sorteio, escala e presença." },
       { property: "og:title", content: "Entrar — Escala de Voluntários" },

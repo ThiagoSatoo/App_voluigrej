@@ -10,6 +10,8 @@ import { DRAW_STATUS, fmtDM, fmtDMY, fmtDateTime, periodLabel } from "@/lib/form
 export const Route = createFileRoute("/supervisor/historico")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Histórico — Painel do Supervisor" },
       { name: "description", content: "Escalas realizadas, presenças, faltas, substituições e versões de sorteio." },
       { property: "og:title", content: "Histórico — Painel do Supervisor" },

@@ -12,6 +12,8 @@ import { SupervisorAlerts } from "@/components/app/SupervisorAlerts";
 export const Route = createFileRoute("/supervisor/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Dashboard — Painel do Supervisor" },
       { name: "description", content: "Visão geral de voluntários, disponibilidades e escalas." },
       { property: "og:title", content: "Dashboard — Painel do Supervisor" },

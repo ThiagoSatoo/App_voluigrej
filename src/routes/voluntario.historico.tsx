@@ -8,6 +8,8 @@ import { ATTENDANCE_STATUS, fmtDateTime, fmtLong } from "@/lib/format";
 export const Route = createFileRoute("/voluntario/historico")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Meu histórico — Área do Voluntário" },
       { name: "description", content: "Seus registros de presença." },
       { property: "og:title", content: "Meu histórico — Área do Voluntário" },

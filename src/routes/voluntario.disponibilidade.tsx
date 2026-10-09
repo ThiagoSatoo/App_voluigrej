@@ -13,6 +13,8 @@ import { fmtDM, fmtWeekday, periodLabel } from "@/lib/format";
 export const Route = createFileRoute("/voluntario/disponibilidade")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Disponibilidade — Área do Voluntário" },
       { name: "description", content: "Informe em quais datas e horários você pode servir." },
       { property: "og:title", content: "Disponibilidade — Área do Voluntário" },

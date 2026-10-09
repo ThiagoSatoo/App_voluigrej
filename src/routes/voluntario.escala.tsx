@@ -10,6 +10,8 @@ import { DEMO_TODAY, fmtWeekday, periodLabel } from "@/lib/format";
 export const Route = createFileRoute("/voluntario/escala")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Minha escala — Área do Voluntário" },
       { name: "description", content: "Suas datas escaladas publicadas." },
       { property: "og:title", content: "Minha escala — Área do Voluntário" },

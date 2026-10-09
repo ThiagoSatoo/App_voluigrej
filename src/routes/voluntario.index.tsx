@@ -10,6 +10,8 @@ import { firstName, fmtDM, fmtLong, periodLabel } from "@/lib/format";
 export const Route = createFileRoute("/voluntario/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Início — Área do Voluntário" },
       { name: "description", content: "Sua próxima escala e atalhos rápidos." },
       { property: "og:title", content: "Início — Área do Voluntário" },

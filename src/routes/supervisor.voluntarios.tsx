@@ -19,6 +19,8 @@ import { fmtDMY, formatCpfInput, maskCpf } from "@/lib/format";
 export const Route = createFileRoute("/supervisor/voluntarios")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Voluntários — Painel do Supervisor" },
       { name: "description", content: "Cadastro e gestão dos voluntários." },
       { property: "og:title", content: "Voluntários — Painel do Supervisor" },

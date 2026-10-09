@@ -19,6 +19,8 @@ import { MONTHS, PERIOD_STATUS, fmtDMY, fmtWeekday, periodLabel } from "@/lib/fo
 export const Route = createFileRoute("/supervisor/periodos")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Períodos — Painel do Supervisor" },
       { name: "description", content: "Crie períodos mensais e defina as necessidades de cada data e horário." },
       { property: "og:title", content: "Períodos — Painel do Supervisor" },

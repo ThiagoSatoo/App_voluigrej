@@ -11,6 +11,8 @@ import { maskCpf } from "@/lib/format";
 export const Route = createFileRoute("/voluntario/perfil")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Meu perfil — Área do Voluntário" },
       { name: "description", content: "Seus dados, foto e senha." },
       { property: "og:title", content: "Meu perfil — Área do Voluntário" },

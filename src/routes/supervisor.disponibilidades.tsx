@@ -17,6 +17,8 @@ import { PERIOD_STATUS, fmtDM, fmtWeekday } from "@/lib/format";
 export const Route = createFileRoute("/supervisor/disponibilidades")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Disponibilidades — Painel do Supervisor" },
       { name: "description", content: "Acompanhe quem respondeu e quem está disponível em cada data." },
       { property: "og:title", content: "Disponibilidades — Painel do Supervisor" },
