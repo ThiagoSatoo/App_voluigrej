@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/voluntario/vagas")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Vagas — Área do Voluntário" },
       { name: "description", content: "Marque seus dias disponíveis e candidate-se às escalas compatíveis." },
       { property: "og:title", content: "Vagas — Área do Voluntário" },

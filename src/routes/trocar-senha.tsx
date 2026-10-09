@@ -12,6 +12,8 @@ import { LoadingScreen } from "@/components/app/common";
 export const Route = createFileRoute("/trocar-senha")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Alterar senha — Escala de Voluntários" },
       { name: "description", content: "Defina uma nova senha de acesso." },
       { property: "og:title", content: "Alterar senha — Escala de Voluntários" },

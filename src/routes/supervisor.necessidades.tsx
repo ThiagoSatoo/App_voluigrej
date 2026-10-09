@@ -20,6 +20,8 @@ import { fmtLong } from "@/lib/format";
 export const Route = createFileRoute("/supervisor/necessidades")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Necessidades — Painel do Supervisor" },
       { name: "description", content: "Crie necessidades por data e horário e confirme os voluntários selecionados." },
       { property: "og:title", content: "Necessidades — Painel do Supervisor" },

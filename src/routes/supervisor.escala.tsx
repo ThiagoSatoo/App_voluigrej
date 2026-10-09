@@ -12,6 +12,8 @@ import { fmtDM, fmtWeekday, periodLabel } from "@/lib/format";
 export const Route = createFileRoute("/supervisor/escala")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Escala completa — Painel do Supervisor" },
       { name: "description", content: "Visualize a escala publicada de todos os voluntários." },
       { property: "og:title", content: "Escala completa — Painel do Supervisor" },

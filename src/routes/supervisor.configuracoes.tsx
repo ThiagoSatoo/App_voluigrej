@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/supervisor/configuracoes")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Configurações — Painel do Supervisor" },
       { name: "description", content: "Dados da igreja e opções do aplicativo." },
       { property: "og:title", content: "Configurações — Painel do Supervisor" },

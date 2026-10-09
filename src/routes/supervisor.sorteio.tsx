@@ -15,6 +15,8 @@ import { DRAW_STATUS, PERIOD_STATUS, fmtDM, fmtDateTime, periodLabel } from "@/l
 export const Route = createFileRoute("/supervisor/sorteio")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Sorteio da Escala — Painel do Supervisor" },
       { name: "description", content: "Gere, revise e publique a escala com prioridade para quem serviu menos." },
       { property: "og:title", content: "Sorteio da Escala — Painel do Supervisor" },
