@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { createSeed } from "./mock-data";
+import { createSeed, seedBirthDate } from "./mock-data";
 import { migrateScheduleTimes } from "./migrate";
 import type { AppState } from "./types";
 
@@ -42,7 +42,14 @@ export function hydrateStore() {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      state = migrateScheduleTimes({ ...createSeed(), ...JSON.parse(raw) });
+      const saved = migrateScheduleTimes({ ...createSeed(), ...JSON.parse(raw) });
+      // Older local data: add birth dates, notification type/recipient and staff session ids.
+      state = {
+        ...saved,
+        volunteers: saved.volunteers.map((v) => (v.birthDate ? v : { ...v, birthDate: seedBirthDate(v.id) })),
+        notifications: saved.notifications.map((n) => ({ ...n, type: n.type ?? "candidatura_cancelada", recipientId: n.recipientId ?? "s1" })),
+        session: saved.session?.role === "supervisor" && saved.session.userId === "supervisor" ? { ...saved.session, userId: "s1" } : saved.session,
+      };
       localStorage.setItem(KEY, JSON.stringify(state));
     }
   } catch {

@@ -8,7 +8,9 @@ import { fmtDateTime } from "@/lib/format";
 /** Unread alerts (e.g. a cancellation left a need below its minimum). */
 export function SupervisorAlerts() {
   const { state } = useStore();
-  const unread = state.notifications.filter((n) => !n.read);
+  const unread = state.notifications.filter(
+    (n) => !n.read && n.recipientId === state.session?.userId && (n.type === "candidatura_cancelada" || n.type === "abaixo_minimo_24h"),
+  );
   if (unread.length === 0) return null;
   return (
     <div className="mb-5 space-y-2">
