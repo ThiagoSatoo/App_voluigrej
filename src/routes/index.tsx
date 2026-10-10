@@ -34,7 +34,7 @@ function Login() {
 
   useEffect(() => {
     if (!hydrated || !state.session) return;
-    navigate({ to: state.session.role === "supervisor" ? "/supervisor" : "/voluntario" });
+    navigate({ to: state.session.role !== "voluntario" ? "/supervisor" : "/voluntario" });
   }, [hydrated, state.session, navigate]);
 
   const loginVol = (e: React.FormEvent) => {
@@ -96,7 +96,8 @@ function Login() {
         <div className="mt-6 rounded-2xl border border-dashed bg-card/70 p-4 text-xs text-muted-foreground">
           <p className="mb-2 flex items-center gap-1.5 font-semibold text-foreground"><KeyRound className="h-3.5 w-3.5" />Acessos de demonstração</p>
           <ul className="space-y-1">
-            <li>Supervisor: <b>supervisor</b> / <b>123456</b></li>
+            <li>Administrador: <b>admin</b> / <b>123456</b></li>
+            <li>Supervisor: <b>supervisor</b> (ou <b>marta</b>) / <b>123456</b></li>
             <li>Voluntário: CPF <b>111.111.111-11</b> / <b>123456</b></li>
             <li>Primeiro acesso (troca de senha): CPF <b>222.222.222-22</b> / <b>123456</b></li>
           </ul>

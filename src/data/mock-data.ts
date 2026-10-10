@@ -60,6 +60,11 @@ function seedDraw(
   };
 }
 
+/** v1 faz aniversário no "dia de hoje" da demo (05/10) e v4 daqui a 7 dias (12/10). */
+const BIRTHDAYS: Record<string, string> = { v1: "1990-10-05", v4: "1995-10-12", v2: "1988-03-21", v3: "1992-07-14" };
+
+export const seedBirthDate = (id: string) => createSeed().volunteers.find((v) => v.id === id)?.birthDate ?? "1990-01-01";
+
 export function createSeed(): AppState {
   const volunteers: Volunteer[] = people.map(([id, name, cpf, photo, r3, r12, active = true], i) => ({
     id,
@@ -67,6 +72,7 @@ export function createSeed(): AppState {
     cpf,
     phone: `(11) 9${String(8000 + i * 137).padStart(4, "0")}-${String(1000 + i * 241).slice(0, 4)}`,
     email: `${name.split(" ")[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}@exemplo.com`,
+    birthDate: BIRTHDAYS[id] ?? `19${80 + (i % 20)}-${String((i % 12) + 1).padStart(2, "0")}-${String(((i * 7) % 27) + 1).padStart(2, "0")}`,
     photoUrl: photo ? `https://i.pravatar.cc/240?img=${photo}` : undefined,
     status: active ? "ativo" : "inativo",
     recent3m: r3,
@@ -165,7 +171,9 @@ export function createSeed(): AppState {
     { id: "o1", date: "2026-10-14", start: "19:00", end: "21:00", min: 2, max: 4, note: "Culto de quarta", status: "aberta", createdAt: "2026-10-01T10:00:00" },
     { id: "o2", date: "2026-10-18", start: "09:00", end: "12:00", min: 3, max: 5, note: "Culto de domingo", status: "aberta", createdAt: "2026-10-01T10:00:00" },
     { id: "o3", date: "2026-10-21", start: "19:30", end: "21:30", min: 2, max: 3, note: "Ensaio geral", status: "aberta", createdAt: "2026-10-01T10:00:00" },
-    { id: "o4", date: "2026-10-25", start: "18:00", end: "21:00", min: 4, max: 6, note: "Conferência de jovens", status: "aberta", createdAt: "2026-10-01T10:00:00" },
+    { id: "o4", date: "2026-10-25", start: "18:00", end: "21:00", min: 4, max: 6, note: "Conferência de jovens", status: "aberta", createdAt: "2026-10-01T10:00:00", supervisorId: "s2" },
+    { id: "o5", date: "2026-10-06", start: "08:00", end: "10:00", min: 3, max: 5, note: "Mutirão de limpeza", status: "aberta", createdAt: "2026-10-01T10:00:00" },
+    { id: "o6", date: "2026-10-06", start: "19:30", end: "21:00", min: 2, max: 3, note: "Reunião de oração", status: "confirmada", createdAt: "2026-10-01T10:00:00" },
   ];
   const dayAvailability: DayAvailability[] = [];
   const apps: Application[] = [];
@@ -178,12 +186,27 @@ export function createSeed(): AppState {
   apply("o2", ["v2", "v3", "v5", "v7", "v8", "v16"]);
   apply("o3", ["v6", "v9", "v10"]);
   apply("o4", ["v2", "v3", "v15", "v16"]);
+  apply("o5", ["v5"]);
+  avail("v1", ["2026-10-06"]);
+  avail("v5", ["2026-10-06"]);
+  ["v1", "v9"].forEach((vid) => apps.push({ id: `ap-o6-${vid}`, opportunityId: "o6", volunteerId: vid, status: "selecionado", updatedAt: "2026-10-04T09:00:00" }));
+  apps.push({ id: "ap-o6-v10", opportunityId: "o6", volunteerId: "v10", status: "nao_selecionado", updatedAt: "2026-10-04T09:00:00" });
 
   return {
     opportunities,
     dayAvailability,
     applications: apps,
-    notifications: [],
+    notifications: [
+      { id: "nt-h1", type: "nova_candidatura", recipientId: "s1", opportunityId: "o3", message: "Rafael Lima se candidatou para 21/10/2026 às 19:30 (2/3).", createdAt: "2026-10-04T09:00:00", read: true },
+      { id: "nt-h2", type: "minimo_atingido", recipientId: "s1", opportunityId: "o3", message: "Mínimo atingido em 21/10/2026 às 19:30: 2 de 2 necessários (máximo 3).", createdAt: "2026-10-04T09:00:00", read: true },
+      { id: "nt-h3", type: "escala_completa", recipientId: "s1", opportunityId: "o2", message: "Escala completa em 18/10/2026 às 09:00: 5/5 voluntários (máximo atingido).", createdAt: "2026-10-04T09:00:00", read: true },
+    ],
+    supervisors: [
+      { id: "admin", name: "Administrador", username: "admin", password: "123456", role: "admin", status: "ativo" },
+      { id: "s1", name: "Supervisor", username: "supervisor", password: "123456", role: "supervisor", status: "ativo" },
+      { id: "s2", name: "Marta Nogueira", username: "marta", password: "123456", role: "supervisor", status: "ativo" },
+    ],
+    notifPrefs: {},
     volunteers,
     periods,
     availabilities,
