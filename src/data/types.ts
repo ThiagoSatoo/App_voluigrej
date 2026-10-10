@@ -7,6 +7,7 @@ export interface Volunteer {
   cpf: string; // digits only
   phone: string;
   email: string;
+  birthDate: string; // YYYY-MM-DD
   photoUrl?: string;
   status: VolunteerStatus;
   recent3m: number; // escalas nos últimos 3 meses (simulado)
@@ -97,7 +98,7 @@ export interface Substitution {
 }
 
 export interface Session {
-  role: "supervisor" | "voluntario";
+  role: "admin" | "supervisor" | "voluntario";
   userId: string;
 }
 
@@ -121,7 +122,36 @@ export interface AppState {
   dayAvailability: DayAvailability[];
   applications: Application[];
   notifications: AppNotification[];
+  supervisors: Staff[];
+  notifPrefs: Record<string, NotifPrefs>;
 }
+
+/** Admin ou supervisor (login simulado). */
+export interface Staff {
+  id: string;
+  name: string;
+  username: string;
+  password: string; // PROTÓTIPO
+  role: "admin" | "supervisor";
+  status: "ativo" | "inativo";
+}
+
+export type NotifType =
+  | "nova_candidatura"
+  | "candidatura_cancelada"
+  | "minimo_atingido"
+  | "escala_completa"
+  | "abaixo_minimo_24h"
+  | "aniversario_7d"
+  | "aniversario_dia"
+  | "lembrete_24h"
+  | "lembrete_12h"
+  | "lembrete_6h"
+  | "lembrete_3h"
+  | "lembrete_1h";
+
+/** Preferências por usuário: categoria → ativada. Ausente = ativada. */
+export type NotifPrefs = Partial<Record<NotifType, boolean>>;
 
 // ---------- Necessidades avulsas e candidaturas ----------
 export interface Opportunity {
@@ -134,6 +164,7 @@ export interface Opportunity {
   note?: string;
   status: "aberta" | "confirmada";
   createdAt: string;
+  supervisorId?: string; // supervisor responsável
 }
 
 /** Dia em que o voluntário marcou estar disponível (não é candidatura). */
@@ -154,7 +185,10 @@ export interface Application {
 
 export interface AppNotification {
   id: string;
-  opportunityId: string;
+  type: NotifType;
+  recipientId: string; // id do supervisor/admin ou do voluntário
+  key?: string; // evita duplicadas
+  opportunityId?: string;
   message: string;
   createdAt: string;
   read: boolean;
