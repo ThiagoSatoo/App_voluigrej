@@ -6,7 +6,8 @@ import { repo } from "@/data/repository";
 import { Button } from "@/components/ui/button";
 import { Panel, Pill } from "@/components/app/common";
 import { PhotoPicker, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
-import { maskCpf } from "@/lib/format";
+import { fmtDMY } from "@/lib/format";
+import { NotifPrefsList } from "@/components/app/NotifPrefsList";
 
 export const Route = createFileRoute("/voluntario/perfil")({
   head: () => ({
@@ -32,7 +33,6 @@ function Profile() {
       <Panel className="flex flex-col items-center bg-gradient-warm py-8 text-center">
         <VolunteerAvatar name={me.name} photoUrl={me.photoUrl} size="xl" className="ring-4" />
         <h1 className="mt-4 font-display text-2xl font-semibold">{me.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">CPF {maskCpf(me.cpf)}</p>
         <Pill tone={me.status === "ativo" ? "success" : "muted"} className="mt-3">{me.status === "ativo" ? "Ativo" : "Inativo"}</Pill>
       </Panel>
 
@@ -58,6 +58,12 @@ function Profile() {
       <Panel className="space-y-1 text-sm">
         <Row label="Telefone" value={me.phone} />
         <Row label="E-mail" value={me.email} />
+        <Row label="Nascimento" value={me.birthDate ? fmtDMY(me.birthDate) : "—"} />
+      </Panel>
+
+      <Panel>
+        <p className="font-display text-lg font-semibold">Notificações</p>
+        <NotifPrefsList categories={[]} />
       </Panel>
 
       <Button variant="ghost" size="lg" className="w-full text-destructive" onClick={() => { repo.logout(); navigate({ to: "/" }); }}>

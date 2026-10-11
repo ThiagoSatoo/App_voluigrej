@@ -14,7 +14,10 @@ import {
   Shuffle,
   UserCheck,
   Users,
+  FileText,
+  ShieldCheck,
 } from "lucide-react";
+import { NotificationBell, useScheduledChecks } from "@/components/app/NotificationBell";
 import { useRequireRole } from "@/hooks/use-session";
 import { LoadingScreen } from "@/components/app/common";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -35,10 +38,12 @@ const nav = [
   { to: "/supervisor/escala", label: "Escala", icon: CalendarDays },
   { to: "/supervisor/presenca", label: "Presença", icon: UserCheck },
   { to: "/supervisor/historico", label: "Histórico", icon: History },
+  { to: "/supervisor/relatorios", label: "Relatórios", icon: FileText },
+  { to: "/supervisor/supervisores", label: "Supervisores", icon: ShieldCheck, adminOnly: true },
   { to: "/supervisor/configuracoes", label: "Configurações", icon: Settings },
 ] as const;
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
+function NavList({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin: boolean }) {
   const navigate = useNavigate();
   return (
     <div className="flex h-full flex-col">
@@ -48,11 +53,11 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
         </div>
         <div>
           <div className="font-display text-lg font-semibold leading-tight">Escala</div>
-          <div className="text-xs opacity-70">Painel do supervisor</div>
+          <div className="text-xs opacity-70">{isAdmin ? "Painel do administrador" : "Painel do supervisor"}</div>
         </div>
       </div>
       <nav className="flex-1 space-y-0.5 px-3">
-        {nav.map((it) => (
+        {nav.filter((it) => !("adminOnly" in it) || isAdmin).map((it) => (
           <Link
             key={it.to}
             to={it.to}
@@ -81,32 +86,37 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function SupervisorLayout() {
-  const { ready } = useRequireRole("supervisor");
+  const { ready, isAdmin } = useRequireRole("supervisor");
   const [open, setOpen] = useState(false);
+  useScheduledChecks();
   if (!ready) return <LoadingScreen />;
   return (
     <div className="min-h-screen lg:flex">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 bg-sidebar text-sidebar-foreground lg:block">
-        <NavList />
+        <NavList isAdmin={isAdmin} />
       </aside>
       <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-card/95 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center gap-2">
           <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-hero text-primary-foreground">
             <HeartHandshake className="h-4 w-4" />
           </div>
-          <span className="font-display font-semibold">Supervisor</span>
+          <span className="font-display font-semibold">{isAdmin ? "Administrador" : "Supervisor"}</span>
         </div>
+        <div className="flex items-center">
+        <NotificationBell />
         <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Abrir menu">
           <Menu className="h-5 w-5" />
         </Button>
+        </div>
       </header>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="w-72 border-0 bg-sidebar p-0 text-sidebar-foreground">
           <SheetTitle className="sr-only">Menu</SheetTitle>
-          <NavList onNavigate={() => setOpen(false)} />
+          <NavList isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+        <div className="-mt-2 mb-2 hidden justify-end lg:flex"><NotificationBell /></div>
         <Outlet />
       </main>
     </div>

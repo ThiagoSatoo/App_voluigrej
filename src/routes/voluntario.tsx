@@ -2,6 +2,7 @@ import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { CalendarCheck, CalendarDays, HandHeart, History, Home, UserRound } from "lucide-react";
 import { useRequireRole } from "@/hooks/use-session";
 import { LoadingScreen } from "@/components/app/common";
+import { NotificationBell, useScheduledChecks } from "@/components/app/NotificationBell";
 
 export const Route = createFileRoute("/voluntario")({
   component: VolunteerLayout,
@@ -18,10 +19,12 @@ const items = [
 
 function VolunteerLayout() {
   const { ready } = useRequireRole("voluntario");
+  useScheduledChecks();
   if (!ready) return <LoadingScreen />;
   return (
     <div className="min-h-screen">
-      <main className="pb-safe mx-auto max-w-2xl px-4 pt-6 sm:px-6">
+      <main className="pb-safe relative mx-auto max-w-2xl px-4 pt-6 sm:px-6">
+        <div className="absolute right-3 top-3 z-10"><NotificationBell className="bg-card/80 backdrop-blur" /></div>
         <Outlet />
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
