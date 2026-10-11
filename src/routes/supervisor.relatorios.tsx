@@ -52,7 +52,7 @@ function ReportsPage() {
 
   const build = () => buildReport(state, start, end);
   const exportPdf = async () => {
-    if (invalid) return toast.error("Informe um período válido.");
+    if (invalid) { toast.error("Informe um período válido."); return; }
     setBusy(true);
     try {
       await exportReportPdf(preview ?? build(), TITLE[kind], `${state.settings.churchName} · ${state.settings.ministryName}`);
