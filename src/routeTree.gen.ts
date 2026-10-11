@@ -21,7 +21,9 @@ import { Route as SupervisorHistoricoRouteImport } from './routes/supervisor.his
 import { Route as SupervisorNecessidadesRouteImport } from './routes/supervisor.necessidades'
 import { Route as SupervisorPeriodosRouteImport } from './routes/supervisor.periodos'
 import { Route as SupervisorPresencaRouteImport } from './routes/supervisor.presenca'
+import { Route as SupervisorRelatoriosRouteImport } from './routes/supervisor.relatorios'
 import { Route as SupervisorSorteioRouteImport } from './routes/supervisor.sorteio'
+import { Route as SupervisorSupervisoresRouteImport } from './routes/supervisor.supervisores'
 import { Route as SupervisorVoluntariosRouteImport } from './routes/supervisor.voluntarios'
 import { Route as VoluntarioIndexRouteImport } from './routes/voluntario.index'
 import { Route as VoluntarioDisponibilidadeRouteImport } from './routes/voluntario.disponibilidade'
@@ -91,9 +93,19 @@ const SupervisorPresencaRoute = SupervisorPresencaRouteImport.update({
   path: '/presenca',
   getParentRoute: () => SupervisorRoute,
 } as any)
+const SupervisorRelatoriosRoute = SupervisorRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => SupervisorRoute,
+} as any)
 const SupervisorSorteioRoute = SupervisorSorteioRouteImport.update({
   id: '/sorteio',
   path: '/sorteio',
+  getParentRoute: () => SupervisorRoute,
+} as any)
+const SupervisorSupervisoresRoute = SupervisorSupervisoresRouteImport.update({
+  id: '/supervisores',
+  path: '/supervisores',
   getParentRoute: () => SupervisorRoute,
 } as any)
 const SupervisorVoluntariosRoute = SupervisorVoluntariosRouteImport.update({
@@ -145,7 +157,9 @@ export interface FileRoutesByFullPath {
   '/supervisor/necessidades': typeof SupervisorNecessidadesRoute
   '/supervisor/periodos': typeof SupervisorPeriodosRoute
   '/supervisor/presenca': typeof SupervisorPresencaRoute
+  '/supervisor/relatorios': typeof SupervisorRelatoriosRoute
   '/supervisor/sorteio': typeof SupervisorSorteioRoute
+  '/supervisor/supervisores': typeof SupervisorSupervisoresRoute
   '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
   '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
   '/voluntario/escala': typeof VoluntarioEscalaRoute
@@ -165,7 +179,9 @@ export interface FileRoutesByTo {
   '/supervisor/necessidades': typeof SupervisorNecessidadesRoute
   '/supervisor/periodos': typeof SupervisorPeriodosRoute
   '/supervisor/presenca': typeof SupervisorPresencaRoute
+  '/supervisor/relatorios': typeof SupervisorRelatoriosRoute
   '/supervisor/sorteio': typeof SupervisorSorteioRoute
+  '/supervisor/supervisores': typeof SupervisorSupervisoresRoute
   '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
   '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
   '/voluntario/escala': typeof VoluntarioEscalaRoute
@@ -188,7 +204,9 @@ export interface FileRoutesById {
   '/supervisor/necessidades': typeof SupervisorNecessidadesRoute
   '/supervisor/periodos': typeof SupervisorPeriodosRoute
   '/supervisor/presenca': typeof SupervisorPresencaRoute
+  '/supervisor/relatorios': typeof SupervisorRelatoriosRoute
   '/supervisor/sorteio': typeof SupervisorSorteioRoute
+  '/supervisor/supervisores': typeof SupervisorSupervisoresRoute
   '/supervisor/voluntarios': typeof SupervisorVoluntariosRoute
   '/voluntario/disponibilidade': typeof VoluntarioDisponibilidadeRoute
   '/voluntario/escala': typeof VoluntarioEscalaRoute
@@ -212,7 +230,9 @@ export interface FileRouteTypes {
     | '/supervisor/necessidades'
     | '/supervisor/periodos'
     | '/supervisor/presenca'
+    | '/supervisor/relatorios'
     | '/supervisor/sorteio'
+    | '/supervisor/supervisores'
     | '/supervisor/voluntarios'
     | '/voluntario/disponibilidade'
     | '/voluntario/escala'
@@ -232,7 +252,9 @@ export interface FileRouteTypes {
     | '/supervisor/necessidades'
     | '/supervisor/periodos'
     | '/supervisor/presenca'
+    | '/supervisor/relatorios'
     | '/supervisor/sorteio'
+    | '/supervisor/supervisores'
     | '/supervisor/voluntarios'
     | '/voluntario/disponibilidade'
     | '/voluntario/escala'
@@ -254,7 +276,9 @@ export interface FileRouteTypes {
     | '/supervisor/necessidades'
     | '/supervisor/periodos'
     | '/supervisor/presenca'
+    | '/supervisor/relatorios'
     | '/supervisor/sorteio'
+    | '/supervisor/supervisores'
     | '/supervisor/voluntarios'
     | '/voluntario/disponibilidade'
     | '/voluntario/escala'
@@ -358,11 +382,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupervisorPresencaRouteImport
       parentRoute: typeof SupervisorRoute
     }
+    '/supervisor/relatorios': {
+      id: '/supervisor/relatorios'
+      path: '/relatorios'
+      fullPath: '/supervisor/relatorios'
+      preLoaderRoute: typeof SupervisorRelatoriosRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
     '/supervisor/sorteio': {
       id: '/supervisor/sorteio'
       path: '/sorteio'
       fullPath: '/supervisor/sorteio'
       preLoaderRoute: typeof SupervisorSorteioRouteImport
+      parentRoute: typeof SupervisorRoute
+    }
+    '/supervisor/supervisores': {
+      id: '/supervisor/supervisores'
+      path: '/supervisores'
+      fullPath: '/supervisor/supervisores'
+      preLoaderRoute: typeof SupervisorSupervisoresRouteImport
       parentRoute: typeof SupervisorRoute
     }
     '/supervisor/voluntarios': {
@@ -425,7 +463,9 @@ interface SupervisorRouteChildren {
   SupervisorNecessidadesRoute: typeof SupervisorNecessidadesRoute
   SupervisorPeriodosRoute: typeof SupervisorPeriodosRoute
   SupervisorPresencaRoute: typeof SupervisorPresencaRoute
+  SupervisorRelatoriosRoute: typeof SupervisorRelatoriosRoute
   SupervisorSorteioRoute: typeof SupervisorSorteioRoute
+  SupervisorSupervisoresRoute: typeof SupervisorSupervisoresRoute
   SupervisorVoluntariosRoute: typeof SupervisorVoluntariosRoute
   SupervisorIndexRoute: typeof SupervisorIndexRoute
 }
@@ -438,7 +478,9 @@ const SupervisorRouteChildren: SupervisorRouteChildren = {
   SupervisorNecessidadesRoute: SupervisorNecessidadesRoute,
   SupervisorPeriodosRoute: SupervisorPeriodosRoute,
   SupervisorPresencaRoute: SupervisorPresencaRoute,
+  SupervisorRelatoriosRoute: SupervisorRelatoriosRoute,
   SupervisorSorteioRoute: SupervisorSorteioRoute,
+  SupervisorSupervisoresRoute: SupervisorSupervisoresRoute,
   SupervisorVoluntariosRoute: SupervisorVoluntariosRoute,
   SupervisorIndexRoute: SupervisorIndexRoute,
 }

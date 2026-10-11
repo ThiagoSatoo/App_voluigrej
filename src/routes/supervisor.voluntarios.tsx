@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { fmtDMY, formatCpfInput, maskCpf } from "@/lib/format";
+import { fmtDMY, formatCpfInput } from "@/lib/format";
 
 export const Route = createFileRoute("/supervisor/voluntarios")({
   head: () => ({
@@ -78,7 +78,6 @@ function VolunteersPage() {
                 <VolunteerAvatar name={v.name} photoUrl={v.photoUrl} size="md" />
                 <div className="min-w-0">
                   <div className="truncate font-semibold">{v.name}</div>
-                  <div className="text-xs text-muted-foreground">CPF {maskCpf(v.cpf)}</div>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     <Pill tone={v.status === "ativo" ? "success" : "muted"}>{v.status === "ativo" ? "Ativo" : "Inativo"}</Pill>
                     <Pill tone="accent">{v.recent3m} recentes</Pill>
@@ -86,7 +85,7 @@ function VolunteersPage() {
                 </div>
               </button>
               <div className="flex flex-col items-end gap-2">
-                <Switch checked={v.status === "ativo"} onCheckedChange={() => { repo.toggleVolunteer(v.id); toast.success(v.status === "ativo" ? "Voluntário desativado" : "Voluntário ativado"); }} aria-label="Ativo" />
+                <Switch title="Ativar/desativar (os dados e o histórico são preservados)" checked={v.status === "ativo"} onCheckedChange={() => { repo.toggleVolunteer(v.id); toast.success(v.status === "ativo" ? "Voluntário desativado" : "Voluntário ativado"); }} aria-label="Ativo" />
                 <Button size="sm" variant="ghost" onClick={() => setEditing(v)}><Pencil /> Editar</Button>
               </div>
             </Panel>
@@ -117,7 +116,6 @@ function VolunteerProfile({ v, onEdit }: { v: Volunteer; onEdit: () => void }) {
       <div className="mt-6 flex flex-col items-center text-center">
         <VolunteerAvatar name={v.name} photoUrl={v.photoUrl} size="xl" />
         <h2 className="mt-3 font-display text-xl font-semibold">{v.name}</h2>
-        <p className="text-sm text-muted-foreground">CPF {maskCpf(v.cpf)}</p>
         <Pill tone={v.status === "ativo" ? "success" : "muted"} className="mt-2">{v.status === "ativo" ? "Ativo" : "Inativo"}</Pill>
       </div>
       <div className="mt-6 grid grid-cols-3 gap-2 text-center">
@@ -128,6 +126,7 @@ function VolunteerProfile({ v, onEdit }: { v: Volunteer; onEdit: () => void }) {
       <div className="mt-5 space-y-2 rounded-2xl bg-secondary p-4 text-sm">
         <Row label="Telefone" value={v.phone} />
         <Row label="E-mail" value={v.email} />
+        <Row label="Nascimento" value={v.birthDate ? fmtDMY(v.birthDate) : "—"} />
         <Row label="Última escala" value={v.lastScaleDate ? fmtDMY(v.lastScaleDate) : "—"} />
         <Row label="Desde" value={fmtDMY(v.joinedAt)} />
         <Row label="Acesso" value={v.mustChangePassword ? "Aguardando 1º acesso" : "Senha definida"} />
@@ -172,11 +171,12 @@ function VolunteerForm({ editing, onClose }: { editing: Volunteer | "new" | null
   const [cpf, setCpf] = useState(v?.cpf ?? "");
   const [phone, setPhone] = useState(v?.phone ?? "");
   const [email, setEmail] = useState(v?.email ?? "");
+  const [birthDate, setBirthDate] = useState(v?.birthDate ?? "");
   const [photoUrl, setPhotoUrl] = useState(v?.photoUrl);
   const [error, setError] = useState("");
 
   const save = () => {
-    const r = repo.saveVolunteer({ id: v?.id, name, cpf, phone, email, photoUrl });
+    const r = repo.saveVolunteer({ id: v?.id, name, cpf, phone, email, birthDate, photoUrl });
     if (!r.ok) return setError(r.error);
     toast.success(v ? "Dados atualizados" : "Voluntário cadastrado. Senha inicial: 123456");
     onClose();
@@ -200,7 +200,8 @@ function VolunteerForm({ editing, onClose }: { editing: Volunteer | "new" | null
             </div>
           </div>
           <F label="Nome completo"><Input value={name} onChange={(e) => setName(e.target.value)} className="h-11 rounded-xl" /></F>
-          <F label="CPF (login)"><Input inputMode="numeric" value={formatCpfInput(cpf)} onChange={(e) => setCpf(e.target.value)} className="h-11 rounded-xl" /></F>
+          <F label="Data de nascimento *"><Input type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="h-11 rounded-xl" /></F>
+          <F label="CPF (login — visível somente aqui)"><Input inputMode="numeric" value={formatCpfInput(cpf)} onChange={(e) => setCpf(e.target.value)} className="h-11 rounded-xl" /></F>
           <div className="grid gap-4 sm:grid-cols-2">
             <F label="Telefone"><Input value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11 rounded-xl" /></F>
             <F label="E-mail"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl" /></F>
