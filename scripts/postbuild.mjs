@@ -11,12 +11,10 @@ const hashes = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/scrip
   (m) => `'sha256-${createHash("sha256").update(m[1], "utf8").digest("base64")}'`,
 );
 
-let supabase = "https://*.supabase.co wss://*.supabase.co";
-const url = process.env.VITE_SUPABASE_URL;
-if (url) {
-  const host = new URL(url).host;
-  supabase = `https://${host} wss://${host}`;
-}
+// Mesmo padrão de src/lib/supabase.ts: libera conexões só para o projeto do app.
+const url = process.env.VITE_SUPABASE_URL || "https://fkjbtxsjqdgywfgccqzo.supabase.co";
+const host = new URL(url).host;
+const supabase = `https://${host} wss://${host}`;
 
 const csp = [
   "default-src 'self'",

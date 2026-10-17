@@ -28,15 +28,16 @@ end $$;
 -- Quem recebe avisos de uma vaga: o responsável ativo; sem ele, toda a equipe (admin + supervisores).
 create or replace function public._opp_recipients(p_opp uuid)
 returns setof uuid language sql stable security definer set search_path = '' as $$
-  select coalesce(
-    (select array[p.id] from public.opportunities o join public.profiles p on p.id = o.responsavel_id and p.status = 'ativo' where o.id = p_opp),
-    (select array_agg(p.id) from public.profiles p where p.role in ('admin', 'supervisor') and p.status = 'ativo')
-  )[i]
-  from generate_series(1, 1000) i
-  where coalesce(
-    (select array[p.id] from public.opportunities o join public.profiles p on p.id = o.responsavel_id and p.status = 'ativo' where o.id = p_opp),
-    (select array_agg(p.id) from public.profiles p where p.role in ('admin', 'supervisor') and p.status = 'ativo')
-  )[i] is not null
+  select p.id from public.opportunities o
+  join public.profiles p on p.id = o.responsavel_id and p.status = 'ativo'
+  where o.id = p_opp
+  union all
+  select p.id from public.profiles p
+  where p.role in ('admin', 'supervisor') and p.status = 'ativo'
+    and not exists (
+      select 1 from public.opportunities o join public.profiles r on r.id = o.responsavel_id and r.status = 'ativo'
+      where o.id = p_opp
+    )
 $$;
 
 create or replace function public._fmt_br(d date) returns text language sql immutable set search_path = '' as $$
@@ -298,34 +299,34 @@ returns void language plpgsql security definer set search_path = '' as $$
 declare
   v_now timestamp := now() at time zone 'America/Sao_Paulo';
   v_today date := v_now::date;
-  o record; v record; st record; x record; r uuid; c int; t timestamp; h int; ty public.notif_type;
+  opp record; vol record; st record; x record; r uuid; c int; t timestamp; h int; ty public.notif_type;
 begin
   -- Vaga abaixo do mínimo faltando menos de 24h
-  for o in select * from public.opportunities where date between v_today and v_today + 1 loop
-    t := o.date + o.start_time::time;
-    c := public._active_count(o.id);
-    if c < o.min and v_now >= t - interval '24 hours' and v_now < t then
-      for r in select public._opp_recipients(o.id) loop
+  for opp in select * from public.opportunities where date between v_today and v_today + 1 loop
+    t := opp.date + opp.start_time::time;
+    c := public._active_count(opp.id);
+    if c < opp.min and v_now >= t - interval '24 hours' and v_now < t then
+      for r in select public._opp_recipients(opp.id) loop
         perform public._notify(r, 'abaixo_minimo_24h',
-          'Faltam menos de 24h para ' || public._fmt_br(o.date) || ' às ' || o.start_time || ' e a necessidade está abaixo do mínimo (' || c || '/' || o.min || ').',
-          o.id, '24h:' || o.id || ':' || r);
+          'Faltam menos de 24h para ' || public._fmt_br(opp.date) || ' às ' || opp.start_time || ' e a necessidade está abaixo do mínimo (' || c || '/' || opp.min || ').',
+          opp.id, '24h:' || opp.id || ':' || r);
       end loop;
     end if;
   end loop;
 
   -- Aniversários (avisa a equipe)
-  for v in
+  for vol in
     select p.id, p.name, d.birth_date from public.profiles p join public.volunteer_details d on d.id = p.id
     where p.status = 'ativo' and d.birth_date is not null
   loop
     for st in select id from public.profiles where role in ('admin', 'supervisor') and status = 'ativo' loop
-      if to_char(v.birth_date, 'MM-DD') = to_char(v_today, 'MM-DD') then
-        perform public._notify(st.id, 'aniversario_dia', 'Hoje é aniversário de ' || v.name || '! 🎉', null,
-          'bday:' || v.id || ':' || extract(year from v_today) || ':' || st.id);
+      if to_char(vol.birth_date, 'MM-DD') = to_char(v_today, 'MM-DD') then
+        perform public._notify(st.id, 'aniversario_dia', 'Hoje é aniversário de ' || vol.name || '! 🎉', null,
+          'bday:' || vol.id || ':' || extract(year from v_today) || ':' || st.id);
       end if;
-      if to_char(v.birth_date, 'MM-DD') = to_char(v_today + 7, 'MM-DD') then
-        perform public._notify(st.id, 'aniversario_7d', 'Daqui a 7 dias (' || to_char(v_today + 7, 'DD/MM') || ') é aniversário de ' || v.name || '.', null,
-          'bday7:' || v.id || ':' || extract(year from v_today) || ':' || st.id);
+      if to_char(vol.birth_date, 'MM-DD') = to_char(v_today + 7, 'MM-DD') then
+        perform public._notify(st.id, 'aniversario_7d', 'Daqui a 7 dias (' || to_char(v_today + 7, 'DD/MM') || ') é aniversário de ' || vol.name || '.', null,
+          'bday7:' || vol.id || ':' || extract(year from v_today) || ':' || st.id);
       end if;
     end loop;
   end loop;
@@ -368,7 +369,7 @@ revoke execute on function public._threshold_notify(uuid, int, int, text, text) 
 revoke execute on function public._active_count(uuid) from authenticated;
 
 create extension if not exists pg_cron;
-select cron.schedule('avisos-agendados', '*/10 * * * *', $$select public.run_scheduled_notifications()$$);
+select cron.schedule('avisos-agendados', '*/10 * * * *', $cron$select public.run_scheduled_notifications()$cron$);
 
 -- ---------------------------------------------------------------------
 -- Fotos de perfil (bucket privado, 2 MB, só imagens)

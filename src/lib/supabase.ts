@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env["VITE_SUPABASE_URL"] as string | undefined;
-const key = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined;
+// Valores públicos do projeto (seguros no navegador). Podem ser trocados por variáveis de ambiente.
+const DEFAULT_URL = "https://fkjbtxsjqdgywfgccqzo.supabase.co";
+const DEFAULT_KEY = "sb_publishable_FqnNB_o1Hj6_ltrVhnDeDg_-7KfxM4d";
+const url = (import.meta.env["VITE_SUPABASE_URL"] as string | undefined) || DEFAULT_URL;
+const key = (import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined) || DEFAULT_KEY;
 
 export const supabaseConfigured = Boolean(url && key);
 
