@@ -1,4 +1,3 @@
-import { DEMO_TODAY } from "@/lib/format";
 import type { AppNotification, AppState, NotifType } from "./types";
 
 export const NOTIF_LABEL: Record<NotifType, string> = {
@@ -17,8 +16,8 @@ export const NOTIF_LABEL: Record<NotifType, string> = {
 };
 
 export const NOTIF_DESCRIPTION: Record<NotifType, string> = {
-  nova_candidatura: "Avisar o supervisor responsável quando alguém se candidatar.",
-  candidatura_cancelada: "Avisar o supervisor responsável quando alguém cancelar.",
+  nova_candidatura: "Avisar o responsável quando alguém se candidatar.",
+  candidatura_cancelada: "Avisar o responsável quando alguém cancelar.",
   minimo_atingido: "Quando a necessidade alcançar a quantidade mínima.",
   escala_completa: "Quando a necessidade alcançar a quantidade máxima.",
   abaixo_minimo_24h: "Alerta se faltar 24h para o início e ainda estiver abaixo do mínimo.",
@@ -50,15 +49,6 @@ export const STAFF_CATEGORIES: NotifType[] = [
 ];
 
 export const prefEnabled = (s: AppState, userId: string, type: NotifType) => s.notifPrefs[userId]?.[type] !== false;
-
-/** Simulated clock: demo date + real time of day. */
-export function demoNow(real = new Date()) {
-  const hh = String(real.getHours()).padStart(2, "0");
-  const mm = String(real.getMinutes()).padStart(2, "0");
-  return new Date(`${DEMO_TODAY}T${hh}:${mm}:00`);
-}
-
-export const startOf = (date: string, time: string) => new Date(`${date}T${time}:00`);
 
 /** Current user id for notifications (staff id or volunteer id). */
 export const currentUserId = (s: AppState) => s.session?.userId ?? "";

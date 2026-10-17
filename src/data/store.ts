@@ -1,19 +1,35 @@
 import { useSyncExternalStore } from "react";
-import { createSeed, seedBirthDate } from "./mock-data";
-import { migrateScheduleTimes } from "./migrate";
+import { supabase } from "@/lib/supabase";
+import { loadState } from "./loader";
 import type { AppState } from "./types";
 
 /**
- * Local mock persistence (localStorage). Only the repository writes here.
- * When a real database is connected, replace repository.ts internals —
- * screens keep using the same hooks and actions.
+ * Cache em memória dos dados que o usuário logado pode ver.
+ * Nada de dado pessoal fica salvo no aparelho: a fonte da verdade é o Supabase
+ * (com RLS), e o cache é recarregado após cada alteração.
  */
-const KEY = "escala-voluntarios-v1";
+export const emptyState = (): AppState => ({
+  volunteers: [],
+  periods: [],
+  availabilities: [],
+  draws: [],
+  attendance: [],
+  substitutions: [],
+  session: null,
+  settings: { churchName: "", ministryName: "" },
+  opportunities: [],
+  dayAvailability: [],
+  applications: [],
+  notifications: [],
+  supervisors: [],
+  notifPrefs: {},
+  oppCounts: {},
+});
 
-let state: AppState = createSeed();
+let state: AppState = emptyState();
 let hydrated = false;
 let snapshot = { state, hydrated };
-const serverSnapshot = { state: createSeed(), hydrated: false };
+const serverSnapshot = { state: emptyState(), hydrated: false };
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -27,43 +43,61 @@ export function getState() {
 
 export function setState(fn: (s: AppState) => AppState) {
   state = fn(state);
-  if (typeof window !== "undefined") {
+  emit();
+}
+
+let inflight: Promise<void> | null = null;
+let queued = false;
+
+/** Recarrega tudo do servidor (pedidos simultâneos são agrupados). */
+export async function refresh(): Promise<void> {
+  if (inflight) {
+    queued = true;
+    return inflight;
+  }
+  inflight = (async () => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(state));
-    } catch {
-      /* quota (e.g. large photos) — keep in memory */
+      do {
+        queued = false;
+        state = await loadState();
+      } while (queued);
+    } catch (e) {
+      console.error("Falha ao carregar dados", e);
+    } finally {
+      hydrated = true;
+      inflight = null;
+      emit();
     }
-  }
-  emit();
+  })();
+  return inflight;
 }
 
+let started = false;
+
+/** Liga o app à sessão do Supabase. Chamado uma vez na raiz. */
 export function hydrateStore() {
-  if (hydrated) return;
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const saved = migrateScheduleTimes({ ...createSeed(), ...JSON.parse(raw) });
-      // Older local data: add birth dates, notification type/recipient and staff session ids.
-      state = {
-        ...saved,
-        volunteers: saved.volunteers.map((v) => (v.birthDate ? v : { ...v, birthDate: seedBirthDate(v.id) })),
-        notifications: saved.notifications.map((n) => ({ ...n, type: n.type ?? "candidatura_cancelada", recipientId: n.recipientId ?? "s1" })),
-        session: saved.session?.role === "supervisor" && saved.session.userId === "supervisor" ? { ...saved.session, userId: "s1" } : saved.session,
-      };
-      localStorage.setItem(KEY, JSON.stringify(state));
+  if (started) return;
+  started = true;
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT") {
+      state = emptyState();
+      hydrated = true;
+      emit();
+    } else if (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
+      // Evita chamar o Supabase dentro do callback (recomendação da biblioteca).
+      setTimeout(() => void refresh(), 0);
     }
-  } catch {
-    /* ignore */
+  });
+  // Atualiza ao voltar para o app e periodicamente (notificações novas).
+  if (typeof window !== "undefined") {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && state.session) void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    setInterval(() => {
+      if (document.visibilityState === "visible" && state.session) void refresh();
+    }, 120_000);
   }
-  hydrated = true;
-  emit();
-}
-
-export function resetStore() {
-  const session = state.session;
-  state = { ...createSeed(), session };
-  localStorage.removeItem(KEY);
-  setState((s) => s);
 }
 
 export function useStore() {

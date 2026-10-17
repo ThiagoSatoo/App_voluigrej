@@ -1,8 +1,9 @@
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
-import { CalendarCheck, CalendarDays, HandHeart, History, Home, UserRound } from "lucide-react";
+import { CalendarCheck, CalendarDays, ClipboardCheck, HandHeart, History, Home, UserRound } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useRequireRole } from "@/hooks/use-session";
 import { LoadingScreen } from "@/components/app/common";
-import { NotificationBell, useScheduledChecks } from "@/components/app/NotificationBell";
+import { NotificationBell } from "@/components/app/NotificationBell";
 
 export const Route = createFileRoute("/voluntario")({
   component: VolunteerLayout,
@@ -13,13 +14,14 @@ const items = [
   { to: "/voluntario/disponibilidade", label: "Disponível", icon: CalendarCheck },
   { to: "/voluntario/escala", label: "Escala", icon: CalendarDays },
   { to: "/voluntario/vagas", label: "Vagas", icon: HandHeart },
+  { to: "/voluntario/turnos", label: "Turnos", icon: ClipboardCheck, responsavelOnly: true },
   { to: "/voluntario/historico", label: "Histórico", icon: History },
   { to: "/voluntario/perfil", label: "Perfil", icon: UserRound },
 ] as const;
 
 function VolunteerLayout() {
-  const { ready } = useRequireRole("voluntario");
-  useScheduledChecks();
+  const { ready, isResponsavel } = useRequireRole("voluntario");
+  const visible = items.filter((it) => !("responsavelOnly" in it) || isResponsavel);
   if (!ready) return <LoadingScreen />;
   return (
     <div className="min-h-screen">
@@ -28,8 +30,8 @@ function VolunteerLayout() {
         <Outlet />
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        <div className="mx-auto grid max-w-2xl grid-cols-6">
-          {items.map((it) => (
+        <div className={cn("mx-auto grid max-w-2xl", visible.length === 7 ? "grid-cols-7" : "grid-cols-6")}>
+          {visible.map((it) => (
             <Link
               key={it.to}
               to={it.to}

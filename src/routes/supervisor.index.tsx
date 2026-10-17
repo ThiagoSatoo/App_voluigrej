@@ -35,7 +35,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Olá, ${state.supervisors.find((x) => x.id === state.session?.userId)?.name ?? state.settings.supervisorName}`} subtitle={`${state.settings.ministryName} · ${state.settings.churchName}`} />
+      <PageHeader title={`Olá, ${state.supervisors.find((x) => x.id === state.session?.userId)?.name ?? state.session?.name ?? ""}`} subtitle={`${state.settings.ministryName} · ${state.settings.churchName}`} />
       <SupervisorAlerts />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

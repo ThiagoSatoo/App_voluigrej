@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Camera } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const sizes = {
@@ -51,35 +52,47 @@ export function VolunteerAvatar({
   );
 }
 
-/** Opens the device picker (camera/gallery on mobile) and returns a data URL. */
-export function PhotoPicker({ onPick, children }: { onPick: (dataUrl: string) => void; children: (open: () => void) => React.ReactNode }) {
+/**
+ * Abre a câmera/galeria e devolve a foto reduzida (máx. 512 px, JPEG).
+ * Redesenhar no canvas também remove metadados como a localização GPS.
+ */
+export function PhotoPicker({ onPick, children }: { onPick: (photo: Blob, previewUrl: string) => void; children: (open: () => void) => React.ReactNode }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <>
       <input
         ref={ref}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (!f) return;
-          const img = new Image();
-          const reader = new FileReader();
-          reader.onload = () => {
-            img.onload = () => {
-              // downscale for local storage
-              const c = document.createElement("canvas");
-              const s = 320 / Math.max(img.width, img.height);
-              c.width = img.width * Math.min(1, s);
-              c.height = img.height * Math.min(1, s);
-              c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-              onPick(c.toDataURL("image/jpeg", 0.85));
-            };
-            img.src = reader.result as string;
-          };
-          reader.readAsDataURL(f);
           e.target.value = "";
+          if (!f) return;
+          if (!/^image\/(jpeg|png|webp)$/.test(f.type)) {
+            toast.error("Escolha uma imagem JPG, PNG ou WEBP.");
+            return;
+          }
+          if (f.size > 15 * 1024 * 1024) {
+            toast.error("Imagem muito grande (máx. 15 MB).");
+            return;
+          }
+          const url = URL.createObjectURL(f);
+          const img = new Image();
+          img.onload = () => {
+            const c = document.createElement("canvas");
+            const s = Math.min(1, 512 / Math.max(img.width, img.height));
+            c.width = Math.round(img.width * s);
+            c.height = Math.round(img.height * s);
+            c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+            URL.revokeObjectURL(url);
+            c.toBlob((blob) => blob && onPick(blob, c.toDataURL("image/jpeg", 0.85)), "image/jpeg", 0.85);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            toast.error("Não foi possível ler esta imagem.");
+          };
+          img.src = url;
         }}
       />
       {children(() => ref.current?.click())}

@@ -1,4 +1,4 @@
-import { DEMO_TODAY } from "@/lib/format";
+import { today } from "@/lib/format";
 import type { AppState, Need, Period, Volunteer } from "./types";
 
 export const sortNeeds = (needs: Need[]) =>
@@ -55,7 +55,7 @@ export function assignmentsOf(s: AppState, volunteerId: string): Assignment[] {
 }
 
 export const nextAssignment = (s: AppState, volunteerId: string) =>
-  assignmentsOf(s, volunteerId).find((a) => a.need.date >= DEMO_TODAY);
+  assignmentsOf(s, volunteerId).find((a) => a.need.date >= today());
 
 /** Next scheduled need across all published scales. */
 export function nextScheduledNeed(s: AppState) {
@@ -65,7 +65,7 @@ export function nextScheduledNeed(s: AppState) {
       const period = s.periods.find((p) => p.id === d.periodId)!;
       return d.slots.map((slot) => ({ period, slot, need: period.needs.find((n) => n.id === slot.needId)! }));
     })
-    .filter((x) => x.need && x.need.date >= DEMO_TODAY)
+    .filter((x) => x.need && x.need.date >= today())
     .sort((a, b) => a.need.date.localeCompare(b.need.date));
   return all[0];
 }
@@ -98,3 +98,15 @@ export function fillState(count: number, o: Pick<Opportunity, "min" | "max">): {
   if (count >= o.min) return { tone: "success", label: "Mínimo atingido" };
   return { tone: "destructive", label: "Abaixo do mínimo" };
 }
+
+/** Quantidade de candidaturas ativas (o servidor informa a contagem mesmo quando o usuário não vê os nomes). */
+export const activeCount = (s: AppState, opportunityId: string) => s.oppCounts[opportunityId] ?? activeApplicants(s, opportunityId).length;
+
+/** Pessoas que podem ser responsáveis por um turno ou vaga. */
+export const responsavelOptions = (s: AppState) => [
+  ...s.supervisors.filter((x) => x.status === "ativo").map((x) => ({ id: x.id, name: x.name, kind: x.role === "admin" ? "Administrador" : "Supervisor" })),
+  ...s.volunteers.filter((v) => v.status === "ativo" && v.role === "responsavel").map((v) => ({ id: v.id, name: v.name, kind: "Responsável" })),
+];
+
+export const personName = (s: AppState, id?: string) =>
+  id ? (s.volunteers.find((v) => v.id === id)?.name ?? s.supervisors.find((x) => x.id === id)?.name) : undefined;

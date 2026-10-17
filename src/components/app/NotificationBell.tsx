@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { act } from "@/lib/act";
 import { NOTIF_LABEL, notificationsOf } from "@/data/notifications";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -9,15 +10,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState, Pill } from "@/components/app/common";
 import { fmtDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-/** Runs the simulated time-based checks while the app is open (no real push notifications). */
-export function useScheduledChecks() {
-  useEffect(() => {
-    repo.runScheduledChecks();
-    const t = setInterval(() => repo.runScheduledChecks(), 60_000);
-    return () => clearInterval(t);
-  }, []);
-}
 
 export function NotificationBell({ className }: { className?: string }) {
   const { state } = useStore();
@@ -51,12 +43,12 @@ export function NotificationBell({ className }: { className?: string }) {
               </TabsList>
             </Tabs>
             {unread.length > 0 && (
-              <Button size="sm" variant="ghost" onClick={() => repo.markAllNotificationsRead(userId)}><CheckCheck /> Ler todas</Button>
+              <Button size="sm" variant="ghost" onClick={() => act(repo.markAllNotificationsRead(userId))}><CheckCheck /> Ler todas</Button>
             )}
           </div>
           <div className="mt-4 space-y-2">
             {list.length === 0 ? (
-              <EmptyState icon={Bell} title={tab === "nao_lidas" ? "Tudo em dia" : "Nenhuma notificação"} text="Novos avisos aparecem aqui enquanto o app está aberto." />
+              <EmptyState icon={Bell} title={tab === "nao_lidas" ? "Tudo em dia" : "Nenhuma notificação"} text="Novos avisos aparecem aqui." />
             ) : (
               list.map((n) => (
                 <div key={n.id} className={cn("rounded-2xl border p-3.5 text-sm", !n.read && "border-primary/30 bg-primary-soft/40")}>
@@ -68,14 +60,14 @@ export function NotificationBell({ className }: { className?: string }) {
                   <div className="mt-1.5 flex items-center justify-between gap-2">
                     <span className="text-xs text-muted-foreground">{fmtDateTime(n.createdAt)}</span>
                     {!n.read && (
-                      <Button size="sm" variant="ghost" onClick={() => repo.markNotificationRead(n.id)}><Check /> Marcar como lida</Button>
+                      <Button size="sm" variant="ghost" onClick={() => act(repo.markNotificationRead(n.id))}><Check /> Marcar como lida</Button>
                     )}
                   </div>
                 </div>
               ))
             )}
           </div>
-          <p className="mt-6 text-xs text-muted-foreground">Nesta versão as notificações são simuladas e aparecem somente com o aplicativo aberto.</p>
+          <p className="mt-6 text-xs text-muted-foreground">Os avisos são gerados automaticamente e atualizados sempre que você abre o app.</p>
         </SheetContent>
       </Sheet>
     </>

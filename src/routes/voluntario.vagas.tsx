@@ -6,11 +6,12 @@ import { CalendarSearch, Check, ChevronLeft, ChevronRight, Clock, HandHeart, X }
 import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
-import { activeApplicants, availableDays, fillState, myApplication, sortOpportunities } from "@/data/selectors";
+import { act } from "@/lib/act";
+import { activeCount, availableDays, fillState, myApplication, sortOpportunities } from "@/data/selectors";
 import { DateBadge, EmptyState, Notice, PageHeader, Panel, Pill } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DEMO_TODAY, fmtDM, fmtLong, toDate } from "@/lib/format";
+import { today, fmtDM, fmtLong, toDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/voluntario/vagas")({
@@ -49,7 +50,7 @@ function WeekAvailability() {
   const { state } = useStore();
   const meId = state.session!.userId;
   const [offset, setOffset] = useState(0);
-  const weekStart = addDays(startOfWeek(toDate(DEMO_TODAY), { weekStartsOn: 1 }), offset * 7);
+  const weekStart = addDays(startOfWeek(toDate(today()), { weekStartsOn: 1 }), offset * 7);
   const days = Array.from({ length: 7 }, (_, i) => iso(addDays(weekStart, i)));
   const saved = availableDays(state, meId);
   const [sel, setSel] = useState<string[]>([]);
@@ -88,7 +89,7 @@ function WeekAvailability() {
           );
         })}
       </div>
-      <Button size="lg" className="w-full" disabled={!dirty} onClick={() => { repo.setWeekAvailability(meId, days, sel); toast.success("Disponibilidade da semana salva"); }}>
+      <Button size="lg" className="w-full" disabled={!dirty} onClick={() => { act(repo.setWeekAvailability(meId, days, sel), "Disponibilidade da semana salva"); }}>
         Salvar semana
       </Button>
     </div>
@@ -99,7 +100,7 @@ function AvailableScales() {
   const { state } = useStore();
   const meId = state.session!.userId;
   const days = availableDays(state, meId);
-  const list = sortOpportunities(state.opportunities).filter((o) => o.date >= DEMO_TODAY && days.has(o.date));
+  const list = sortOpportunities(state.opportunities).filter((o) => o.date >= today() && days.has(o.date));
 
   if (days.size === 0)
     return <EmptyState icon={CalendarSearch} title="Marque seus dias primeiro" text="Vá em “Minha semana” e marque os dias em que você está disponível." />;
@@ -109,7 +110,7 @@ function AvailableScales() {
   return (
     <div className="space-y-3">
       {list.map((o) => {
-        const count = activeApplicants(state, o.id).length;
+        const count = activeCount(state, o.id);
         const fill = fillState(count, o);
         const mine = myApplication(state, o.id, meId);
         const open = o.status === "aberta";
@@ -136,11 +137,11 @@ function AvailableScales() {
               {open && applied && (
                 <div className="flex items-center gap-2">
                   <div className="flex h-11 flex-1 items-center justify-center rounded-xl bg-success-soft font-semibold text-success">✓ Candidatado</div>
-                  <Button variant="outline" className="h-11" onClick={() => { const r = repo.cancelApplication(o.id, meId); r.ok ? toast("Candidatura cancelada") : toast.error(r.error); }}>Cancelar</Button>
+                  <Button variant="outline" className="h-11" onClick={() => { act(repo.cancelApplication(o.id, meId), "Candidatura cancelada"); }}>Cancelar</Button>
                 </div>
               )}
               {open && !applied && (
-                <Button size="lg" className="w-full" onClick={() => { const r = repo.applyTo(o.id, meId); r.ok ? toast.success("Candidatura enviada!") : toast.error(r.error); }}>
+                <Button size="lg" className="w-full" onClick={() => { act(repo.applyTo(o.id, meId), "Candidatura enviada!"); }}>
                   Quero participar
                 </Button>
               )}

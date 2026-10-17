@@ -17,7 +17,7 @@ import {
   FileText,
   ShieldCheck,
 } from "lucide-react";
-import { NotificationBell, useScheduledChecks } from "@/components/app/NotificationBell";
+import { NotificationBell } from "@/components/app/NotificationBell";
 import { useRequireRole } from "@/hooks/use-session";
 import { LoadingScreen } from "@/components/app/common";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -72,8 +72,8 @@ function NavList({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin: bo
       </nav>
       <div className="p-3">
         <button
-          onClick={() => {
-            repo.logout();
+          onClick={async () => {
+            await repo.logout();
             navigate({ to: "/" });
           }}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium opacity-80 hover:bg-sidebar-accent hover:opacity-100"
@@ -88,7 +88,6 @@ function NavList({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin: bo
 function SupervisorLayout() {
   const { ready, isAdmin } = useRequireRole("supervisor");
   const [open, setOpen] = useState(false);
-  useScheduledChecks();
   if (!ready) return <LoadingScreen />;
   return (
     <div className="min-h-screen lg:flex">

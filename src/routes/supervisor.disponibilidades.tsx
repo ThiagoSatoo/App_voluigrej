@@ -5,6 +5,7 @@ import { CalendarX2, ChevronDown, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { act } from "@/lib/act";
 import { activeVolunteers, availabilityOf, availabilityPeriod, byPriority, hasResponded, sortNeeds } from "@/data/selectors";
 import { ConfirmDialog, DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PersonRow } from "@/components/app/VolunteerAvatar";
@@ -119,7 +120,7 @@ function AvailabilityOverview() {
         title="Encerrar disponibilidade?"
         description={`${pending.length} voluntário(s) ainda não responderam. Após encerrar, as respostas não poderão mais ser alteradas.`}
         confirmLabel="Encerrar"
-        onConfirm={() => { repo.setPeriodStatus(period.id, "encerrada"); toast.success("Disponibilidade encerrada"); }}
+        onConfirm={() => { act(repo.setPeriodStatus(period.id, "encerrada"), "Disponibilidade encerrada"); }}
       />
     </div>
   );

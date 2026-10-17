@@ -26,31 +26,37 @@ export const Route = createFileRoute("/trocar-senha")({
 function ChangePassword() {
   const { state, hydrated } = useStore();
   const navigate = useNavigate();
-  const me = state.session?.role === "voluntario" ? state.volunteers.find((v) => v.id === state.session!.userId) : undefined;
+  const session = state.session;
   const [cur, setCur] = useState("");
   const [next, setNext] = useState("");
   const [conf, setConf] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (hydrated && !me) navigate({ to: "/" });
-  }, [hydrated, me, navigate]);
-  if (!me) return <LoadingScreen />;
+    if (hydrated && !session) navigate({ to: "/" });
+  }, [hydrated, session, navigate]);
+  if (!session) return <LoadingScreen />;
+  const isStaff = session.role === "admin" || session.role === "supervisor";
+  const home = isStaff ? "/supervisor" : "/voluntario";
+  const back = isStaff ? "/supervisor/configuracoes" : "/voluntario/perfil";
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (next !== conf) return setError("A confirmação não confere com a nova senha.");
-    const r = repo.changePassword(me.id, cur, next);
+    setBusy(true);
+    const r = await repo.changePassword(cur, next);
+    setBusy(false);
     if (!r.ok) return setError(r.error);
     toast.success("Senha alterada com sucesso!");
-    navigate({ to: "/voluntario" });
+    navigate({ to: home });
   };
 
   return (
     <div className="min-h-screen bg-gradient-warm px-5 py-8">
       <div className="mx-auto max-w-md">
-        {!me.mustChangePassword && (
-          <Button variant="ghost" size="sm" className="mb-4" onClick={() => navigate({ to: "/voluntario/perfil" })}>
+        {!session.mustChangePassword && (
+          <Button variant="ghost" size="sm" className="mb-4" onClick={() => navigate({ to: back })}>
             <ArrowLeft /> Voltar
           </Button>
         )}
@@ -58,30 +64,33 @@ function ChangePassword() {
           <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-primary-soft text-primary">
             <LockKeyhole className="h-6 w-6" />
           </div>
-          <h1 className="font-display text-2xl font-semibold">{me.mustChangePassword ? "Crie sua nova senha" : "Alterar senha"}</h1>
+          <h1 className="font-display text-2xl font-semibold">{session.mustChangePassword ? "Crie sua nova senha" : "Alterar senha"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {me.mustChangePassword
-              ? "Este é seu primeiro acesso. Por segurança, defina uma senha pessoal para continuar."
+            {session.mustChangePassword
+              ? "Você entrou com uma senha provisória. Por segurança, defina uma senha pessoal para continuar."
               : "Informe sua senha atual e escolha uma nova."}
           </p>
           <form onSubmit={submit} className="mt-5 space-y-4">
-            <Field id="cur" label={me.mustChangePassword ? "Senha inicial" : "Senha atual"} value={cur} onChange={setCur} />
-            <Field id="new" label="Nova senha (mín. 6 caracteres)" value={next} onChange={setNext} />
-            <Field id="conf" label="Confirmar nova senha" value={conf} onChange={setConf} />
-            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-            <Button type="submit" size="lg" className="w-full">Salvar nova senha</Button>
+            <Field id="cur" auto="current-password" label={session.mustChangePassword ? "Senha provisória" : "Senha atual"} value={cur} onChange={setCur} />
+            <Field id="new" auto="new-password" label="Nova senha (mín. 8 caracteres, com letras e números)" value={next} onChange={setNext} />
+            <Field id="conf" auto="new-password" label="Confirmar nova senha" value={conf} onChange={setConf} />
+            {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
+            <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Salvando…" : "Salvar nova senha"}</Button>
           </form>
+          {session.mustChangePassword && (
+            <Button variant="ghost" size="sm" className="mt-3 w-full text-muted-foreground" onClick={() => repo.logout()}>Sair</Button>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function Field({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (v: string) => void }) {
+function Field({ id, label, value, onChange, auto }: { id: string; label: string; value: string; onChange: (v: string) => void; auto: string }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type="password" className="h-12 rounded-xl" value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input id={id} type="password" autoComplete={auto} className="h-12 rounded-xl" value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { repo } from "@/data/repository";
 import { useStore } from "@/data/store";
 import { formatCpfInput } from "@/lib/format";
+import { supabaseConfigured } from "@/lib/supabase";
+import { InstallAppCard } from "@/components/app/InstallAppCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,24 +33,24 @@ function Login() {
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!hydrated || !state.session) return;
-    navigate({ to: state.session.role !== "voluntario" ? "/supervisor" : "/voluntario" });
+    if (state.session.mustChangePassword) navigate({ to: "/trocar-senha" });
+    else navigate({ to: state.session.role === "admin" || state.session.role === "supervisor" ? "/supervisor" : "/voluntario" });
   }, [hydrated, state.session, navigate]);
 
-  const loginVol = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent, kind: "vol" | "sup") => {
     e.preventDefault();
-    const r = repo.loginVolunteer(cpf, pass);
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    const r = kind === "vol" ? await repo.loginVolunteer(cpf, pass) : await repo.loginStaff(user, pass);
+    setBusy(false);
+    setPass("");
     if (!r.ok) return setError(r.error);
     toast.success("Bem-vindo(a)!");
-    navigate({ to: r.mustChange ? "/trocar-senha" : "/voluntario" });
-  };
-  const loginSup = (e: React.FormEvent) => {
-    e.preventDefault();
-    const r = repo.loginSupervisor(user, pass);
-    if (!r.ok) return setError(r.error);
-    navigate({ to: "/supervisor" });
   };
 
   return (
@@ -59,49 +61,52 @@ function Login() {
             <HeartHandshake className="h-8 w-8" />
           </div>
           <h1 className="font-display text-3xl font-semibold">Escala de Voluntários</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{state.settings.churchName}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Entre com o acesso fornecido pela coordenação.</p>
         </div>
+
+        {!supabaseConfigured && (
+          <p className="mb-4 rounded-2xl bg-destructive-soft p-4 text-sm text-destructive">
+            O app ainda não está configurado: defina VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.
+          </p>
+        )}
 
         <div className="rounded-3xl border bg-card p-5 shadow-soft">
           <Tabs defaultValue="vol" onValueChange={() => { setError(""); setPass(""); }}>
             <TabsList className="mb-5 grid h-11 w-full grid-cols-2 rounded-xl">
               <TabsTrigger value="vol" className="rounded-lg"><User className="mr-1.5 h-4 w-4" />Voluntário</TabsTrigger>
-              <TabsTrigger value="sup" className="rounded-lg"><ShieldCheck className="mr-1.5 h-4 w-4" />Supervisor</TabsTrigger>
+              <TabsTrigger value="sup" className="rounded-lg"><ShieldCheck className="mr-1.5 h-4 w-4" />Coordenação</TabsTrigger>
             </TabsList>
             <TabsContent value="vol">
-              <form onSubmit={loginVol} className="space-y-4">
+              <form onSubmit={(e) => submit(e, "vol")} className="space-y-4" autoComplete="on">
                 <div className="space-y-1.5">
                   <Label htmlFor="cpf">CPF</Label>
-                  <Input id="cpf" inputMode="numeric" placeholder="000.000.000-00" className="h-12 rounded-xl" value={formatCpfInput(cpf)} onChange={(e) => setCpf(e.target.value)} />
+                  <Input id="cpf" name="username" autoComplete="username" inputMode="numeric" placeholder="000.000.000-00" className="h-12 rounded-xl" value={formatCpfInput(cpf)} onChange={(e) => setCpf(e.target.value)} />
                 </div>
                 <PasswordField value={pass} onChange={setPass} />
-                {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-                <Button type="submit" size="lg" className="w-full">Entrar</Button>
+                {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
+                <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Entrando…" : "Entrar"}</Button>
               </form>
             </TabsContent>
             <TabsContent value="sup">
-              <form onSubmit={loginSup} className="space-y-4">
+              <form onSubmit={(e) => submit(e, "sup")} className="space-y-4" autoComplete="on">
                 <div className="space-y-1.5">
                   <Label htmlFor="user">Usuário</Label>
-                  <Input id="user" autoCapitalize="none" className="h-12 rounded-xl" value={user} onChange={(e) => setUser(e.target.value)} />
+                  <Input id="user" name="username" autoComplete="username" autoCapitalize="none" className="h-12 rounded-xl" value={user} onChange={(e) => setUser(e.target.value)} />
                 </div>
                 <PasswordField value={pass} onChange={setPass} />
-                {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-                <Button type="submit" size="lg" className="w-full">Entrar como supervisor</Button>
+                {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
+                <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Entrando…" : "Entrar como coordenação"}</Button>
               </form>
             </TabsContent>
           </Tabs>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-dashed bg-card/70 p-4 text-xs text-muted-foreground">
-          <p className="mb-2 flex items-center gap-1.5 font-semibold text-foreground"><KeyRound className="h-3.5 w-3.5" />Acessos de demonstração</p>
-          <ul className="space-y-1">
-            <li>Administrador: <b>admin</b> / <b>123456</b></li>
-            <li>Supervisor: <b>supervisor</b> (ou <b>marta</b>) / <b>123456</b></li>
-            <li>Voluntário: CPF <b>111.111.111-11</b> / <b>123456</b></li>
-            <li>Primeiro acesso (troca de senha): CPF <b>222.222.222-22</b> / <b>123456</b></li>
-          </ul>
-        </div>
+        <InstallAppCard />
+
+        <p className="mt-6 flex items-start gap-2 px-1 text-xs text-muted-foreground">
+          <KeyRound className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          Esqueceu a senha? Peça à coordenação para redefini-la. Você receberá uma senha provisória e criará uma nova no próximo acesso.
+        </p>
       </div>
     </div>
   );
@@ -111,7 +116,7 @@ function PasswordField({ value, onChange }: { value: string; onChange: (v: strin
   return (
     <div className="space-y-1.5">
       <Label htmlFor="pass">Senha</Label>
-      <Input id="pass" type="password" className="h-12 rounded-xl" value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input id="pass" name="password" autoComplete="current-password" type="password" className="h-12 rounded-xl" value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }

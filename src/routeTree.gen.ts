@@ -30,6 +30,7 @@ import { Route as VoluntarioDisponibilidadeRouteImport } from './routes/voluntar
 import { Route as VoluntarioEscalaRouteImport } from './routes/voluntario.escala'
 import { Route as VoluntarioHistoricoRouteImport } from './routes/voluntario.historico'
 import { Route as VoluntarioPerfilRouteImport } from './routes/voluntario.perfil'
+import { Route as VoluntarioTurnosRouteImport } from './routes/voluntario.turnos'
 import { Route as VoluntarioVagasRouteImport } from './routes/voluntario.vagas'
 
 const IndexRoute = IndexRouteImport.update({
@@ -139,6 +140,11 @@ const VoluntarioPerfilRoute = VoluntarioPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => VoluntarioRoute,
 } as any)
+const VoluntarioTurnosRoute = VoluntarioTurnosRouteImport.update({
+  id: '/turnos',
+  path: '/turnos',
+  getParentRoute: () => VoluntarioRoute,
+} as any)
 const VoluntarioVagasRoute = VoluntarioVagasRouteImport.update({
   id: '/vagas',
   path: '/vagas',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/voluntario/escala': typeof VoluntarioEscalaRoute
   '/voluntario/historico': typeof VoluntarioHistoricoRoute
   '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/voluntario/turnos': typeof VoluntarioTurnosRoute
   '/voluntario/vagas': typeof VoluntarioVagasRoute
   '/supervisor/': typeof SupervisorIndexRoute
   '/voluntario/': typeof VoluntarioIndexRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/voluntario/escala': typeof VoluntarioEscalaRoute
   '/voluntario/historico': typeof VoluntarioHistoricoRoute
   '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/voluntario/turnos': typeof VoluntarioTurnosRoute
   '/voluntario/vagas': typeof VoluntarioVagasRoute
   '/supervisor': typeof SupervisorIndexRoute
   '/voluntario': typeof VoluntarioIndexRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/voluntario/escala': typeof VoluntarioEscalaRoute
   '/voluntario/historico': typeof VoluntarioHistoricoRoute
   '/voluntario/perfil': typeof VoluntarioPerfilRoute
+  '/voluntario/turnos': typeof VoluntarioTurnosRoute
   '/voluntario/vagas': typeof VoluntarioVagasRoute
   '/supervisor/': typeof SupervisorIndexRoute
   '/voluntario/': typeof VoluntarioIndexRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/voluntario/escala'
     | '/voluntario/historico'
     | '/voluntario/perfil'
+    | '/voluntario/turnos'
     | '/voluntario/vagas'
     | '/supervisor/'
     | '/voluntario/'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/voluntario/escala'
     | '/voluntario/historico'
     | '/voluntario/perfil'
+    | '/voluntario/turnos'
     | '/voluntario/vagas'
     | '/supervisor'
     | '/voluntario'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/voluntario/escala'
     | '/voluntario/historico'
     | '/voluntario/perfil'
+    | '/voluntario/turnos'
     | '/voluntario/vagas'
     | '/supervisor/'
     | '/voluntario/'
@@ -445,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VoluntarioPerfilRouteImport
       parentRoute: typeof VoluntarioRoute
     }
+    '/voluntario/turnos': {
+      id: '/voluntario/turnos'
+      path: '/turnos'
+      fullPath: '/voluntario/turnos'
+      preLoaderRoute: typeof VoluntarioTurnosRouteImport
+      parentRoute: typeof VoluntarioRoute
+    }
     '/voluntario/vagas': {
       id: '/voluntario/vagas'
       path: '/vagas'
@@ -494,6 +513,7 @@ interface VoluntarioRouteChildren {
   VoluntarioEscalaRoute: typeof VoluntarioEscalaRoute
   VoluntarioHistoricoRoute: typeof VoluntarioHistoricoRoute
   VoluntarioPerfilRoute: typeof VoluntarioPerfilRoute
+  VoluntarioTurnosRoute: typeof VoluntarioTurnosRoute
   VoluntarioVagasRoute: typeof VoluntarioVagasRoute
   VoluntarioIndexRoute: typeof VoluntarioIndexRoute
 }
@@ -503,6 +523,7 @@ const VoluntarioRouteChildren: VoluntarioRouteChildren = {
   VoluntarioEscalaRoute: VoluntarioEscalaRoute,
   VoluntarioHistoricoRoute: VoluntarioHistoricoRoute,
   VoluntarioPerfilRoute: VoluntarioPerfilRoute,
+  VoluntarioTurnosRoute: VoluntarioTurnosRoute,
   VoluntarioVagasRoute: VoluntarioVagasRoute,
   VoluntarioIndexRoute: VoluntarioIndexRoute,
 }
@@ -522,11 +543,10 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
+import type { createStart } from '@tanstack/react-start'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

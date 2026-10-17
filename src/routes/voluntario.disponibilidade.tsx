@@ -61,8 +61,8 @@ function AvailabilityPage() {
       <div className="space-y-3">
         {needs.map((n) => {
           const val = availabilityOf(state, period.id, meId, n.id);
-          const set = (v: "disponivel" | "indisponivel") => {
-            const r = repo.setAvailability(period.id, meId, n.id, v);
+          const set = async (v: "disponivel" | "indisponivel") => {
+            const r = await repo.setAvailability(period.id, meId, n.id, v);
             if (!r.ok) toast.error(r.error);
             else toast.success("Resposta salva", { duration: 1200 });
           };

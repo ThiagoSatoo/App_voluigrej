@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, Info, Send, Shuffle } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { act } from "@/lib/act";
 import { activeVolunteers, availabilityOf, drawsOf, hasResponded, latestDraw, sortNeeds } from "@/data/selectors";
 import { ConfirmDialog, Notice, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PersonRow } from "@/components/app/VolunteerAvatar";
@@ -71,7 +72,7 @@ function DrawPage() {
         {!canDraw && (
           <div className="mt-3 space-y-2">
             <Notice tone="accent" icon={Info}>A disponibilidade ainda está aberta. Encerre-a para realizar o sorteio.</Notice>
-            <Button variant="outline" onClick={() => { repo.setPeriodStatus(period.id, "encerrada"); toast.success("Disponibilidade encerrada"); }}>Encerrar disponibilidade agora</Button>
+            <Button variant="outline" onClick={() => { act(repo.setPeriodStatus(period.id, "encerrada"), "Disponibilidade encerrada"); }}>Encerrar disponibilidade agora</Button>
           </div>
         )}
       </Step>
@@ -147,8 +148,8 @@ function DrawPage() {
         </Panel>
       )}
 
-      <ConfirmDialog open={confirmGen} onOpenChange={setConfirmGen} title="Gerar sorteio?" description="Você está prestes a gerar uma nova proposta de escala. O resultado poderá ser revisado antes da publicação." confirmLabel="Gerar sorteio" onConfirm={() => { const d = repo.runDraw(period.id); toast.success(`Sorteio #${d.number} gerado como rascunho`); }} />
-      <ConfirmDialog open={confirmPub} onOpenChange={setConfirmPub} title="Publicar escala?" description="Tem certeza que deseja publicar esta escala? Após a publicação, ela ficará disponível para os voluntários." confirmLabel="Publicar" onConfirm={() => { if (draw) repo.publishDraw(draw.id); toast.success("Escala publicada"); }} />
+      <ConfirmDialog open={confirmGen} onOpenChange={setConfirmGen} title="Gerar sorteio?" description="Você está prestes a gerar uma nova proposta de escala. O resultado poderá ser revisado antes da publicação." confirmLabel="Gerar sorteio" onConfirm={async () => { const r = await act(repo.runDraw(period.id)); if (r.ok) toast.success(`Sorteio #${r.draw?.number ?? ""} gerado como rascunho`); }} />
+      <ConfirmDialog open={confirmPub} onOpenChange={setConfirmPub} title="Publicar escala?" description="Tem certeza que deseja publicar esta escala? Após a publicação, ela ficará disponível para os voluntários." confirmLabel="Publicar" onConfirm={() => { if (draw) act(repo.publishDraw(draw.id), "Escala publicada"); }} />
     </div>
   );
 }

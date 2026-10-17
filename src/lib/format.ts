@@ -2,8 +2,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { AttendanceStatus, DrawStatus, PeriodStatus } from "@/data/types";
 
-/** Fixed "today" for the demo so mock scales stay meaningful. Replace with new Date() in production. */
-export const DEMO_TODAY = "2026-10-05";
+/** Data de hoje (YYYY-MM-DD) no fuso de São Paulo. */
+export const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export const toDate = (d: string) => new Date(`${d}T12:00:00`);

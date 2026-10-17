@@ -5,7 +5,7 @@ import { useStore } from "@/data/store";
 import { assignmentsOf } from "@/data/selectors";
 import { DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { VolunteerAvatar } from "@/components/app/VolunteerAvatar";
-import { DEMO_TODAY, fmtWeekday, periodLabel } from "@/lib/format";
+import { today, fmtWeekday, periodLabel } from "@/lib/format";
 
 export const Route = createFileRoute("/voluntario/escala")({
   head: () => ({
@@ -25,8 +25,8 @@ function MySchedule() {
   const { state } = useStore();
   const me = state.volunteers.find((v) => v.id === state.session!.userId)!;
   const list = assignmentsOf(state, me.id);
-  const upcoming = list.filter((a) => a.need.date >= DEMO_TODAY);
-  const past = list.filter((a) => a.need.date < DEMO_TODAY).reverse();
+  const upcoming = list.filter((a) => a.need.date >= today());
+  const past = list.filter((a) => a.need.date < today()).reverse();
 
   // Group by period label
   const groups = upcoming.reduce<Record<string, typeof upcoming>>((acc, a) => {

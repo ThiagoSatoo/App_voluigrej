@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Database, RotateCcw } from "lucide-react";
-import { toast } from "sonner";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Camera, KeyRound, Trash2 } from "lucide-react";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
-import { ConfirmDialog, Notice, PageHeader, Panel } from "@/components/app/common";
+import { act } from "@/lib/act";
+import { PhotoPicker, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
+import { PageHeader, Panel } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/supervisor/configuracoes")({
 function SettingsPage() {
   const { state } = useStore();
   const [s, setS] = useState(state.settings);
-  const [confirm, setConfirm] = useState(false);
+  const navigate = useNavigate();
   return (
     <div className="max-w-2xl space-y-4">
       <PageHeader title="Configurações" />
@@ -46,21 +47,38 @@ function SettingsPage() {
         </TabsContent>
         <TabsContent value="geral" className="space-y-4">
       <Panel className="space-y-3">
-        {([["churchName", "Nome da igreja"], ["ministryName", "Ministério"], ["supervisorName", "Nome do supervisor"]] as const).map(([k, l]) => (
+        {([["churchName", "Nome da igreja"], ["ministryName", "Ministério"]] as const).map(([k, l]) => (
           <div key={k} className="space-y-1.5">
             <Label>{l}</Label>
             <Input value={s[k]} onChange={(e) => setS({ ...s, [k]: e.target.value })} className="h-11 rounded-xl" />
           </div>
         ))}
-        <Button onClick={() => { repo.updateSettings(s); toast.success("Configurações salvas"); }}>Salvar</Button>
+        <Button onClick={() => act(repo.updateSettings(s), "Configurações salvas")}>Salvar</Button>
       </Panel>
       <Panel className="space-y-3">
-        <Notice tone="primary" icon={Database}>Esta versão usa dados de demonstração salvos apenas neste aparelho. Nenhum banco de dados está conectado.</Notice>
-        <Button variant="outline" onClick={() => setConfirm(true)}><RotateCcw /> Restaurar dados de demonstração</Button>
+        <p className="font-semibold">Minha conta</p>
+        <MyPhoto />
+        <Button variant="outline" onClick={() => navigate({ to: "/trocar-senha" })}><KeyRound /> Alterar minha senha</Button>
       </Panel>
         </TabsContent>
       </Tabs>
-      <ConfirmDialog open={confirm} onOpenChange={setConfirm} title="Restaurar dados?" description="Todas as alterações feitas nesta demonstração serão perdidas." confirmLabel="Restaurar" onConfirm={() => { repo.resetDemoData(); toast.success("Dados restaurados"); }} />
+    </div>
+  );
+}
+
+function MyPhoto() {
+  const { state } = useStore();
+  const me = state.supervisors.find((x) => x.id === state.session?.userId);
+  if (!me) return null;
+  return (
+    <div className="flex items-center gap-4">
+      <VolunteerAvatar name={me.name} photoUrl={me.photoUrl} size="lg" />
+      <div className="flex flex-col gap-1.5">
+        <PhotoPicker onPick={(photo) => act(repo.setPhoto(me.id, photo), "Foto atualizada")}>
+          {(open) => <Button variant="outline" size="sm" onClick={open}><Camera /> {me.photoUrl ? "Trocar foto" : "Adicionar foto"}</Button>}
+        </PhotoPicker>
+        {me.photoUrl && <Button variant="ghost" size="sm" onClick={() => act(repo.setPhoto(me.id, null), "Foto removida")}><Trash2 /> Remover</Button>}
+      </div>
     </div>
   );
 }

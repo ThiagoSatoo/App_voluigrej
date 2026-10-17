@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, KeyRound, Pencil, Plus, Search, UserX } from "lucide-react";
+import { Camera, KeyRound, Pencil, Plus, Search, ShieldCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { act } from "@/lib/act";
+import { TempPasswordDialog } from "@/components/app/TempPasswordDialog";
 import type { Volunteer } from "@/data/types";
 import { ConfirmDialog, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PhotoPicker, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
@@ -36,6 +38,7 @@ function VolunteersPage() {
   const [filter, setFilter] = useState<"todos" | "ativo" | "inativo">("todos");
   const [editing, setEditing] = useState<Volunteer | "new" | null>(null);
   const [viewing, setViewing] = useState<string | null>(null);
+  const [temp, setTemp] = useState<{ name: string; login: string; password: string } | null>(null);
 
   const list = useMemo(
     () =>
@@ -80,12 +83,13 @@ function VolunteersPage() {
                   <div className="truncate font-semibold">{v.name}</div>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     <Pill tone={v.status === "ativo" ? "success" : "muted"}>{v.status === "ativo" ? "Ativo" : "Inativo"}</Pill>
+                    {v.role === "responsavel" && <Pill tone="primary">Responsável</Pill>}
                     <Pill tone="accent">{v.recent3m} recentes</Pill>
                   </div>
                 </div>
               </button>
               <div className="flex flex-col items-end gap-2">
-                <Switch title="Ativar/desativar (os dados e o histórico são preservados)" checked={v.status === "ativo"} onCheckedChange={() => { repo.toggleVolunteer(v.id); toast.success(v.status === "ativo" ? "Voluntário desativado" : "Voluntário ativado"); }} aria-label="Ativo" />
+                <Switch title="Ativar/desativar (os dados e o histórico são preservados)" checked={v.status === "ativo"} onCheckedChange={() => { act(repo.toggleVolunteer(v.id), v.status === "ativo" ? "Voluntário desativado" : "Voluntário ativado"); }} aria-label="Ativo" />
                 <Button size="sm" variant="ghost" onClick={() => setEditing(v)}><Pencil /> Editar</Button>
               </div>
             </Panel>
@@ -93,18 +97,21 @@ function VolunteersPage() {
         </div>
       )}
 
-      <VolunteerForm key={editing === "new" ? "new" : editing?.id ?? "none"} editing={editing} onClose={() => setEditing(null)} />
+      <VolunteerForm key={editing === "new" ? "new" : editing?.id ?? "none"} editing={editing} onClose={() => setEditing(null)} onTempPassword={setTemp} />
+      <TempPasswordDialog info={temp} onClose={() => setTemp(null)} />
 
       <Sheet open={!!viewed} onOpenChange={(o) => !o && setViewing(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          {viewed && <VolunteerProfile v={viewed} onEdit={() => { setViewing(null); setEditing(viewed); }} />}
+          {viewed && <VolunteerProfile v={viewed} onEdit={() => { setViewing(null); setEditing(viewed); }} onTempPassword={setTemp} />}
         </SheetContent>
       </Sheet>
     </div>
   );
 }
 
-function VolunteerProfile({ v, onEdit }: { v: Volunteer; onEdit: () => void }) {
+type TempInfo = { name: string; login: string; password: string };
+
+function VolunteerProfile({ v, onEdit, onTempPassword }: { v: Volunteer; onEdit: () => void; onTempPassword: (t: TempInfo) => void }) {
   const { state } = useStore();
   const [confirmReset, setConfirmReset] = useState(false);
   const att = state.attendance.filter((a) => a.volunteerId === v.id);
@@ -116,7 +123,10 @@ function VolunteerProfile({ v, onEdit }: { v: Volunteer; onEdit: () => void }) {
       <div className="mt-6 flex flex-col items-center text-center">
         <VolunteerAvatar name={v.name} photoUrl={v.photoUrl} size="xl" />
         <h2 className="mt-3 font-display text-xl font-semibold">{v.name}</h2>
-        <Pill tone={v.status === "ativo" ? "success" : "muted"} className="mt-2">{v.status === "ativo" ? "Ativo" : "Inativo"}</Pill>
+        <div className="mt-2 flex gap-1.5">
+          <Pill tone={v.status === "ativo" ? "success" : "muted"}>{v.status === "ativo" ? "Ativo" : "Inativo"}</Pill>
+          {v.role === "responsavel" && <Pill tone="primary">Responsável</Pill>}
+        </div>
       </div>
       <div className="mt-6 grid grid-cols-3 gap-2 text-center">
         <Mini label="Últ. 3 meses" value={v.recent3m} />
@@ -131,6 +141,17 @@ function VolunteerProfile({ v, onEdit }: { v: Volunteer; onEdit: () => void }) {
         <Row label="Desde" value={fmtDMY(v.joinedAt)} />
         <Row label="Acesso" value={v.mustChangePassword ? "Aguardando 1º acesso" : "Senha definida"} />
       </div>
+      <label className="mt-4 flex items-center justify-between gap-3 rounded-2xl border p-4">
+        <span>
+          <span className="flex items-center gap-1.5 text-sm font-semibold"><ShieldCheck className="h-4 w-4" /> Responsável de turno</span>
+          <span className="block text-xs text-muted-foreground">Pode ver a equipe e os contatos dos turnos e vagas que você atribuir, registrar presença, substituir e gerenciar vagas desses turnos.</span>
+        </span>
+        <Switch
+          checked={v.role === "responsavel"}
+          onCheckedChange={(c) => act(repo.setVolunteerRole(v.id, c ? "responsavel" : "voluntario"), c ? "Agora é responsável" : "Voltou a ser voluntário")}
+          aria-label="Responsável de turno"
+        />
+      </label>
       <div className="mt-5 grid gap-2">
         <Button variant="outline" onClick={onEdit}><Pencil /> Editar dados</Button>
         <Button variant="outline" onClick={() => setConfirmReset(true)}><KeyRound /> Redefinir senha</Button>
@@ -139,9 +160,12 @@ function VolunteerProfile({ v, onEdit }: { v: Volunteer; onEdit: () => void }) {
         open={confirmReset}
         onOpenChange={setConfirmReset}
         title="Redefinir senha?"
-        description={`A senha de ${v.name} voltará para a senha inicial (123456) e será exigida a troca no próximo acesso.`}
+        description={`Será gerada uma senha provisória para ${v.name}, e a troca será exigida no próximo acesso.`}
         confirmLabel="Redefinir"
-        onConfirm={() => { repo.resetPassword(v.id); toast.success("Senha redefinida"); }}
+        onConfirm={async () => {
+          const r = await act(repo.resetPassword(v.id));
+          if (r.ok && r.tempPassword) onTempPassword({ name: v.name, login: `CPF ${formatCpfInput(v.cpf)}`, password: r.tempPassword });
+        }}
       />
     </>
   );
@@ -165,7 +189,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function VolunteerForm({ editing, onClose }: { editing: Volunteer | "new" | null; onClose: () => void }) {
+function VolunteerForm({ editing, onClose, onTempPassword }: { editing: Volunteer | "new" | null; onClose: () => void; onTempPassword: (t: TempInfo) => void }) {
   const v = editing && editing !== "new" ? editing : undefined;
   const [name, setName] = useState(v?.name ?? "");
   const [cpf, setCpf] = useState(v?.cpf ?? "");
@@ -173,12 +197,17 @@ function VolunteerForm({ editing, onClose }: { editing: Volunteer | "new" | null
   const [email, setEmail] = useState(v?.email ?? "");
   const [birthDate, setBirthDate] = useState(v?.birthDate ?? "");
   const [photoUrl, setPhotoUrl] = useState(v?.photoUrl);
+  const [photo, setPhoto] = useState<Blob | null | undefined>(undefined); // undefined = sem alteração
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const save = () => {
-    const r = repo.saveVolunteer({ id: v?.id, name, cpf, phone, email, birthDate, photoUrl });
+  const save = async () => {
+    setBusy(true);
+    const r = await repo.saveVolunteer({ id: v?.id, name, cpf, phone, email, birthDate, photo });
+    setBusy(false);
     if (!r.ok) return setError(r.error);
-    toast.success(v ? "Dados atualizados" : "Voluntário cadastrado. Senha inicial: 123456");
+    toast.success(v ? "Dados atualizados" : "Voluntário cadastrado");
+    if (!v && r.tempPassword) onTempPassword({ name: name.trim(), login: `CPF ${formatCpfInput(cpf)}`, password: r.tempPassword });
     onClose();
   };
 
@@ -192,10 +221,10 @@ function VolunteerForm({ editing, onClose }: { editing: Volunteer | "new" | null
           <div className="flex items-center gap-4">
             <VolunteerAvatar name={name || "?"} photoUrl={photoUrl} size="lg" />
             <div className="flex flex-col gap-1.5">
-              <PhotoPicker onPick={setPhotoUrl}>
+              <PhotoPicker onPick={(blob, preview) => { setPhoto(blob); setPhotoUrl(preview); }}>
                 {(open) => <Button type="button" variant="outline" size="sm" onClick={open}><Camera /> {photoUrl ? "Trocar foto" : "Adicionar foto"}</Button>}
               </PhotoPicker>
-              {photoUrl && <Button type="button" variant="ghost" size="sm" onClick={() => setPhotoUrl(undefined)}>Remover</Button>}
+              {photoUrl && <Button type="button" variant="ghost" size="sm" onClick={() => { setPhoto(null); setPhotoUrl(undefined); }}>Remover</Button>}
               <span className="text-xs text-muted-foreground">Opcional</span>
             </div>
           </div>
@@ -206,12 +235,12 @@ function VolunteerForm({ editing, onClose }: { editing: Volunteer | "new" | null
             <F label="Telefone"><Input value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11 rounded-xl" /></F>
             <F label="E-mail"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl" /></F>
           </div>
-          {!v && <p className="rounded-xl bg-accent-soft p-3 text-xs text-accent-foreground">O voluntário receberá a senha inicial <b>123456</b> e deverá alterá-la no primeiro acesso.</p>}
+          {!v && <p className="rounded-xl bg-accent-soft p-3 text-xs text-accent-foreground">Ao cadastrar, será gerada uma senha provisória para você entregar ao voluntário. Ele criará a própria senha no primeiro acesso.</p>}
           {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save}>{v ? "Salvar" : "Cadastrar"}</Button>
+          <Button onClick={save} disabled={busy}>{busy ? "Salvando…" : v ? "Salvar" : "Cadastrar"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { BellRing, Check } from "lucide-react";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { act } from "@/lib/act";
 import { Button } from "@/components/ui/button";
 import { fmtDateTime } from "@/lib/format";
 
@@ -22,7 +23,7 @@ export function SupervisorAlerts() {
             <p className="mt-0.5 text-xs opacity-80">{fmtDateTime(n.createdAt)}</p>
             <Link to="/supervisor/necessidades" className="mt-1 inline-block text-xs font-bold underline underline-offset-2">Ver necessidades</Link>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => repo.markNotificationRead(n.id)} aria-label="Marcar como lida"><Check /></Button>
+          <Button size="sm" variant="ghost" onClick={() => act(repo.markNotificationRead(n.id))} aria-label="Marcar como lida"><Check /></Button>
         </div>
       ))}
     </div>

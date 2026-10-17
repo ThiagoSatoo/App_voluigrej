@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Camera, KeyRound, LogOut, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { act } from "@/lib/act";
 import { Button } from "@/components/ui/button";
 import { Panel, Pill } from "@/components/app/common";
 import { PhotoPicker, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
@@ -33,11 +33,14 @@ function Profile() {
       <Panel className="flex flex-col items-center bg-gradient-warm py-8 text-center">
         <VolunteerAvatar name={me.name} photoUrl={me.photoUrl} size="xl" className="ring-4" />
         <h1 className="mt-4 font-display text-2xl font-semibold">{me.name}</h1>
-        <Pill tone={me.status === "ativo" ? "success" : "muted"} className="mt-3">{me.status === "ativo" ? "Ativo" : "Inativo"}</Pill>
+        <div className="mt-3 flex gap-1.5">
+          <Pill tone={me.status === "ativo" ? "success" : "muted"}>{me.status === "ativo" ? "Ativo" : "Inativo"}</Pill>
+          {me.role === "responsavel" && <Pill tone="primary">Responsável</Pill>}
+        </div>
       </Panel>
 
       <Panel className="space-y-2">
-        <PhotoPicker onPick={(url) => { repo.setPhoto(me.id, url); toast.success("Foto atualizada!"); }}>
+        <PhotoPicker onPick={(photo) => { act(repo.setPhoto(me.id, photo), "Foto atualizada!"); }}>
           {(open) => (
             <Button variant="outline" size="lg" className="w-full justify-start" onClick={open}>
               <Camera /> {me.photoUrl ? "Alterar foto" : "Adicionar foto"}
@@ -45,20 +48,21 @@ function Profile() {
           )}
         </PhotoPicker>
         {me.photoUrl && (
-          <Button variant="ghost" size="lg" className="w-full justify-start text-muted-foreground" onClick={() => { repo.setPhoto(me.id, undefined); toast("Foto removida"); }}>
+          <Button variant="ghost" size="lg" className="w-full justify-start text-muted-foreground" onClick={() => { act(repo.setPhoto(me.id, null), "Foto removida"); }}>
             <Trash2 /> Remover foto
           </Button>
         )}
         <Button variant="outline" size="lg" className="w-full justify-start" onClick={() => navigate({ to: "/trocar-senha" })}>
           <KeyRound /> Alterar senha
         </Button>
-        <p className="px-1 pt-1 text-xs text-muted-foreground">A foto é opcional. Sem foto, exibimos suas iniciais.</p>
+        <p className="px-1 pt-1 text-xs text-muted-foreground">A foto é opcional e só aparece para a coordenação e para quem serve no mesmo turno que você. Sem foto, exibimos suas iniciais.</p>
       </Panel>
 
       <Panel className="space-y-1 text-sm">
         <Row label="Telefone" value={me.phone} />
         <Row label="E-mail" value={me.email} />
         <Row label="Nascimento" value={me.birthDate ? fmtDMY(me.birthDate) : "—"} />
+        <p className="pt-2 text-xs text-muted-foreground">Para corrigir seus dados, fale com a coordenação.</p>
       </Panel>
 
       <Panel>
@@ -66,7 +70,7 @@ function Profile() {
         <NotifPrefsList categories={[]} />
       </Panel>
 
-      <Button variant="ghost" size="lg" className="w-full text-destructive" onClick={() => { repo.logout(); navigate({ to: "/" }); }}>
+      <Button variant="ghost" size="lg" className="w-full text-destructive" onClick={async () => { await repo.logout(); navigate({ to: "/" }); }}>
         <LogOut /> Sair
       </Button>
     </div>

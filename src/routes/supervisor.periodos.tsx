@@ -6,6 +6,8 @@ import { CalendarPlus, Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { ResponsavelSelect } from "@/components/app/ResponsavelSelect";
+import { act } from "@/lib/act";
 import { sortNeeds, sortPeriods } from "@/data/selectors";
 import type { Period, PeriodStatus } from "@/data/types";
 import { ConfirmDialog, DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
@@ -14,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MONTHS, PERIOD_STATUS, fmtDMY, fmtWeekday, periodLabel } from "@/lib/format";
+import { MONTHS, PERIOD_STATUS, fmtDMY, fmtWeekday, periodLabel, today } from "@/lib/format";
 
 export const Route = createFileRoute("/supervisor/periodos")({
   head: () => ({
@@ -74,11 +76,12 @@ function PeriodDetail({ period }: { period: Period }) {
   const action = NEXT_ACTION[period.status];
   const total = period.needs.reduce((s, n) => s + n.slots, 0);
 
-  const add = () => {
+  const [responsavelId, setResponsavelId] = useState<string | null>(null);
+  const add = async () => {
     if (!date) { toast.error("Escolha uma data."); return; }
     const [y, m] = date.split("-").map(Number);
     if (y !== period.year || m !== period.month) { toast.error(`A data precisa estar em ${periodLabel(period)}.`); return; }
-    const result = repo.addNeed(period.id, { date, start, end, slots });
+    const result = await repo.addNeed(period.id, { date, start, end, slots, responsavelId: responsavelId ?? undefined });
     if (!result.ok) { toast.error(result.error); return; }
     setDate("");
     toast.success("Necessidade adicionada");
@@ -98,11 +101,11 @@ function PeriodDetail({ period }: { period: Period }) {
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Abertura</Label>
-              <Input type="date" disabled={!editable} value={period.openDate} onChange={(e) => repo.updatePeriod(period.id, { openDate: e.target.value })} className="rounded-xl" />
+              <Input type="date" disabled={!editable} value={period.openDate} onChange={(e) => e.target.value && act(repo.updatePeriod(period.id, { openDate: e.target.value }))} className="rounded-xl" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Prazo final</Label>
-              <Input type="date" disabled={!editable} value={period.deadline} onChange={(e) => repo.updatePeriod(period.id, { deadline: e.target.value })} className="rounded-xl" />
+              <Input type="date" disabled={!editable} value={period.deadline} onChange={(e) => e.target.value && act(repo.updatePeriod(period.id, { deadline: e.target.value }))} className="rounded-xl" />
             </div>
           </div>
           {action && (
@@ -125,14 +128,23 @@ function PeriodDetail({ period }: { period: Period }) {
               </div>
               {editable ? (
                 <div className="flex items-center gap-1">
-                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => repo.updateNeedSlots(period.id, n.id, n.slots - 1)}><Minus /></Button>
+                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => act(repo.updateNeedSlots(period.id, n.id, n.slots - 1))}><Minus /></Button>
                   <span className="w-14 text-center text-sm font-bold">{n.slots} vol.</span>
-                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => repo.updateNeedSlots(period.id, n.id, n.slots + 1)}><Plus /></Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => repo.removeNeed(period.id, n.id)} aria-label="Remover"><Trash2 /></Button>
+                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => act(repo.updateNeedSlots(period.id, n.id, n.slots + 1))}><Plus /></Button>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => act(repo.removeNeed(period.id, n.id), "Turno removido")} aria-label="Remover"><Trash2 /></Button>
                 </div>
               ) : (
                 <Pill tone="primary">{n.slots} voluntários</Pill>
               )}
+              <div className="flex w-full flex-wrap items-center gap-2 border-t pt-2">
+                <span className="text-xs font-medium text-muted-foreground">Responsável</span>
+                <ResponsavelSelect className="h-9 min-w-48 flex-1" value={n.responsavelId} onChange={(id) => act(repo.setNeedResponsavel(n.id, id), "Responsável atualizado")} />
+                {period.needs.filter((x) => x.date === n.date).length > 1 && (
+                  <Button size="sm" variant="ghost" className="text-xs" onClick={() => act(repo.setDayResponsavel(period.id, n.date, n.responsavelId ?? null), "Aplicado a todos os turnos do dia")}>
+                    Usar no dia todo
+                  </Button>
+                )}
+              </div>
             </Panel>
           ))}
         </div>
@@ -144,6 +156,7 @@ function PeriodDetail({ period }: { period: Period }) {
           <div className="space-y-1.5"><Label className="text-xs">Data</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded-xl" /></div>
           <TimeRangeFields start={start} end={end} onStartChange={setStart} onEndChange={setEnd} />
           <div className="space-y-1.5"><Label className="text-xs">Voluntários necessários</Label><Input type="number" min={1} value={slots} onChange={(e) => setSlots(Math.max(1, Number(e.target.value)))} className="rounded-xl" /></div>
+          <div className="space-y-1.5"><Label className="text-xs">Responsável (opcional)</Label><ResponsavelSelect value={responsavelId ?? undefined} onChange={setResponsavelId} /></div>
           <Button className="w-full" onClick={add}><Plus /> Adicionar</Button>
         </Panel>
       )}
@@ -155,7 +168,7 @@ function PeriodDetail({ period }: { period: Period }) {
           title={`${action.label}?`}
           description={action.confirm}
           confirmLabel={action.label}
-          onConfirm={() => { repo.setPeriodStatus(period.id, action.to); toast.success(PERIOD_STATUS[action.to].label); }}
+          onConfirm={() => { act(repo.setPeriodStatus(period.id, action.to), PERIOD_STATUS[action.to].label); }}
         />
       )}
     </div>
@@ -163,12 +176,20 @@ function PeriodDetail({ period }: { period: Period }) {
 }
 
 function NewPeriodDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [month, setMonth] = useState("12");
-  const [year, setYear] = useState("2026");
-  const [openDate, setOpenDate] = useState("2026-11-01");
-  const [deadline, setDeadline] = useState("2026-11-25");
-  const create = () => {
-    const r = repo.createPeriod({ month: Number(month), year: Number(year), openDate, deadline });
+  // Sugere o mês seguinte, com disponibilidade aberta no mês atual.
+  const [defaults] = useState(() => {
+    const [y, m] = today().split("-").map(Number);
+    const ny = m === 12 ? y + 1 : y;
+    const nm = m === 12 ? 1 : m + 1;
+    const cur = `${y}-${String(m).padStart(2, "0")}`;
+    return { month: String(nm), year: String(ny), openDate: today(), deadline: `${cur}-25` < today() ? today() : `${cur}-25` };
+  });
+  const [month, setMonth] = useState(defaults.month);
+  const [year, setYear] = useState(defaults.year);
+  const [openDate, setOpenDate] = useState(defaults.openDate);
+  const [deadline, setDeadline] = useState(defaults.deadline);
+  const create = async () => {
+    const r = await repo.createPeriod({ month: Number(month), year: Number(year), openDate, deadline });
     if (!r.ok) { toast.error(r.error); return; }
     toast.success("Período criado como rascunho");
     onClose();

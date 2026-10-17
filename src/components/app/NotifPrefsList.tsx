@@ -1,5 +1,6 @@
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { act } from "@/lib/act";
 import { NOTIF_DESCRIPTION, NOTIF_LABEL, REMINDERS, prefEnabled } from "@/data/notifications";
 import type { NotifType } from "@/data/types";
 import { Switch } from "@/components/ui/switch";
@@ -14,7 +15,7 @@ export function NotifPrefsList({ categories, showReminders = true }: { categorie
         <span className="block text-sm font-semibold">{label}</span>
         {desc && <span className="block text-xs text-muted-foreground">{desc}</span>}
       </span>
-      <Switch checked={prefEnabled(state, userId, t)} onCheckedChange={(v) => repo.setNotifPref(userId, t, v)} aria-label={label} />
+      <Switch checked={prefEnabled(state, userId, t)} onCheckedChange={(v) => act(repo.setNotifPref(userId, t, v))} aria-label={label} />
     </label>
   );
   return (

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DEMO_TODAY, fmtDMY, toDate } from "@/lib/format";
+import { today, fmtDMY, toDate } from "@/lib/format";
 import { buildReport, exportReportPdf, type Report } from "@/lib/report";
 import { AlertCircle, CheckCircle2, ClipboardList, UserCheck, UserX, Repeat } from "lucide-react";
 
@@ -32,7 +32,7 @@ const ymd = (d: Date) => format(d, "yyyy-MM-dd");
 const TITLE: Record<Kind, string> = { diario: "Relatório diário", semanal: "Relatório semanal", mensal: "Relatório mensal", personalizado: "Relatório personalizado" };
 
 function rangeFor(kind: Kind, ref: string, from: string, to: string): [string, string] {
-  const d = toDate(ref || DEMO_TODAY);
+  const d = toDate(ref || today());
   if (kind === "diario") return [ymd(d), ymd(d)];
   if (kind === "semanal") return [ymd(startOfWeek(d, { weekStartsOn: 0 })), ymd(endOfWeek(d, { weekStartsOn: 0 }))];
   if (kind === "mensal") return [ymd(startOfMonth(d)), ymd(endOfMonth(d))];
@@ -42,9 +42,9 @@ function rangeFor(kind: Kind, ref: string, from: string, to: string): [string, s
 function ReportsPage() {
   const { state } = useStore();
   const [kind, setKind] = useState<Kind>("mensal");
-  const [ref, setRef] = useState(DEMO_TODAY);
-  const [from, setFrom] = useState(DEMO_TODAY);
-  const [to, setTo] = useState(ymd(addDays(toDate(DEMO_TODAY), 30)));
+  const [ref, setRef] = useState(today());
+  const [from, setFrom] = useState(today());
+  const [to, setTo] = useState(ymd(addDays(toDate(today()), 30)));
   const [preview, setPreview] = useState<Report | null>(null);
   const [busy, setBusy] = useState(false);
   const [start, end] = useMemo(() => rangeFor(kind, ref, from, to), [kind, ref, from, to]);

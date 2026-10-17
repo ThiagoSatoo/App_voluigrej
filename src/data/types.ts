@@ -8,12 +8,13 @@ export interface Volunteer {
   phone: string;
   email: string;
   birthDate: string; // YYYY-MM-DD
-  photoUrl?: string;
+  photoUrl?: string; // URL assinada temporária (bucket privado)
+  photoPath?: string; // caminho no armazenamento
   status: VolunteerStatus;
-  recent3m: number; // escalas nos últimos 3 meses (simulado)
-  last12m: number; // escalas nos últimos 12 meses (simulado)
+  role: "voluntario" | "responsavel";
+  recent3m: number; // escalas nos últimos 3 meses
+  last12m: number; // escalas nos últimos 12 meses
   lastScaleDate?: string;
-  password: string; // PROTÓTIPO: nunca armazenar senha em texto puro em produção
   mustChangePassword: boolean;
   joinedAt: string;
 }
@@ -26,6 +27,7 @@ export interface Need {
   start: string; // HH:mm
   end: string; // HH:mm
   slots: number;
+  responsavelId?: string; // quem cuida deste turno
 }
 
 export interface Period {
@@ -97,16 +99,18 @@ export interface Substitution {
   reason: string;
 }
 
+export type Role = "admin" | "supervisor" | "responsavel" | "voluntario";
+
 export interface Session {
-  role: "admin" | "supervisor" | "voluntario";
+  role: Role;
   userId: string;
+  name: string;
+  mustChangePassword: boolean;
 }
 
 export interface Settings {
   churchName: string;
   ministryName: string;
-  supervisorName: string;
-  supervisorPassword: string;
 }
 
 export interface AppState {
@@ -124,16 +128,20 @@ export interface AppState {
   notifications: AppNotification[];
   supervisors: Staff[];
   notifPrefs: Record<string, NotifPrefs>;
+  /** Candidaturas ativas por vaga (contagem segura vinda do servidor). */
+  oppCounts: Record<string, number>;
 }
 
-/** Admin ou supervisor (login simulado). */
+/** Admin ou supervisor. */
 export interface Staff {
   id: string;
   name: string;
   username: string;
-  password: string; // PROTÓTIPO
   role: "admin" | "supervisor";
   status: "ativo" | "inativo";
+  photoUrl?: string;
+  photoPath?: string;
+  mustChangePassword: boolean;
 }
 
 export type NotifType =
@@ -164,7 +172,7 @@ export interface Opportunity {
   note?: string;
   status: "aberta" | "confirmada";
   createdAt: string;
-  supervisorId?: string; // supervisor responsável
+  responsavelId?: string; // quem cuida desta vaga (supervisor, admin ou responsável)
 }
 
 /** Dia em que o voluntário marcou estar disponível (não é candidatura). */
