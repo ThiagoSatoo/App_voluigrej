@@ -10,6 +10,11 @@ Aplicativo web instalável (PWA), pensado para o celular, que organiza a escala 
 - **Presença e substituições.** Registro de presença, falta e cancelamento, além da troca de um escalado por outro voluntário disponível.
 - **Vagas avulsas.** Dias extras com mínimo e máximo de pessoas. Os voluntários se candidatam e o responsável confirma quem vai servir.
 - **Avisos automáticos.** Nova candidatura, cancelamento, mínimo atingido, vaga lotada, vaga abaixo do mínimo a 24h do início, aniversários e lembretes de 24h, 12h, 6h, 3h e 1h antes. Cada pessoa liga ou desliga cada tipo de aviso.
+- **Agenda da coordenação.** Calendário do mês com todos os horários criados (escala mensal e vagas avulsas) e todos os escalados ao mesmo tempo. Cada horário mostra vagas preenchidas, vagas vazias e quem se candidatou ou marcou disponibilidade.
+- **Privacidade da escala** (Configurações → "Quem vê a escala"). A coordenação escolhe uma opção, que vale para todos e é aplicada pelo banco:
+  - **Privado:** cada voluntário vê só a própria escala.
+  - **Mesmo turno:** vê quem está no mesmo turno ou vaga que ele.
+  - **Escala geral:** vê todos os turnos com os nomes, mas o app não tem tela de agenda individual de outra pessoa.
 - **Relatórios** em PDF e **histórico** completo.
 
 ## Perfis de acesso

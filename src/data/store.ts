@@ -16,7 +16,7 @@ export const emptyState = (): AppState => ({
   attendance: [],
   substitutions: [],
   session: null,
-  settings: { churchName: "", ministryName: "" },
+  settings: { churchName: "", ministryName: "", visibilityPolicy: "privado" },
   opportunities: [],
   dayAvailability: [],
   applications: [],

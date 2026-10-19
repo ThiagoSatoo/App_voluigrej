@@ -43,7 +43,7 @@ const empty = (): AppState => ({
   attendance: [],
   substitutions: [],
   session: null,
-  settings: { churchName: "", ministryName: "" },
+  settings: { churchName: "", ministryName: "", visibilityPolicy: "privado" },
   opportunities: [],
   dayAvailability: [],
   applications: [],
@@ -179,7 +179,11 @@ export async function loadState(): Promise<AppState> {
 
   return {
     session,
-    settings: { churchName: settings.data?.church_name ?? "", ministryName: settings.data?.ministry_name ?? "" },
+    settings: {
+      churchName: settings.data?.church_name ?? "",
+      ministryName: settings.data?.ministry_name ?? "",
+      visibilityPolicy: settings.data?.visibility_policy ?? "privado",
+    },
     volunteers,
     supervisors,
     periods: periodList,

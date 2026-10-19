@@ -35,7 +35,7 @@ const nav = [
   { to: "/supervisor/necessidades", label: "Necessidades", icon: ClipboardList },
   { to: "/supervisor/disponibilidades", label: "Disponibilidades", icon: ClipboardCheck },
   { to: "/supervisor/sorteio", label: "Sorteio", icon: Shuffle },
-  { to: "/supervisor/escala", label: "Escala", icon: CalendarDays },
+  { to: "/supervisor/escala", label: "Agenda", icon: CalendarDays },
   { to: "/supervisor/presenca", label: "Presença", icon: UserCheck },
   { to: "/supervisor/historico", label: "Histórico", icon: History },
   { to: "/supervisor/relatorios", label: "Relatórios", icon: FileText },

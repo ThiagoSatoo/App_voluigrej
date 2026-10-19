@@ -5,6 +5,7 @@ import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
 import { MyCpfCard } from "@/components/app/MyCpfCard";
+import { VisibilityPolicyCard } from "@/components/app/VisibilityPolicyCard";
 import { PhotoPicker, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
 import { PageHeader, Panel } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
@@ -54,8 +55,9 @@ function SettingsPage() {
             <Input value={s[k]} onChange={(e) => setS({ ...s, [k]: e.target.value })} className="h-11 rounded-xl" />
           </div>
         ))}
-        <Button onClick={() => act(repo.updateSettings(s), "Configurações salvas")}>Salvar</Button>
+        <Button onClick={() => act(repo.updateSettings({ churchName: s.churchName, ministryName: s.ministryName }), "Configurações salvas")}>Salvar</Button>
       </Panel>
+      <VisibilityPolicyCard />
       <Panel className="space-y-3">
         <p className="font-semibold">Minha conta</p>
         <MyCpfCard />

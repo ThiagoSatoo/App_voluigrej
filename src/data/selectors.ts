@@ -110,3 +110,145 @@ export const responsavelOptions = (s: AppState) => [
 
 export const personName = (s: AppState, id?: string) =>
   id ? (s.volunteers.find((v) => v.id === id)?.name ?? s.supervisors.find((x) => x.id === id)?.name) : undefined;
+
+// ---------- Visão de agenda (escala mensal + vagas confirmadas) ----------
+import type { VisibilityPolicy } from "./types";
+
+export interface ScheduleItem {
+  key: string;
+  kind: "escala" | "vaga";
+  date: string;
+  start: string;
+  end: string;
+  note?: string;
+  slots: number;
+  /** Pessoas que o usuário logado pode ver neste turno (o banco já filtrou pela política). */
+  people: string[];
+  responsavelId?: string;
+}
+
+/** Todos os turnos publicados e vagas confirmadas que o usuário consegue ver. */
+export function scheduleItems(s: AppState): ScheduleItem[] {
+  const out: ScheduleItem[] = [];
+  s.draws
+    .filter((d) => d.status === "publicado")
+    .forEach((d) => {
+      const period = s.periods.find((p) => p.id === d.periodId);
+      d.slots.forEach((slot) => {
+        const n = period?.needs.find((x) => x.id === slot.needId);
+        if (!n) return;
+        const out_ = s.attendance.filter((a) => a.needId === n.id && (a.status === "cancelado" || a.status === "substituido")).map((a) => a.volunteerId);
+        out.push({
+          key: `n:${n.id}`,
+          kind: "escala",
+          date: n.date,
+          start: n.start,
+          end: n.end,
+          slots: n.slots,
+          people: slot.picks.map((p) => p.volunteerId).filter((id) => !out_.includes(id)),
+          responsavelId: n.responsavelId,
+        });
+      });
+    });
+  s.opportunities
+    .filter((o) => o.status === "confirmada")
+    .forEach((o) =>
+      out.push({
+        key: `o:${o.id}`,
+        kind: "vaga",
+        date: o.date,
+        start: o.start,
+        end: o.end,
+        note: o.note,
+        slots: o.max,
+        people: s.applications.filter((a) => a.opportunityId === o.id && a.status === "selecionado").map((a) => a.volunteerId),
+        responsavelId: o.responsavelId,
+      }),
+    );
+  return out.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+}
+
+export const myScheduleItems = (s: AppState, userId: string) => scheduleItems(s).filter((i) => i.people.includes(userId));
+
+export const VISIBILITY_OPTIONS: { value: VisibilityPolicy; title: string; text: string }[] = [
+  {
+    value: "privado",
+    title: "Privado",
+    text: "Cada voluntário vê apenas a própria escala. Ninguém vê quem mais está escalado.",
+  },
+  {
+    value: "mesmo_turno",
+    title: "Mesmo turno",
+    text: "O voluntário vê quem está no mesmo turno ou vaga que ele, mas não consegue abrir a agenda de outra pessoa.",
+  },
+  {
+    value: "escala_geral",
+    title: "Escala geral",
+    text: "O voluntário vê a escala de todos os turnos, com os nomes, mas o app nunca mostra a agenda individual de outra pessoa.",
+  },
+];
+
+// ---------- Agenda da coordenação ----------
+export interface AgendaItem {
+  key: string;
+  kind: "escala" | "vaga";
+  date: string;
+  start: string;
+  end: string;
+  note?: string;
+  /** Vagas do turno (na vaga avulsa: o máximo). */
+  slots: number;
+  min?: number;
+  /** Situação: rascunho/aberta/... do período ou aberta/confirmada da vaga. */
+  status: string;
+  /** Quem ocupa a vaga: escalados publicados, ou selecionados/candidatos ativos na vaga avulsa. */
+  filled: string[];
+  /** Quem se candidatou: disponíveis para o turno, ou candidatos da vaga. */
+  candidates: string[];
+  responsavelId?: string;
+}
+
+/** Todos os horários criados, com ocupação e candidatos (visão completa da coordenação). */
+export function agendaItems(s: AppState): AgendaItem[] {
+  const out: AgendaItem[] = [];
+  s.periods.forEach((p) => {
+    const draw = publishedDraw(s, p.id);
+    p.needs.forEach((n) => {
+      const removed = s.attendance
+        .filter((a) => a.needId === n.id && (a.status === "cancelado" || a.status === "substituido"))
+        .map((a) => a.volunteerId);
+      const picks = draw?.slots.find((sl) => sl.needId === n.id)?.picks.map((pk) => pk.volunteerId).filter((id) => !removed.includes(id)) ?? [];
+      out.push({
+        key: `n:${n.id}`,
+        kind: "escala",
+        date: n.date,
+        start: n.start,
+        end: n.end,
+        slots: n.slots,
+        status: p.status,
+        filled: picks,
+        candidates: s.availabilities.filter((a) => a.needId === n.id && a.value === "disponivel").map((a) => a.volunteerId),
+        responsavelId: n.responsavelId,
+      });
+    });
+  });
+  s.opportunities.forEach((o) => {
+    const apps = s.applications.filter((a) => a.opportunityId === o.id);
+    const confirmed = o.status === "confirmada";
+    out.push({
+      key: `o:${o.id}`,
+      kind: "vaga",
+      date: o.date,
+      start: o.start,
+      end: o.end,
+      note: o.note,
+      slots: o.max,
+      min: o.min,
+      status: o.status,
+      filled: apps.filter((a) => (confirmed ? a.status === "selecionado" : a.status === "candidatado")).map((a) => a.volunteerId),
+      candidates: apps.filter((a) => a.status !== "cancelado").map((a) => a.volunteerId),
+      responsavelId: o.responsavelId,
+    });
+  });
+  return out.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+}

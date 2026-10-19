@@ -108,9 +108,13 @@ export interface Session {
   mustChangePassword: boolean;
 }
 
+/** Quanto da escala os voluntários enxergam (garantido no banco). */
+export type VisibilityPolicy = "privado" | "mesmo_turno" | "escala_geral";
+
 export interface Settings {
   churchName: string;
   ministryName: string;
+  visibilityPolicy: VisibilityPolicy;
 }
 
 export interface AppState {

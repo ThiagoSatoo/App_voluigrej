@@ -409,6 +409,7 @@ export const repo = {
     const row: Record<string, string> = {};
     if (patch.churchName !== undefined) row["church_name"] = patch.churchName.trim().slice(0, 120);
     if (patch.ministryName !== undefined) row["ministry_name"] = patch.ministryName.trim().slice(0, 120);
+    if (patch.visibilityPolicy !== undefined) row["visibility_policy"] = patch.visibilityPolicy;
     return run(() => supabase.from("app_settings").update(row).eq("id", 1));
   },
 };
