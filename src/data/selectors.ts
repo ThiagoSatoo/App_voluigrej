@@ -252,3 +252,73 @@ export function agendaItems(s: AppState): AgendaItem[] {
   });
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
 }
+
+// ---------- Equipe (todos juntos) ----------
+export type TeamRole = "voluntario" | "responsavel" | "supervisor";
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: "admin" | TeamRole;
+  cpf: string;
+  phone: string;
+  email: string;
+  birthDate: string;
+  status: "ativo" | "inativo";
+  photoUrl?: string;
+  mustChangePassword: boolean;
+  recent3m?: number;
+  last12m?: number;
+  username?: string;
+}
+
+export const ROLE_LABEL: Record<TeamMember["role"], string> = {
+  admin: "Administrador",
+  supervisor: "Supervisor",
+  responsavel: "Responsável",
+  voluntario: "Voluntário",
+};
+
+export const ROLE_ORDER: Record<TeamMember["role"], number> = { admin: 0, supervisor: 1, responsavel: 2, voluntario: 3 };
+
+/** Admin, supervisores, responsáveis e voluntários numa lista só. */
+export function teamMembers(s: AppState): TeamMember[] {
+  return [
+    ...s.supervisors.map((x) => ({
+      id: x.id,
+      name: x.name,
+      role: x.role,
+      cpf: x.cpf,
+      phone: x.phone,
+      email: x.email,
+      birthDate: x.birthDate,
+      status: x.status,
+      photoUrl: x.photoUrl,
+      mustChangePassword: x.mustChangePassword,
+      username: x.username,
+    })),
+    ...s.volunteers.map((v) => ({
+      id: v.id,
+      name: v.name,
+      role: v.role,
+      cpf: v.cpf,
+      phone: v.phone,
+      email: v.email,
+      birthDate: v.birthDate,
+      status: v.status,
+      photoUrl: v.photoUrl,
+      mustChangePassword: v.mustChangePassword,
+      recent3m: v.recent3m,
+      last12m: v.last12m,
+    })),
+  ];
+}
+
+/** Quem o usuário logado pode gerenciar (o servidor aplica a mesma regra). */
+export function canManageMember(s: AppState, m: TeamMember) {
+  const me = s.session;
+  if (!me) return false;
+  if (m.role === "admin") return false;
+  if (m.role === "supervisor") return me.role === "admin";
+  return me.role === "admin" || me.role === "supervisor";
+}

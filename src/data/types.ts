@@ -112,8 +112,8 @@ export interface Session {
 export type VisibilityPolicy = "privado" | "mesmo_turno" | "escala_geral";
 
 export interface Settings {
+  /** Nome da instituição (coluna church_name no banco). */
   churchName: string;
-  ministryName: string;
   visibilityPolicy: VisibilityPolicy;
 }
 
@@ -132,6 +132,8 @@ export interface AppState {
   notifications: AppNotification[];
   supervisors: Staff[];
   notifPrefs: Record<string, NotifPrefs>;
+  /** Abas do menu ligadas/desligadas por perfil (tela Admin). */
+  navConfig: Partial<Record<"supervisor" | "voluntario", Record<string, boolean>>>;
   /** Candidaturas ativas por vaga (contagem segura vinda do servidor). */
   oppCounts: Record<string, number>;
 }
@@ -142,6 +144,9 @@ export interface Staff {
   name: string;
   username: string; // contas antigas; o login atual é o CPF
   cpf: string;
+  phone: string;
+  email: string;
+  birthDate: string;
   role: "admin" | "supervisor";
   status: "ativo" | "inativo";
   photoUrl?: string;

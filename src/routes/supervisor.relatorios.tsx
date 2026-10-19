@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { today, fmtDMY, toDate } from "@/lib/format";
+import { today, fmtDMY, toDate, APP_TITLE } from "@/lib/format";
 import { buildReport, exportReportPdf, type Report } from "@/lib/report";
 import { AlertCircle, CheckCircle2, ClipboardList, UserCheck, UserX, Repeat } from "lucide-react";
 
@@ -55,7 +55,7 @@ function ReportsPage() {
     if (invalid) { toast.error("Informe um período válido."); return; }
     setBusy(true);
     try {
-      await exportReportPdf(preview ?? build(), TITLE[kind], `${state.settings.churchName} · ${state.settings.ministryName}`);
+      await exportReportPdf(preview ?? build(), TITLE[kind], `${APP_TITLE} · ${state.settings.churchName}`);
       toast.success("PDF gerado");
     } catch {
       toast.error("Não foi possível gerar o PDF.");

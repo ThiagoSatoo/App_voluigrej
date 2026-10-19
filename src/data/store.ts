@@ -16,7 +16,7 @@ export const emptyState = (): AppState => ({
   attendance: [],
   substitutions: [],
   session: null,
-  settings: { churchName: "", ministryName: "", visibilityPolicy: "privado" },
+  settings: { churchName: "", visibilityPolicy: "privado" },
   opportunities: [],
   dayAvailability: [],
   applications: [],
@@ -24,6 +24,7 @@ export const emptyState = (): AppState => ({
   supervisors: [],
   notifPrefs: {},
   oppCounts: {},
+  navConfig: {},
 });
 
 let state: AppState = emptyState();

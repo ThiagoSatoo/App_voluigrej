@@ -2,6 +2,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { AttendanceStatus, DrawStatus, PeriodStatus } from "@/data/types";
 
+/** Nome fixo do aplicativo. Abaixo dele aparece o nome da instituição (Configurações). */
+export const APP_TITLE = "Sistema de escalas";
+
 /** Data de hoje (YYYY-MM-DD) no fuso de São Paulo. */
 export const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 

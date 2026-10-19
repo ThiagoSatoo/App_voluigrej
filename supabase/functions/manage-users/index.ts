@@ -104,13 +104,14 @@ Deno.serve(async (req) => {
 
   try {
     switch (body.action) {
-      // Supervisor/admin cria voluntário ou responsável. Login e senha inicial = CPF.
+      // Coordenação cria voluntário ou responsável; só o admin cria supervisor. Login e senha inicial = CPF.
       case "create_volunteer": {
         if (!isStaff) return json(req, 403, { error: "Acesso negado." });
         const name = str(body.name, 120);
         const cpf = digits(body.cpf);
         const birth = str(body.birthDate, 10);
-        const role = body.role === "responsavel" ? "responsavel" : "voluntario";
+        const role = body.role === "responsavel" ? "responsavel" : body.role === "supervisor" ? "supervisor" : "voluntario";
+        if (role === "supervisor" && !isAdmin) return json(req, 403, { error: "Somente o administrador cria supervisores." });
         if (name.length < 3) return json(req, 400, { error: "Informe o nome completo." });
         if (!validCpf(cpf)) return json(req, 400, { error: "CPF inválido. Confira os números." });
         if (birth && !/^\d{4}-\d{2}-\d{2}$/.test(birth)) return json(req, 400, { error: "Data de nascimento inválida." });

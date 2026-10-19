@@ -49,13 +49,13 @@ function SettingsPage() {
         </TabsContent>
         <TabsContent value="geral" className="space-y-4">
       <Panel className="space-y-3">
-        {([["churchName", "Nome da igreja"], ["ministryName", "Ministério"]] as const).map(([k, l]) => (
+        {([["churchName", "Nome da instituição (aparece abaixo de “Sistema de escalas”)"]] as const).map(([k, l]) => (
           <div key={k} className="space-y-1.5">
             <Label>{l}</Label>
             <Input value={s[k]} onChange={(e) => setS({ ...s, [k]: e.target.value })} className="h-11 rounded-xl" />
           </div>
         ))}
-        <Button onClick={() => act(repo.updateSettings({ churchName: s.churchName, ministryName: s.ministryName }), "Configurações salvas")}>Salvar</Button>
+        <Button onClick={() => act(repo.updateSettings({ churchName: s.churchName }), "Configurações salvas")}>Salvar</Button>
       </Panel>
       <VisibilityPolicyCard />
       <Panel className="space-y-3">

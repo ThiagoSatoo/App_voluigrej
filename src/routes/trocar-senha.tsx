@@ -14,9 +14,9 @@ export const Route = createFileRoute("/trocar-senha")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Alterar senha — Escala de Voluntários" },
+      { title: "Alterar senha — Sistema de escalas" },
       { name: "description", content: "Defina uma nova senha de acesso." },
-      { property: "og:title", content: "Alterar senha — Escala de Voluntários" },
+      { property: "og:title", content: "Alterar senha — Sistema de escalas" },
       { property: "og:description", content: "Defina uma nova senha de acesso." },
     ],
   }),

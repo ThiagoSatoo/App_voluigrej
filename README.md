@@ -1,4 +1,4 @@
-# Escala de Voluntários
+# Sistema de escalas
 
 Aplicativo web instalável (PWA), pensado para o celular, que organiza a escala de cerca de 60 voluntários de uma igreja. Ele cobre todo o ciclo: disponibilidade mensal, sorteio justo, publicação da escala, presença, substituições e vagas avulsas.
 
@@ -15,13 +15,15 @@ Aplicativo web instalável (PWA), pensado para o celular, que organiza a escala 
   - **Privado:** cada voluntário vê só a própria escala.
   - **Mesmo turno:** vê quem está no mesmo turno ou vaga que ele.
   - **Escala geral:** vê todos os turnos com os nomes, mas o app não tem tela de agenda individual de outra pessoa.
+- **Equipe** numa lista só (admin, supervisores, responsáveis e voluntários), uma linha por pessoa com nome, perfil, nascimento, telefone e CPF, além de busca e filtros.
+- **Admin** (só o administrador): liga e desliga, com um botão por aba, o que aparece no menu do supervisor e no do voluntário/responsável. Aba desligada some do menu e também fica bloqueada pelo endereço.
 - **Relatórios** em PDF e **histórico** completo.
 
 ## Perfis de acesso
 
 | Perfil | Como entra | O que pode fazer |
 | --- | --- | --- |
-| **Admin** (dono do app) | CPF + senha | Tudo o que o supervisor faz, mais criar, desativar e alterar a senha de supervisores. Não pode ser desativado. |
+| **Admin** (dono do app) | CPF + senha | Tudo o que o supervisor faz, mais gerenciar supervisores (criar, editar, desativar, alterar senha, promover ou rebaixar) e controlar as abas de cada perfil na tela **Admin**. Não pode ser desativado. |
 | **Supervisor** | CPF + senha | Cuida do app no dia a dia: voluntários, períodos, sorteio, escala, presença, vagas, relatórios e configurações. Define quem é responsável por cada turno, dia ou vaga. |
 | **Responsável** | CPF + senha | É um voluntário com uma área extra, **Turnos**. Lá ele vê a equipe e os contatos **apenas** dos turnos e vagas que lhe foram atribuídos, marca presença, faz substituições e gerencia as vagas desses turnos. Continua podendo ser escalado normalmente. |
 | **Voluntário** | CPF + senha | Vê o próprio perfil e a própria escala, informa disponibilidade, candidata-se a vagas e altera a foto e a senha. Dos colegas de turno, vê só o nome e a foto. |

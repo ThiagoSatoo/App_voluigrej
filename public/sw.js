@@ -1,4 +1,4 @@
-/* Service worker da Escala de Voluntários.
+/* Service worker do Sistema de escalas.
  * Segurança: guarda SOMENTE os arquivos do próprio app (HTML, JS, CSS, ícones).
  * Nunca guarda respostas do Supabase (dados pessoais, fotos, login) nem pedidos que não sejam GET.
  */

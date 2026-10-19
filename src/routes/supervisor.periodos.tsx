@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { ResponsavelSelect } from "@/components/app/ResponsavelSelect";
+import { OpportunityManager } from "@/components/app/OpportunityManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { act } from "@/lib/act";
 import { sortNeeds, sortPeriods } from "@/data/selectors";
 import type { Period, PeriodStatus } from "@/data/types";
@@ -23,14 +25,29 @@ export const Route = createFileRoute("/supervisor/periodos")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Períodos — Painel do Supervisor" },
-      { name: "description", content: "Crie períodos mensais e defina as necessidades de cada data e horário." },
-      { property: "og:title", content: "Períodos — Painel do Supervisor" },
-      { property: "og:description", content: "Crie períodos mensais e defina as necessidades." },
+      { title: "Períodos e necessidades — Painel do Supervisor" },
+      { name: "description", content: "Escala mensal (períodos) e vagas avulsas (necessidades) em um só lugar." },
     ],
   }),
-  component: PeriodsPage,
+  component: () => <SchedulingPage tab="mensal" />,
 });
+
+/** Períodos (escala mensal) e Necessidades (vagas avulsas) juntos, em abas. */
+export function SchedulingPage({ tab: initial }: { tab: "mensal" | "vagas" }) {
+  const [tab, setTab] = useState(initial);
+  return (
+    <div>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <TabsList className="mb-4 grid h-11 w-full max-w-md grid-cols-2 rounded-xl">
+          <TabsTrigger value="mensal" className="rounded-lg">Escala mensal</TabsTrigger>
+          <TabsTrigger value="vagas" className="rounded-lg">Vagas avulsas</TabsTrigger>
+        </TabsList>
+        <TabsContent value="mensal"><PeriodsPage /></TabsContent>
+        <TabsContent value="vagas"><OpportunityManager scope="all" /></TabsContent>
+      </Tabs>
+    </div>
+  );
+}
 
 const NEXT_ACTION: Partial<Record<PeriodStatus, { label: string; to: PeriodStatus; confirm: string }>> = {
   rascunho: { label: "Abrir disponibilidade", to: "aberta", confirm: "Os voluntários poderão informar disponibilidade para este período." },
@@ -47,7 +64,7 @@ function PeriodsPage() {
 
   return (
     <div>
-      <PageHeader title="Períodos" subtitle="Cada mês tem suas próprias datas, horários e vagas." actions={<Button onClick={() => setCreating(true)}><CalendarPlus /> Novo período</Button>} />
+      <PageHeader title="Escala mensal" subtitle="Cada mês tem suas próprias datas e horários. Os voluntários informam disponibilidade e o sorteio monta a escala." actions={<Button onClick={() => setCreating(true)}><CalendarPlus /> Novo período</Button>} />
       <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
         {periods.map((p) => (
           <button

@@ -29,8 +29,8 @@ export function OpportunityManager({ scope = "all" }: { scope?: "all" | "mine" }
   return (
     <div>
       <PageHeader
-        title={scope === "mine" ? "Vagas que você cuida" : "Necessidades"}
-        subtitle={scope === "mine" ? "Crie vagas para os seus turnos e confirme quem vai servir." : "Crie apenas os dias em que precisa de voluntários."}
+        title={scope === "mine" ? "Vagas que você cuida" : "Vagas avulsas"}
+        subtitle={scope === "mine" ? "Crie vagas para os seus turnos e confirme quem vai servir." : "Dias extras, fora da escala mensal: os voluntários se candidatam e você confirma quem vai servir."}
         actions={<Button onClick={() => setCreating(true)}><Plus /> Nova necessidade</Button>} />
       <div className="mb-4 flex flex-wrap gap-2 text-xs">
         <Pill tone="destructive">Abaixo do mínimo</Pill>

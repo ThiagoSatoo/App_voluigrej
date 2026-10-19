@@ -43,7 +43,7 @@ const empty = (): AppState => ({
   attendance: [],
   substitutions: [],
   session: null,
-  settings: { churchName: "", ministryName: "", visibilityPolicy: "privado" },
+  settings: { churchName: "", visibilityPolicy: "privado" },
   opportunities: [],
   dayAvailability: [],
   applications: [],
@@ -51,6 +51,7 @@ const empty = (): AppState => ({
   supervisors: [],
   notifPrefs: {},
   oppCounts: {},
+  navConfig: {},
 });
 
 export async function loadState(): Promise<AppState> {
@@ -68,7 +69,7 @@ export async function loadState(): Promise<AppState> {
 
   const session: Session = { role: meRow.role, userId: uid, name: meRow.name, mustChangePassword: meRow.must_change_password };
 
-  const [profiles, details, settings, periods, needs, avail, draws, slots, picks, att, subs, opps, dayAv, apps, notifs, prefs, counts, oppCounts] =
+  const [profiles, details, settings, periods, needs, avail, draws, slots, picks, att, subs, opps, dayAv, apps, notifs, prefs, counts, oppCounts, nav] =
     await Promise.all([
       fetchAll("profiles"),
       fetchAll("volunteer_details"),
@@ -88,6 +89,7 @@ export async function loadState(): Promise<AppState> {
       fetchAll("notif_prefs"),
       supabase.rpc("scale_counts"),
       supabase.rpc("opportunity_counts"),
+      supabase.from("nav_config").select("config").maybeSingle(),
     ]);
 
   // Fotos ficam em bucket privado: geramos links temporários (1h) só das que o usuário pode ver.
@@ -132,6 +134,9 @@ export async function loadState(): Promise<AppState> {
       name: p.name,
       username: p.username ?? "",
       cpf: detailById.get(p.id)?.cpf ?? "",
+      phone: detailById.get(p.id)?.phone ?? "",
+      email: detailById.get(p.id)?.email ?? "",
+      birthDate: detailById.get(p.id)?.birth_date ?? "",
       role: p.role,
       status: p.status,
       photoUrl: p.photo_path ? photoUrl.get(p.photo_path) : undefined,
@@ -181,7 +186,6 @@ export async function loadState(): Promise<AppState> {
     session,
     settings: {
       churchName: settings.data?.church_name ?? "",
-      ministryName: settings.data?.ministry_name ?? "",
       visibilityPolicy: settings.data?.visibility_policy ?? "privado",
     },
     volunteers,
@@ -216,6 +220,7 @@ export async function loadState(): Promise<AppState> {
       read: n.read,
     })),
     notifPrefs: prefMap,
+    navConfig: (nav.data?.config ?? {}) as AppState["navConfig"],
     oppCounts: Object.fromEntries(((oppCounts.data ?? []) as Row[]).map((c) => [c.opportunity_id, c.active])),
   };
 }

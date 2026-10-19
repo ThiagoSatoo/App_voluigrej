@@ -2,7 +2,8 @@ import { validTimeRange } from "@/lib/time";
 import { AVATAR_BUCKET, cpfLogin, friendlyError, staffLogin, supabase } from "@/lib/supabase";
 import { today, validCpf } from "@/lib/format";
 import { getState, refresh } from "./store";
-import type { AttendanceStatus, AvailabilityValue, Draw, DrawPick, Need, NotifType, PeriodStatus, Settings, Volunteer } from "./types";
+import type { TeamRole } from "./selectors";
+import type { AppState, AttendanceStatus, AvailabilityValue, Draw, DrawPick, Need, NotifType, PeriodStatus, Settings, Volunteer } from "./types";
 
 /**
  * Camada de acesso a dados. As telas só alteram dados por aqui.
@@ -95,8 +96,9 @@ export const repo = {
   },
 
   // ---------- Pessoas (contas criadas no servidor; login e senha inicial = CPF) ----------
+  /** Cria ou edita qualquer pessoa da equipe. Supervisor só pode ser criado/definido pelo admin (o servidor confere). */
   async saveVolunteer(
-    data: Pick<Volunteer, "name" | "cpf" | "phone" | "email" | "birthDate"> & { id?: string; photo?: Blob | null; role?: "voluntario" | "responsavel" },
+    data: Pick<Volunteer, "name" | "cpf" | "phone" | "email" | "birthDate"> & { id?: string; photo?: Blob | null; role?: TeamRole },
   ): Promise<Result> {
     const cpf = data.cpf.replace(/\D/g, "");
     if (data.name.trim().length < 3) return fail("Informe o nome completo.");
@@ -104,13 +106,14 @@ export const repo = {
     if (data.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.birthDate)) return fail("Data de nascimento inválida.");
     if (data.birthDate && data.birthDate > today()) return fail("A data de nascimento não pode ser futura.");
     const s = getState();
-    const dup = [...s.volunteers, ...s.supervisors].find((v) => v.cpf === cpf && v.id !== data.id);
+    const everyone = [...s.volunteers, ...s.supervisors];
+    const dup = everyone.find((v) => v.cpf === cpf && v.id !== data.id);
     if (dup) return fail("Já existe uma pessoa com este CPF.");
     const payload = { name: data.name.trim(), cpf, phone: data.phone.trim(), email: data.email.trim(), birthDate: data.birthDate || null };
 
     if (data.id) {
-      const current = s.volunteers.find((v) => v.id === data.id);
-      if (current && current.cpf !== cpf) {
+      const current = everyone.find((v) => v.id === data.id);
+      if (current && current.cpf && current.cpf !== cpf) {
         const r = await manageUsers({ action: "change_cpf", userId: data.id, cpf });
         if (!r.ok) return r;
       }
@@ -118,8 +121,8 @@ export const repo = {
         supabase.rpc("staff_update_volunteer", { p_id: data.id, p_name: payload.name, p_phone: payload.phone, p_email: payload.email, p_birth: payload.birthDate }),
       );
       if (!r.ok) return r;
-      if (data.role && current && current.role !== data.role) {
-        const rr = await repo.setVolunteerRole(data.id, data.role);
+      if (data.role && current && current.role !== data.role && current.role !== "admin") {
+        const rr = await repo.setUserRole(data.id, data.role);
         if (!rr.ok) return rr;
       }
       if (data.photo !== undefined) return repo.setPhoto(data.id, data.photo);
@@ -130,6 +133,10 @@ export const repo = {
     if (!r.ok) return r;
     if (data.photo) await repo.setPhoto(r.id, data.photo);
     return ok;
+  },
+
+  async setUserRole(id: string, role: TeamRole): Promise<Result> {
+    return run(() => supabase.rpc("set_user_role", { p_id: id, p_role: role }));
   },
 
   /** Somente o admin cria supervisores. */
@@ -165,8 +172,9 @@ export const repo = {
   },
 
   async toggleVolunteer(id: string): Promise<Result> {
-    const v = getState().volunteers.find((x) => x.id === id);
-    if (!v) return fail("Voluntário não encontrado.");
+    const s = getState();
+    const v = [...s.volunteers, ...s.supervisors].find((x) => x.id === id);
+    if (!v) return fail("Pessoa não encontrada.");
     return repo.setUserStatus(id, v.status === "ativo" ? "inativo" : "ativo");
   },
 
@@ -404,11 +412,25 @@ export const repo = {
     return run(() => supabase.rpc("confirm_selection", { p_opp: opportunityId, p_selected: selectedIds }));
   },
 
+  // ---------- Abas do menu (só admin; o banco confere) ----------
+  async setNavConfig(config: AppState["navConfig"]): Promise<Result> {
+    return run(() => supabase.from("nav_config").update({ config, updated_at: new Date().toISOString() }).eq("id", 1));
+  },
+
+  /** Nome da instituição para a tela de login (antes de entrar). */
+  async publicAppName(): Promise<string> {
+    try {
+      const { data } = await supabase.rpc("public_app_name");
+      return typeof data === "string" ? data : "";
+    } catch {
+      return "";
+    }
+  },
+
   // ---------- Configurações ----------
   async updateSettings(patch: Partial<Settings>): Promise<Result> {
     const row: Record<string, string> = {};
     if (patch.churchName !== undefined) row["church_name"] = patch.churchName.trim().slice(0, 120);
-    if (patch.ministryName !== undefined) row["ministry_name"] = patch.ministryName.trim().slice(0, 120);
     if (patch.visibilityPolicy !== undefined) row["visibility_policy"] = patch.visibilityPolicy;
     return run(() => supabase.from("app_settings").update(row).eq("id", 1));
   },

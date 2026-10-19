@@ -1,7 +1,7 @@
 {
-  "name": "Escala de Voluntários",
-  "short_name": "Escala",
-  "description": "Disponibilidade, sorteio, escala e presença dos voluntários da igreja.",
+  "name": "Sistema de escalas",
+  "short_name": "Escalas",
+  "description": "Disponibilidade, sorteio, escala e presença da equipe de voluntários.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -10,11 +10,34 @@
   "lang": "pt-BR",
   "background_color": "#f7f3ec",
   "theme_color": "#2f6b5f",
-  "categories": ["productivity", "lifestyle"],
+  "categories": [
+    "productivity",
+    "lifestyle"
+  ],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { repo } from "@/data/repository";
 import { useStore } from "@/data/store";
-import { formatCpfInput } from "@/lib/format";
+import { APP_TITLE, formatCpfInput } from "@/lib/format";
 import { supabaseConfigured } from "@/lib/supabase";
 import { InstallAppCard } from "@/components/app/InstallAppCard";
 
@@ -16,9 +16,9 @@ export const Route = createFileRoute("/")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Entrar — Escala de Voluntários" },
+      { title: "Entrar — Sistema de escalas" },
       { name: "description", content: "Acesse a escala de voluntários: disponibilidade, sorteio, escala e presença." },
-      { property: "og:title", content: "Entrar — Escala de Voluntários" },
+      { property: "og:title", content: "Entrar — Sistema de escalas" },
       { property: "og:description", content: "Acesse a escala de voluntários da igreja." },
     ],
   }),
@@ -32,6 +32,10 @@ function Login() {
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [org, setOrg] = useState("");
+  useEffect(() => {
+    void repo.publicAppName().then(setOrg);
+  }, []);
 
   useEffect(() => {
     if (!hydrated || !state.session) return;
@@ -58,7 +62,8 @@ function Login() {
           <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-gradient-hero text-primary-foreground shadow-elegant">
             <HeartHandshake className="h-8 w-8" />
           </div>
-          <h1 className="font-display text-3xl font-semibold">Escala de Voluntários</h1>
+          <h1 className="font-display text-3xl font-semibold">{APP_TITLE}</h1>
+          {org ? <p className="mt-1 text-base font-medium text-foreground/80">{org}</p> : null}
           <p className="mt-2 text-sm text-muted-foreground">Entre com o acesso fornecido pela coordenação.</p>
         </div>
 
