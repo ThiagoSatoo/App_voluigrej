@@ -1,6 +1,7 @@
 import { fmtTimeRange } from "@/lib/time";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { AlertCircle, CalendarDays, CheckCircle2, ChevronRight, ClipboardCheck, Shuffle, Target, UserCheck, Users } from "lucide-react";
+import { MyCpfCard } from "@/components/app/MyCpfCard";
 import { useStore } from "@/data/store";
 import { activeVolunteers, availabilityPeriod, hasResponded, latestDraw, nextScheduledNeed } from "@/data/selectors";
 import { PageHeader, Panel, Pill, StatCard } from "@/components/app/common";
@@ -37,6 +38,15 @@ function Dashboard() {
     <div className="space-y-6">
       <PageHeader title={`Olá, ${state.supervisors.find((x) => x.id === state.session?.userId)?.name ?? state.session?.name ?? ""}`} subtitle={`${state.settings.ministryName} · ${state.settings.churchName}`} />
       <SupervisorAlerts />
+      {(() => {
+        const me = state.supervisors.find((x) => x.id === state.session?.userId);
+        return me && !me.cpf ? (
+          <Panel className="space-y-2">
+            <p className="font-semibold">Falta um passo: seu CPF</p>
+            <MyCpfCard />
+          </Panel>
+        ) : null;
+      })()}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard icon={Users} label="Total de voluntários" value={state.volunteers.length} />

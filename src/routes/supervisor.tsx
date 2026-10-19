@@ -30,7 +30,7 @@ export const Route = createFileRoute("/supervisor")({
 
 const nav = [
   { to: "/supervisor", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/supervisor/voluntarios", label: "Voluntários", icon: Users },
+  { to: "/supervisor/voluntarios", label: "Equipe", icon: Users },
   { to: "/supervisor/periodos", label: "Períodos", icon: CalendarRange },
   { to: "/supervisor/necessidades", label: "Necessidades", icon: ClipboardList },
   { to: "/supervisor/disponibilidades", label: "Disponibilidades", icon: ClipboardCheck },

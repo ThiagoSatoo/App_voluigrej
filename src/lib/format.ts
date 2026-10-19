@@ -23,6 +23,18 @@ export const formatCpfInput = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
   return d.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 };
+/** CPF com 11 dígitos e dígitos verificadores corretos. */
+export function validCpf(input: string) {
+  const cpf = input.replace(/\D/g, "");
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  const dv = (len: number) => {
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += Number(cpf[i]) * (len + 1 - i);
+    const r = (sum * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  return dv(9) === Number(cpf[9]) && dv(10) === Number(cpf[10]);
+}
 export const firstName = (n: string) => n.split(" ")[0];
 
 export const PERIOD_STATUS: Record<PeriodStatus, { label: string; tone: Tone }> = {

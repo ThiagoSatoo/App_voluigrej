@@ -1,6 +1,6 @@
 import { validTimeRange } from "@/lib/time";
 import { AVATAR_BUCKET, cpfLogin, friendlyError, staffLogin, supabase } from "@/lib/supabase";
-import { today } from "@/lib/format";
+import { today, validCpf } from "@/lib/format";
 import { getState, refresh } from "./store";
 import type { AttendanceStatus, AvailabilityValue, Draw, DrawPick, Need, NotifType, PeriodStatus, Settings, Volunteer } from "./types";
 
@@ -52,21 +52,22 @@ const myName = () => getState().session?.name ?? "";
 
 export const repo = {
   // ---------- Autenticação ----------
-  async loginVolunteer(cpf: string, password: string): Promise<Result & { mustChange?: boolean }> {
-    const digits = cpf.replace(/\D/g, "");
-    if (digits.length !== 11) return fail("Informe um CPF com 11 dígitos.");
-    return repo._login(cpfLogin(digits), password);
-  },
-
-  async loginStaff(username: string, password: string): Promise<Result & { mustChange?: boolean }> {
-    if (!/^[a-z0-9._-]{3,32}$/i.test(username.trim())) return fail("Usuário ou senha inválidos.");
-    return repo._login(staffLogin(username), password);
+  /** Login de todos é o CPF (só números). Usuários antigos da coordenação ainda entram pelo nome de usuário. */
+  async login(identifier: string, password: string): Promise<Result & { mustChange?: boolean }> {
+    const id = identifier.trim();
+    const cpf = id.replace(/\D/g, "");
+    if (/[a-z]/i.test(id)) {
+      if (!/^[a-z0-9._-]{3,32}$/i.test(id)) return fail("CPF ou senha inválidos.");
+      return repo._login(staffLogin(id), password);
+    }
+    if (cpf.length !== 11) return fail("Informe o CPF com 11 dígitos.");
+    return repo._login(cpfLogin(cpf), password);
   },
 
   async _login(email: string, password: string): Promise<Result & { mustChange?: boolean }> {
     if (!password) return fail("Informe a senha.");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return fail(friendlyError(error));
+    if (error) return fail(friendlyError(error).replace("Login ou senha", "CPF ou senha"));
     await refresh();
     const s = getState().session;
     if (!s) return fail("Seu acesso está desativado. Fale com a coordenação.");
@@ -84,6 +85,7 @@ export const repo = {
     const { data } = await supabase.auth.getUser();
     const email = data.user?.email;
     if (!email) return fail("Sessão expirada. Entre novamente.");
+    if (next.replace(/\D/g, "") === email.split("@")[0]) return fail("A nova senha não pode ser o seu CPF.");
     // Confirma a senha atual antes de trocar.
     const check = await supabase.auth.signInWithPassword({ email, password: current });
     if (check.error) return fail("Senha atual incorreta.");
@@ -92,21 +94,22 @@ export const repo = {
     return run(() => supabase.rpc("password_changed"));
   },
 
-  // ---------- Pessoas (contas criadas no servidor) ----------
+  // ---------- Pessoas (contas criadas no servidor; login e senha inicial = CPF) ----------
   async saveVolunteer(
-    data: Pick<Volunteer, "name" | "cpf" | "phone" | "email" | "birthDate"> & { id?: string; photo?: Blob | null },
-  ): Promise<Result & { tempPassword?: string }> {
+    data: Pick<Volunteer, "name" | "cpf" | "phone" | "email" | "birthDate"> & { id?: string; photo?: Blob | null; role?: "voluntario" | "responsavel" },
+  ): Promise<Result> {
     const cpf = data.cpf.replace(/\D/g, "");
     if (data.name.trim().length < 3) return fail("Informe o nome completo.");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.birthDate ?? "")) return fail("Informe a data de nascimento.");
-    if (data.birthDate > today()) return fail("A data de nascimento não pode ser futura.");
-    if (cpf.length !== 11) return fail("CPF deve ter 11 dígitos.");
-    const dup = getState().volunteers.find((v) => v.cpf === cpf && v.id !== data.id);
-    if (dup) return fail("Já existe um voluntário com este CPF.");
-    const payload = { name: data.name.trim(), cpf, phone: data.phone.trim(), email: data.email.trim(), birthDate: data.birthDate };
+    if (!validCpf(cpf)) return fail("CPF inválido. Confira os números.");
+    if (data.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.birthDate)) return fail("Data de nascimento inválida.");
+    if (data.birthDate && data.birthDate > today()) return fail("A data de nascimento não pode ser futura.");
+    const s = getState();
+    const dup = [...s.volunteers, ...s.supervisors].find((v) => v.cpf === cpf && v.id !== data.id);
+    if (dup) return fail("Já existe uma pessoa com este CPF.");
+    const payload = { name: data.name.trim(), cpf, phone: data.phone.trim(), email: data.email.trim(), birthDate: data.birthDate || null };
 
     if (data.id) {
-      const current = getState().volunteers.find((v) => v.id === data.id);
+      const current = s.volunteers.find((v) => v.id === data.id);
       if (current && current.cpf !== cpf) {
         const r = await manageUsers({ action: "change_cpf", userId: data.id, cpf });
         if (!r.ok) return r;
@@ -115,28 +118,45 @@ export const repo = {
         supabase.rpc("staff_update_volunteer", { p_id: data.id, p_name: payload.name, p_phone: payload.phone, p_email: payload.email, p_birth: payload.birthDate }),
       );
       if (!r.ok) return r;
+      if (data.role && current && current.role !== data.role) {
+        const rr = await repo.setVolunteerRole(data.id, data.role);
+        if (!rr.ok) return rr;
+      }
       if (data.photo !== undefined) return repo.setPhoto(data.id, data.photo);
       return ok;
     }
 
-    const r = await manageUsers<{ id: string; tempPassword: string }>({ action: "create_volunteer", ...payload });
+    const r = await manageUsers<{ id: string }>({ action: "create_volunteer", ...payload, role: data.role ?? "voluntario" });
     if (!r.ok) return r;
     if (data.photo) await repo.setPhoto(r.id, data.photo);
-    return { ok: true, tempPassword: r.tempPassword };
+    return ok;
   },
 
-  async createStaff(name: string, username: string): Promise<Result & { tempPassword?: string }> {
+  /** Somente o admin cria supervisores. */
+  async createStaff(name: string, cpfInput: string): Promise<Result> {
+    const cpf = cpfInput.replace(/\D/g, "");
     if (name.trim().length < 3) return fail("Informe o nome completo.");
-    if (!/^[a-z0-9._-]{3,32}$/.test(username.trim().toLowerCase())) return fail("Usuário: 3 a 32 letras minúsculas, números, ponto, hífen ou _.");
-    const r = await manageUsers<{ tempPassword: string }>({ action: "create_staff", name: name.trim(), username: username.trim().toLowerCase() });
-    if (!r.ok) return r;
-    return { ok: true, tempPassword: r.tempPassword };
+    if (!validCpf(cpf)) return fail("CPF inválido. Confira os números.");
+    return manageUsers({ action: "create_staff", name: name.trim(), cpf });
   },
 
-  async resetPassword(userId: string): Promise<Result & { tempPassword?: string }> {
-    const r = await manageUsers<{ tempPassword: string }>({ action: "reset_password", userId });
-    if (!r.ok) return r;
-    return { ok: true, tempPassword: r.tempPassword };
+  /** Volta a senha para o CPF; a pessoa troca no próximo acesso. */
+  async resetPassword(userId: string): Promise<Result> {
+    return manageUsers({ action: "reset_password", userId });
+  },
+
+  /** A coordenação define uma senha nova para a pessoa. */
+  async setPassword(userId: string, password: string, mustChange: boolean): Promise<Result> {
+    if (password.length < 8) return fail("A senha deve ter pelo menos 8 caracteres.");
+    if (password.length > 72) return fail("A senha deve ter no máximo 72 caracteres.");
+    return manageUsers({ action: "set_password", userId, password, mustChange });
+  },
+
+  /** Contas antigas da coordenação (criadas com usuário) passam a entrar pelo CPF. */
+  async setMyCpf(cpfInput: string): Promise<Result> {
+    const cpf = cpfInput.replace(/\D/g, "");
+    if (!validCpf(cpf)) return fail("CPF inválido. Confira os números.");
+    return manageUsers({ action: "set_my_cpf", cpf });
   },
 
   /** Ativa/desativa (bloqueia o login, preserva o histórico). */

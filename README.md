@@ -16,12 +16,14 @@ Aplicativo web instalável (PWA), pensado para o celular, que organiza a escala 
 
 | Perfil | Como entra | O que pode fazer |
 | --- | --- | --- |
-| **Admin** (dono do app) | Usuário + senha | Tudo o que o supervisor faz, mais criar, desativar e redefinir a senha de supervisores. Não pode ser desativado. |
-| **Supervisor** | Usuário + senha | Cuida do app no dia a dia: voluntários, períodos, sorteio, escala, presença, vagas, relatórios e configurações. Define quem é responsável por cada turno, dia ou vaga. |
+| **Admin** (dono do app) | CPF + senha | Tudo o que o supervisor faz, mais criar, desativar e alterar a senha de supervisores. Não pode ser desativado. |
+| **Supervisor** | CPF + senha | Cuida do app no dia a dia: voluntários, períodos, sorteio, escala, presença, vagas, relatórios e configurações. Define quem é responsável por cada turno, dia ou vaga. |
 | **Responsável** | CPF + senha | É um voluntário com uma área extra, **Turnos**. Lá ele vê a equipe e os contatos **apenas** dos turnos e vagas que lhe foram atribuídos, marca presença, faz substituições e gerencia as vagas desses turnos. Continua podendo ser escalado normalmente. |
 | **Voluntário** | CPF + senha | Vê o próprio perfil e a própria escala, informa disponibilidade, candidata-se a vagas e altera a foto e a senha. Dos colegas de turno, vê só o nome e a foto. |
 
-As contas são criadas pela coordenação, porque não existe cadastro público. Quem recebe uma senha provisória é obrigado a criar uma senha própria no primeiro acesso. Se alguém esquecer a senha, a coordenação gera uma nova senha provisória.
+**Login de todos é o CPF, só com números.** As contas são criadas pela coordenação na página **Equipe**, porque não existe cadastro público. A **senha inicial é o próprio CPF**, e no primeiro acesso a pessoa é obrigada a criar uma senha própria (que não pode ser o CPF). Na página Equipe, a coordenação também altera a senha de alguém de duas formas: **voltar para o CPF** (a pessoa troca no próximo acesso) ou **digitar uma senha nova**. O app confere os dígitos verificadores do CPF para evitar erro de digitação no login.
+
+> Como o CPF não é segredo, a conta fica vulnerável até a pessoa trocar a senha inicial. Peça que cada um entre e troque a senha logo depois de ser cadastrado. A página Equipe mostra quem ainda está "Aguardando troca da senha inicial".
 
 ## Segurança
 
@@ -29,12 +31,12 @@ O link do app é compartilhado com todos os voluntários, então a segurança n�
 
 - **Regras de acesso no banco (RLS).** Todas as tabelas têm Row Level Security. Cada consulta só devolve o que o perfil logado pode ver, mesmo que alguém use as ferramentas do navegador ou chame a API diretamente. Dados pessoais (CPF, telefone, e-mail, nascimento) ficam numa tabela separada, visível apenas ao próprio voluntário, à coordenação e ao responsável do turno dele.
 - **Ações sensíveis passam por funções seguras no banco.** É o caso de sorteio, publicação, substituição, candidatura, confirmação de seleção e troca de perfil. Essas funções conferem o perfil antes de agir, e o voluntário não consegue gravar direto nessas tabelas.
-- **Contas gerenciadas no servidor.** Criar contas, redefinir senhas, desativar acessos e trocar CPF é feito por uma Edge Function do Supabase que usa a chave secreta. Essa chave nunca chega ao navegador. Desativar alguém bloqueia o login e corta o acesso aos dados na hora, preservando o histórico.
+- **Contas gerenciadas no servidor.** Criar contas, alterar senhas, desativar acessos e trocar CPF é feito por uma Edge Function do Supabase que usa a chave secreta. Essa chave nunca chega ao navegador. Desativar alguém bloqueia o login e corta o acesso aos dados na hora, preservando o histórico.
 - **Sem acesso anônimo.** Visitantes sem login não leem nada. Uma conta sem perfil ativo também não vê nada, mesmo que exista no sistema de login.
 - **Fotos privadas.** As fotos ficam num bucket privado, com limite de 2 MB e apenas JPG, PNG ou WEBP. São exibidas por links temporários de 1 hora, só para quem pode ver aquela pessoa. O app reduz a foto no aparelho e remove metadados como a localização GPS.
 - **Proteções do navegador.** O site usa uma Content Security Policy com hashes exatos dos scripts (gerada a cada build), HSTS, bloqueio de iframes (contra clickjacking), `nosniff`, Referrer-Policy e Permissions-Policy, configurados em `vercel.json` e `scripts/postbuild.mjs`.
 - **PWA sem vazamento de dados.** O service worker guarda apenas os arquivos do app. Respostas do Supabase (dados pessoais, fotos e login) nunca vão para o cache do aparelho, e os dados ficam só em memória enquanto o app está aberto.
-- **Senhas.** Mínimo de 8 caracteres, com letras e números. A troca exige a senha atual. As senhas provisórias são geradas com aleatoriedade criptográfica e exibidas uma única vez.
+- **Senhas.** A senha pessoal precisa ter no mínimo 8 caracteres, com letras e números, e não pode ser o CPF. A troca exige a senha atual. A senha inicial (o CPF) obriga a troca no primeiro acesso.
 
 ### Configurações a fazer no painel do Supabase
 
@@ -42,7 +44,7 @@ Estas opções não podem ser definidas pelo código e precisam ser ajustadas um
 
 1. **Authentication → Sign In / Providers → desligue "Allow new users to sign up".** Mesmo ligado, um intruso não veria nada (falta o perfil), mas desligar fecha a porta de vez.
 2. **Authentication → Providers → Email → desligue "Confirm email"**, pois os logins internos não recebem e-mail.
-3. **Authentication → Passwords → mínimo de 8 caracteres** e, se disponível no seu plano, **"Leaked password protection"**.
+3. **Authentication → Passwords → mínimo de 8 caracteres** (não marque a exigência de letras, porque a senha inicial é o CPF, só com números) e, se disponível no seu plano, **"Leaked password protection"**.
 4. **Authentication → URL Configuration:** coloque o endereço da Vercel em *Site URL*.
 5. **Edge Functions → manage-users → Secrets:** defina `ALLOWED_ORIGINS` com o endereço do app (ex.: `https://seu-app.vercel.app`) para restringir quem pode chamar a função.
 

@@ -67,11 +67,11 @@ function ChangePassword() {
           <h1 className="font-display text-2xl font-semibold">{session.mustChangePassword ? "Crie sua nova senha" : "Alterar senha"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {session.mustChangePassword
-              ? "Você entrou com uma senha provisória. Por segurança, defina uma senha pessoal para continuar."
+              ? "Você entrou com a senha inicial (seu CPF). Por segurança, crie uma senha pessoal para continuar."
               : "Informe sua senha atual e escolha uma nova."}
           </p>
           <form onSubmit={submit} className="mt-5 space-y-4">
-            <Field id="cur" auto="current-password" label={session.mustChangePassword ? "Senha provisória" : "Senha atual"} value={cur} onChange={setCur} />
+            <Field id="cur" auto="current-password" label={session.mustChangePassword ? "Senha atual (seu CPF, se for o primeiro acesso)" : "Senha atual"} value={cur} onChange={setCur} />
             <Field id="new" auto="new-password" label="Nova senha (mín. 8 caracteres, com letras e números)" value={next} onChange={setNext} />
             <Field id="conf" auto="new-password" label="Confirmar nova senha" value={conf} onChange={setConf} />
             {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}

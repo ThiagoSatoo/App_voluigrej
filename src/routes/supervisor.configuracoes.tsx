@@ -4,6 +4,7 @@ import { Camera, KeyRound, Trash2 } from "lucide-react";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
+import { MyCpfCard } from "@/components/app/MyCpfCard";
 import { PhotoPicker, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
 import { PageHeader, Panel } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ function SettingsPage() {
       </Panel>
       <Panel className="space-y-3">
         <p className="font-semibold">Minha conta</p>
+        <MyCpfCard />
         <MyPhoto />
         <Button variant="outline" onClick={() => navigate({ to: "/trocar-senha" })}><KeyRound /> Alterar minha senha</Button>
       </Panel>

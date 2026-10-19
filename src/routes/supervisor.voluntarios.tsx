@@ -5,9 +5,9 @@ import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
-import { TempPasswordDialog } from "@/components/app/TempPasswordDialog";
+import { PasswordDialog } from "@/components/app/PasswordDialog";
 import type { Volunteer } from "@/data/types";
-import { ConfirmDialog, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
+import { EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PhotoPicker, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,17 +16,18 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { fmtDMY, formatCpfInput } from "@/lib/format";
+import { fmtDMY, formatCpfInput, validCpf } from "@/lib/format";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/supervisor/voluntarios")({
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Voluntários — Painel do Supervisor" },
-      { name: "description", content: "Cadastro e gestão dos voluntários." },
-      { property: "og:title", content: "Voluntários — Painel do Supervisor" },
-      { property: "og:description", content: "Cadastro e gestão dos voluntários." },
+      { title: "Equipe — Painel do Supervisor" },
+      { name: "description", content: "Cadastro de usuários, perfis e senhas da equipe." },
+      { property: "og:title", content: "Equipe — Painel do Supervisor" },
+      { property: "og:description", content: "Cadastro de usuários, perfis e senhas da equipe." },
     ],
   }),
   component: VolunteersPage,
@@ -38,7 +39,7 @@ function VolunteersPage() {
   const [filter, setFilter] = useState<"todos" | "ativo" | "inativo">("todos");
   const [editing, setEditing] = useState<Volunteer | "new" | null>(null);
   const [viewing, setViewing] = useState<string | null>(null);
-  const [temp, setTemp] = useState<{ name: string; login: string; password: string } | null>(null);
+  const [pwFor, setPwFor] = useState<Volunteer | null>(null);
 
   const list = useMemo(
     () =>
@@ -53,9 +54,9 @@ function VolunteersPage() {
   return (
     <div>
       <PageHeader
-        title="Voluntários"
+        title="Equipe"
         subtitle={`${state.volunteers.filter((v) => v.status === "ativo").length} ativos de ${state.volunteers.length}`}
-        actions={<Button onClick={() => setEditing("new")}><Plus /> Novo voluntário</Button>}
+        actions={<Button onClick={() => setEditing("new")}><Plus /> Novo usuário</Button>}
       />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
@@ -90,30 +91,30 @@ function VolunteersPage() {
               </button>
               <div className="flex flex-col items-end gap-2">
                 <Switch title="Ativar/desativar (os dados e o histórico são preservados)" checked={v.status === "ativo"} onCheckedChange={() => { act(repo.toggleVolunteer(v.id), v.status === "ativo" ? "Voluntário desativado" : "Voluntário ativado"); }} aria-label="Ativo" />
-                <Button size="sm" variant="ghost" onClick={() => setEditing(v)}><Pencil /> Editar</Button>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => setPwFor(v)} aria-label={`Alterar senha de ${v.name}`}><KeyRound /> Senha</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditing(v)}><Pencil /> Editar</Button>
+                </div>
               </div>
             </Panel>
           ))}
         </div>
       )}
 
-      <VolunteerForm key={editing === "new" ? "new" : editing?.id ?? "none"} editing={editing} onClose={() => setEditing(null)} onTempPassword={setTemp} />
-      <TempPasswordDialog info={temp} onClose={() => setTemp(null)} />
+      <VolunteerForm key={editing === "new" ? "new" : editing?.id ?? "none"} editing={editing} onClose={() => setEditing(null)} />
+      <PasswordDialog person={pwFor} onClose={() => setPwFor(null)} />
 
       <Sheet open={!!viewed} onOpenChange={(o) => !o && setViewing(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          {viewed && <VolunteerProfile v={viewed} onEdit={() => { setViewing(null); setEditing(viewed); }} onTempPassword={setTemp} />}
+          {viewed && <VolunteerProfile v={viewed} onEdit={() => { setViewing(null); setEditing(viewed); }} onPassword={() => { setViewing(null); setPwFor(viewed); }} />}
         </SheetContent>
       </Sheet>
     </div>
   );
 }
 
-type TempInfo = { name: string; login: string; password: string };
-
-function VolunteerProfile({ v, onEdit, onTempPassword }: { v: Volunteer; onEdit: () => void; onTempPassword: (t: TempInfo) => void }) {
+function VolunteerProfile({ v, onEdit, onPassword }: { v: Volunteer; onEdit: () => void; onPassword: () => void }) {
   const { state } = useStore();
-  const [confirmReset, setConfirmReset] = useState(false);
   const att = state.attendance.filter((a) => a.volunteerId === v.id);
   return (
     <>
@@ -139,7 +140,8 @@ function VolunteerProfile({ v, onEdit, onTempPassword }: { v: Volunteer; onEdit:
         <Row label="Nascimento" value={v.birthDate ? fmtDMY(v.birthDate) : "—"} />
         <Row label="Última escala" value={v.lastScaleDate ? fmtDMY(v.lastScaleDate) : "—"} />
         <Row label="Desde" value={fmtDMY(v.joinedAt)} />
-        <Row label="Acesso" value={v.mustChangePassword ? "Aguardando 1º acesso" : "Senha definida"} />
+        <Row label="Login (CPF)" value={v.cpf} />
+        <Row label="Acesso" value={v.mustChangePassword ? "Aguardando troca da senha inicial" : "Senha própria definida"} />
       </div>
       <label className="mt-4 flex items-center justify-between gap-3 rounded-2xl border p-4">
         <span>
@@ -154,19 +156,8 @@ function VolunteerProfile({ v, onEdit, onTempPassword }: { v: Volunteer; onEdit:
       </label>
       <div className="mt-5 grid gap-2">
         <Button variant="outline" onClick={onEdit}><Pencil /> Editar dados</Button>
-        <Button variant="outline" onClick={() => setConfirmReset(true)}><KeyRound /> Redefinir senha</Button>
+        <Button variant="outline" onClick={onPassword}><KeyRound /> Alterar senha</Button>
       </div>
-      <ConfirmDialog
-        open={confirmReset}
-        onOpenChange={setConfirmReset}
-        title="Redefinir senha?"
-        description={`Será gerada uma senha provisória para ${v.name}, e a troca será exigida no próximo acesso.`}
-        confirmLabel="Redefinir"
-        onConfirm={async () => {
-          const r = await act(repo.resetPassword(v.id));
-          if (r.ok && r.tempPassword) onTempPassword({ name: v.name, login: `CPF ${formatCpfInput(v.cpf)}`, password: r.tempPassword });
-        }}
-      />
     </>
   );
 }
@@ -189,13 +180,14 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function VolunteerForm({ editing, onClose, onTempPassword }: { editing: Volunteer | "new" | null; onClose: () => void; onTempPassword: (t: TempInfo) => void }) {
+function VolunteerForm({ editing, onClose }: { editing: Volunteer | "new" | null; onClose: () => void }) {
   const v = editing && editing !== "new" ? editing : undefined;
   const [name, setName] = useState(v?.name ?? "");
   const [cpf, setCpf] = useState(v?.cpf ?? "");
   const [phone, setPhone] = useState(v?.phone ?? "");
   const [email, setEmail] = useState(v?.email ?? "");
   const [birthDate, setBirthDate] = useState(v?.birthDate ?? "");
+  const [role, setRole] = useState<"voluntario" | "responsavel">(v?.role ?? "voluntario");
   const [photoUrl, setPhotoUrl] = useState(v?.photoUrl);
   const [photo, setPhoto] = useState<Blob | null | undefined>(undefined); // undefined = sem alteração
   const [error, setError] = useState("");
@@ -203,11 +195,10 @@ function VolunteerForm({ editing, onClose, onTempPassword }: { editing: Voluntee
 
   const save = async () => {
     setBusy(true);
-    const r = await repo.saveVolunteer({ id: v?.id, name, cpf, phone, email, birthDate, photo });
+    const r = await repo.saveVolunteer({ id: v?.id, name, cpf, phone, email, birthDate, photo, role });
     setBusy(false);
     if (!r.ok) return setError(r.error);
-    toast.success(v ? "Dados atualizados" : "Voluntário cadastrado");
-    if (!v && r.tempPassword) onTempPassword({ name: name.trim(), login: `CPF ${formatCpfInput(cpf)}`, password: r.tempPassword });
+    toast.success(v ? "Dados atualizados" : "Usuário criado. Login e senha inicial: o CPF (somente números).", { duration: v ? 3000 : 6000 });
     onClose();
   };
 
@@ -215,7 +206,7 @@ function VolunteerForm({ editing, onClose, onTempPassword }: { editing: Voluntee
     <Dialog open={!!editing} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[92vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="font-display">{v ? "Editar voluntário" : "Novo voluntário"}</DialogTitle>
+          <DialogTitle className="font-display">{v ? "Editar usuário" : "Novo usuário"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex items-center gap-4">
@@ -228,14 +219,24 @@ function VolunteerForm({ editing, onClose, onTempPassword }: { editing: Voluntee
               <span className="text-xs text-muted-foreground">Opcional</span>
             </div>
           </div>
+          <F label="CPF (é o login)"><Input inputMode="numeric" autoFocus={!v} placeholder="Somente números" value={formatCpfInput(cpf)} onChange={(e) => setCpf(e.target.value)} className="h-11 rounded-xl" /></F>
+          {cpf.replace(/\D/g, "").length === 11 && !validCpf(cpf) && <p className="-mt-2 text-xs font-medium text-destructive">CPF inválido. Confira os números.</p>}
           <F label="Nome completo"><Input value={name} onChange={(e) => setName(e.target.value)} className="h-11 rounded-xl" /></F>
-          <F label="Data de nascimento *"><Input type="date" required value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="h-11 rounded-xl" /></F>
-          <F label="CPF (login — visível somente aqui)"><Input inputMode="numeric" value={formatCpfInput(cpf)} onChange={(e) => setCpf(e.target.value)} className="h-11 rounded-xl" /></F>
+          <F label="Perfil">
+            <Select value={role} onValueChange={(r) => setRole(r as typeof role)}>
+              <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="voluntario">Voluntário</SelectItem>
+                <SelectItem value="responsavel">Responsável de turno</SelectItem>
+              </SelectContent>
+            </Select>
+          </F>
+          <F label="Data de nascimento (para avisos de aniversário)"><Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="h-11 rounded-xl" /></F>
           <div className="grid gap-4 sm:grid-cols-2">
             <F label="Telefone"><Input value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11 rounded-xl" /></F>
             <F label="E-mail"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl" /></F>
           </div>
-          {!v && <p className="rounded-xl bg-accent-soft p-3 text-xs text-accent-foreground">Ao cadastrar, será gerada uma senha provisória para você entregar ao voluntário. Ele criará a própria senha no primeiro acesso.</p>}
+          {!v && <p className="rounded-xl bg-accent-soft p-3 text-xs text-accent-foreground">O login e a senha inicial serão o CPF (somente números). No primeiro acesso a pessoa é obrigada a criar uma senha própria.</p>}
           {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>
         <DialogFooter className="gap-2">

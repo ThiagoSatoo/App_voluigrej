@@ -131,6 +131,7 @@ export async function loadState(): Promise<AppState> {
       id: p.id,
       name: p.name,
       username: p.username ?? "",
+      cpf: detailById.get(p.id)?.cpf ?? "",
       role: p.role,
       status: p.status,
       photoUrl: p.photo_path ? photoUrl.get(p.photo_path) : undefined,

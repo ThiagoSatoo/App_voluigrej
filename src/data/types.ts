@@ -136,7 +136,8 @@ export interface AppState {
 export interface Staff {
   id: string;
   name: string;
-  username: string;
+  username: string; // contas antigas; o login atual é o CPF
+  cpf: string;
   role: "admin" | "supervisor";
   status: "ativo" | "inativo";
   photoUrl?: string;
