@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 /** Registra o service worker só em produção (evita cache confuso durante o desenvolvimento). */
 export function registerServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator) || !import.meta.env.PROD) return;
-  window.addEventListener("load", () => {
+  const register = () =>
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((e) => console.warn("Service worker não registrado", e));
-  });
+  // O app só roda este código depois de montar a tela; nessa hora o evento "load" quase sempre já passou.
+  if (document.readyState === "complete") void register();
+  else window.addEventListener("load", () => void register(), { once: true });
 }
 
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };

@@ -93,7 +93,7 @@ function SupervisorLayout() {
           <NavList isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+      <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
         <div className="-mt-2 mb-2 hidden justify-end lg:flex"><NotificationBell /></div>
         {blocked ? <EmptyState icon={EyeOff} title="Tela desativada" text="Esta área foi desativada pelo administrador." /> : <Outlet />}
       </main>

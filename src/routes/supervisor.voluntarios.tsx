@@ -89,16 +89,16 @@ function TeamPage() {
       ) : (
         // Uma linha por pessoa. Em telas estreitas a tabela rola para o lado em vez de quebrar a linha.
         <div className="overflow-x-auto rounded-2xl border bg-card shadow-soft">
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-3 py-2 font-semibold">Nome</th>
+                <th className="sticky left-0 z-10 bg-secondary px-3 py-2 font-semibold">Nome</th>
                 <th className="px-3 py-2 font-semibold">Perfil</th>
                 <th className="px-3 py-2 font-semibold">Nascimento</th>
                 <th className="px-3 py-2 font-semibold">Telefone</th>
                 <th className="px-3 py-2 font-semibold">CPF (login)</th>
                 <th className="px-3 py-2 text-center font-semibold">Ativo</th>
-                <th className="px-3 py-2 text-right font-semibold">Ações</th>
+                <th className="px-2 py-2 text-right font-semibold"><span className="sr-only">Ações</span></th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -107,10 +107,10 @@ function TeamPage() {
                 const isMe = m.id === state.session?.userId;
                 return (
                   <tr key={m.id} className={cn("whitespace-nowrap", m.status === "inativo" && "opacity-60")}>
-                    <td className="px-3 py-1.5">
+                    <td className="sticky left-0 z-10 bg-card px-3 py-1.5 shadow-[1px_0_0_var(--border)]">
                       <div className="flex items-center gap-2">
                         <VolunteerAvatar name={m.name} photoUrl={m.photoUrl} size="xs" />
-                        <span className="max-w-56 truncate font-medium">{m.name}</span>
+                        <span className="max-w-36 truncate font-medium sm:max-w-56" title={m.name}>{m.name}</span>
                         {m.status === "ativo" && m.mustChangePassword && <Pill tone="warning" className="text-[10px]">1º acesso</Pill>}
                       </div>
                     </td>
@@ -130,8 +130,8 @@ function TeamPage() {
                     </td>
                     <td className="px-3 py-1.5 text-right">
                       <div className="inline-flex gap-1">
-                        <Button size="sm" variant="ghost" disabled={!manage || !m.cpf} onClick={() => setPwFor(m)} aria-label={`Alterar senha de ${m.name}`}><KeyRound /> Senha</Button>
-                        <Button size="sm" variant="ghost" disabled={!manage && !(isMe && isAdmin)} onClick={() => setEditing(m)}><Pencil /> Editar</Button>
+                        <Button size="sm" variant="ghost" disabled={!manage || !m.cpf} onClick={() => setPwFor(m)} aria-label={`Alterar senha de ${m.name}`} title="Alterar senha"><KeyRound /><span className="hidden 2xl:inline">Senha</span></Button>
+                        <Button size="sm" variant="ghost" disabled={!manage && !(isMe && isAdmin)} onClick={() => setEditing(m)} aria-label={`Editar ${m.name}`} title="Editar"><Pencil /><span className="hidden 2xl:inline">Editar</span></Button>
                       </div>
                     </td>
                   </tr>

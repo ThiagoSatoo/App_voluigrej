@@ -45,7 +45,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 }
 
 export function Panel({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("rounded-2xl border bg-card p-4 shadow-soft sm:p-5", className)}>{children}</div>;
+  return <div className={cn("min-w-0 rounded-2xl border bg-card p-4 shadow-soft sm:p-5", className)}>{children}</div>;
 }
 
 export function StatCard({ icon: Icon, label, value, hint, tone = "primary" }: { icon: LucideIcon; label: string; value: ReactNode; hint?: string; tone?: Tone }) {

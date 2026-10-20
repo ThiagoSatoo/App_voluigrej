@@ -21,7 +21,7 @@ export function SupervisorAlerts() {
           <div className="flex-1 text-sm">
             <p className="font-semibold">{n.message}</p>
             <p className="mt-0.5 text-xs opacity-80">{fmtDateTime(n.createdAt)}</p>
-            <Link to="/supervisor/necessidades" className="mt-1 inline-block text-xs font-bold underline underline-offset-2">Ver necessidades</Link>
+            <Link to="/supervisor/necessidades" className="mt-1 inline-block text-xs font-bold underline underline-offset-2">Ver vagas</Link>
           </div>
           <Button size="sm" variant="ghost" onClick={() => act(repo.markNotificationRead(n.id))} aria-label="Marcar como lida"><Check /></Button>
         </div>

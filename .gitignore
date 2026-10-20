@@ -39,3 +39,7 @@ dist-ssr
 # Supabase CLI
 supabase/.temp
 supabase/.branches
+
+# Teste visual (capturas de tela)
+e2e/shots
+e2e/report.json
