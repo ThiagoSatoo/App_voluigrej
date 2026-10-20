@@ -19,10 +19,11 @@ Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
 - A Edge Function `manage-users` está publicada.
 - O login é por CPF para todos; a senha inicial é o CPF.
 - As telas passaram no teste do `e2e/` (em 360px, 390px e 1280px).
-- O PWA funciona: instala, abre sem internet e não guarda dados pessoais no aparelho.
+- O PWA funciona: instala, abre sem internet, se atualiza sozinho e não guarda dados pessoais no aparelho.
 - **Falta o teste real**: entrar no app publicado, criar usuários e usar no celular.
 - 20/10: a primeira tela do voluntário e do responsável é a **Agenda** (a aba "Início" saiu; `/voluntario` redireciona).
 - 20/10: a aba "Presença" saiu do menu do supervisor; a presença é marcada na **Agenda** (`/supervisor/presenca` redireciona). O responsável continua marcando em "Turnos".
+- 20/10: **atualização automática** (`src/lib/pwa.ts`). Ao abrir o app ou voltar para ele, o app confere se há versão nova e recarrega sozinho. Com o app em uso, mostra "Nova versão do app disponível" e atualiza na próxima vez que a pessoa voltar. Tela de versão antiga que sumiu do servidor também recarrega. Os dados já se atualizavam ao voltar ao app e a cada 2 minutos.
 - 20/10: revisão de saúde. O app carrega só os sorteios em uso (publicados e rascunhos). Saíram 30 componentes visuais, 27 pacotes e o código do fluxo mensal antigo que não eram usados. Pacotes com falhas conhecidas foram atualizados (`bun audit` limpo). Testes novos em `src/test/fixed.test.ts`. Índices novos (migration 17).
 - 20/10: "Supervisor" virou **Coordenador** nas telas (no banco o perfil continua `supervisor`). Botões **Disponível** (voluntário) e **Fixar** (coordenação) nas escalas fixas.
 - 20/10: **Escalas fixas** no ar. "Períodos e necessidades", "Disponibilidades" e "Sorteio" viraram a aba **Escalas** (escalas fixas + vagas avulsas). O voluntário escolhe suas escalas fixas e usa o botão "Indisponível" na aba **Escalas**. Os períodos e sorteios antigos continuam no banco e aparecem na Agenda, no Histórico e nos Relatórios.
