@@ -1,6 +1,52 @@
-# AGENTS.md — contexto do projeto para IAs
+# AGENTS.md — leia primeiro
 
-Leia este arquivo inteiro antes de mudar qualquer coisa. Ele descreve o que o projeto é, como funciona e o que não pode ser quebrado.
+Este é o único arquivo de contexto do projeto, para pessoas e IAs.
+Ele diz o objetivo, onde paramos, o que falta e as regras.
+Leia tudo antes de mudar qualquer coisa.
+Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
+
+## Objetivo
+
+- Colocar no ar um app seguro para os voluntários instalarem no celular.
+- O link da Vercel será enviado a todos os voluntários.
+- Por isso, a segurança não pode depender de esconder o endereço: ela fica no banco.
+- O app precisa ser simples de usar no celular, por pessoas sem conhecimento técnico.
+
+## Onde paramos (19/10/2026)
+
+- O app está pronto e publicado na Vercel a partir da branch `main`.
+- O banco no Supabase está criado, com as regras de acesso aplicadas (migrations 1 a 8).
+- A Edge Function `manage-users` está publicada.
+- O login é por CPF para todos; a senha inicial é o CPF.
+- As telas passaram no teste do `e2e/` (20 telas, em 360px, 390px e 1280px).
+- O PWA funciona: instala, abre sem internet e não guarda dados pessoais no aparelho.
+- **Falta o teste real**: entrar no app publicado, criar usuários e usar no celular.
+
+## O que falta
+
+Feito pelo dono, no painel do Supabase (não dá para fazer pelo código):
+- Authentication: desligar "Allow new users to sign up".
+- Authentication → Email: desligar "Confirm email".
+- Authentication → Passwords: mínimo de 8 caracteres, **sem** exigir letras (a senha inicial é o CPF, só números).
+- Ligar "Leaked password protection", se o plano permitir.
+- Apagar as contas de teste `52601815906@cpf…` e `08301661305@cpf…` (já estão bloqueadas).
+- Desligar a extensão `pg_net` (Database → Extensions); ela foi usada só para testes.
+
+Feito pelo dono, no app:
+- Entrar com o usuário `admin` (senha provisória combinada com o dono) e criar a senha definitiva.
+- Em Configurações → Minha conta, cadastrar o CPF do admin.
+- Em Configurações, trocar o "Nome da instituição" (hoje está "Minha Igreja").
+- Escolher a política "Quem vê a escala" (hoje está `mesmo_turno`).
+
+Feito por quem programa, depois que houver o link da Vercel:
+- Definir o segredo `ALLOWED_ORIGINS` da Edge Function com o endereço da Vercel.
+- Corrigir o que aparecer no teste real.
+
+Ideias sugeridas ao dono, ainda não pedidas:
+- Política "mesmo dia" (vê todos que servem no mesmo dia).
+- Mostrar só o primeiro nome e esconder fotos dos colegas.
+- Esconder escalas passadas dos colegas.
+- Fazer a tela Admin também tirar a permissão no banco, além de esconder a aba.
 
 ## O que é
 
@@ -10,7 +56,7 @@ Leia este arquivo inteiro antes de mudar qualquer coisa. Ele descreve o que o pr
 - São cerca de 60 voluntários.
 - O idioma da interface é português do Brasil.
 - O fuso horário é America/Sao_Paulo.
-- O dono do projeto é o admin. Ele não é programador: explique em linguagem simples.
+- O dono do projeto é o admin. Ele não é programador: explique em linguagem simples e em português.
 
 ## O que o app faz
 
