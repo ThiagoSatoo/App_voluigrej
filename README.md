@@ -2,6 +2,8 @@
 
 Aplicativo web instalável (PWA), pensado para o celular, que organiza a escala de cerca de 60 voluntários de uma igreja. Ele cobre todo o ciclo: disponibilidade mensal, sorteio justo, publicação da escala, presença, substituições e vagas avulsas.
 
+> **Usando uma IA para trabalhar no projeto?** Peça para ela ler o [`AGENTS.md`](AGENTS.md) primeiro. Ele tem o contexto completo, em frases curtas, e as regras que não podem ser quebradas.
+
 ## O que o app faz
 
 - **Períodos mensais.** A coordenação cria o mês, os dias e horários de cada turno e quantas pessoas cada um precisa.

@@ -5,7 +5,7 @@
 
 ## Criar a conta do administrador
 
-As demais contas são criadas pelo próprio app, na página **Equipe** (voluntários e responsáveis) e na página **Supervisores** (só o admin). Só a primeira, a do administrador, precisa ser criada à mão. No painel do Supabase, abra o **SQL Editor** e rode o trecho abaixo, trocando o nome e o CPF (só números). A senha inicial é o próprio CPF.
+As demais contas são criadas pelo próprio app, na página **Equipe** (o perfil Supervisor só o admin pode criar). Só a primeira, a do administrador, precisa ser criada à mão. No painel do Supabase, abra o **SQL Editor** e rode o trecho abaixo, trocando o nome e o CPF (só números). A senha inicial é o próprio CPF.
 
 ```sql
 do $$
