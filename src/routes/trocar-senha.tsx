@@ -38,7 +38,7 @@ function ChangePassword() {
   }, [hydrated, session, navigate]);
   if (!session) return <LoadingScreen />;
   const isStaff = session.role === "admin" || session.role === "supervisor";
-  const home = isStaff ? "/supervisor" : "/voluntario";
+  const home = isStaff ? "/supervisor" : "/voluntario/escala";
   const back = isStaff ? "/supervisor/configuracoes" : "/voluntario/perfil";
 
   const submit = async (e: React.FormEvent) => {

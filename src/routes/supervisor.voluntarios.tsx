@@ -88,7 +88,7 @@ function TeamPage() {
         <EmptyState icon={UserX} title="Ninguém encontrado" text="Tente outro nome ou filtro." />
       ) : (
         // Uma linha por pessoa. Em telas estreitas a tabela rola para o lado em vez de quebrar a linha.
-        <div className="overflow-x-auto rounded-2xl border bg-card shadow-soft">
+        <div className="relative overflow-x-auto rounded-2xl border bg-card shadow-soft">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>

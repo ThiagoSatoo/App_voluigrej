@@ -100,13 +100,13 @@ function Dashboard() {
       <div className="grid gap-3 sm:grid-cols-3">
         <Quick to="/supervisor/disponibilidades" icon={ClipboardCheck} label="Ver disponibilidades" />
         <Quick to="/supervisor/sorteio" icon={Shuffle} label="Sorteio da escala" />
-        <Quick to="/supervisor/presenca" icon={UserCheck} label="Registrar presença" />
+        <Quick to="/supervisor/escala" icon={UserCheck} label="Registrar presença" />
       </div>
     </div>
   );
 }
 
-function Quick({ to, icon: Icon, label }: { to: "/supervisor/disponibilidades" | "/supervisor/sorteio" | "/supervisor/presenca"; icon: typeof Users; label: string }) {
+function Quick({ to, icon: Icon, label }: { to: "/supervisor/disponibilidades" | "/supervisor/sorteio" | "/supervisor/escala"; icon: typeof Users; label: string }) {
   return (
     <Link to={to} className="flex items-center gap-3 rounded-2xl border bg-card p-4 font-semibold shadow-soft transition hover:border-primary">
       <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary"><Icon className="h-5 w-5" /></span>

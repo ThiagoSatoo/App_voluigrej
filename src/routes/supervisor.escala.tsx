@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, LayoutGrid, List, UserCog } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, LayoutGrid, List, UserCheck, UserCog } from "lucide-react";
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useStore } from "@/data/store";
 import { agendaItems, personName, type AgendaItem } from "@/data/selectors";
 import { DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PersonRow } from "@/components/app/VolunteerAvatar";
+import { ShiftAttendance } from "@/components/app/AttendanceManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PERIOD_STATUS, firstName, fmtLong, today, toDate } from "@/lib/format";
@@ -43,7 +44,8 @@ function AgendaPage() {
   const [month, setMonth] = useState(() => startOfMonth(toDate(today())));
   const [view, setView] = useState<"calendario" | "lista">("calendario");
   const [kind, setKind] = useState<"todos" | "escala" | "vaga">("todos");
-  const [day, setDay] = useState<string | null>(null);
+  // Abre já no dia de hoje quando há horários, para marcar a presença mais rápido.
+  const [day, setDay] = useState<string | null>(() => (items.some((i) => i.date === today()) ? today() : null));
   const name = (id: string) => personName(state, id) ?? "—";
 
   const mk = format(month, "yyyy-MM");
@@ -58,7 +60,7 @@ function AgendaPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Agenda" subtitle="Todos os horários criados, com quem está escalado, quem se candidatou e as vagas livres." />
+      <PageHeader title="Agenda" subtitle="Todos os horários, com escalados, candidatos e vagas livres. Abra um turno de hoje ou passado para marcar a presença." />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1">
@@ -138,7 +140,7 @@ function AgendaPage() {
           <EmptyState icon={CalendarDays} title="Nenhum horário" text={day ? "Não há horários neste dia." : "Crie turnos em Períodos ou vagas em Necessidades."} />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {shown.map((i) => <AgendaCard key={i.key} item={i} name={name} />)}
+            {shown.map((i) => <AgendaCard key={i.key} item={i} name={name} open={!!day} />)}
           </div>
         )}
       </div>
@@ -155,9 +157,12 @@ function Total({ label, value, tone }: { label: string; value: number; tone?: st
   );
 }
 
-function AgendaCard({ item: i, name }: { item: AgendaItem; name: (id: string) => string }) {
+function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: string) => string; open: boolean }) {
   const empty = Math.max(0, i.slots - i.filled.length);
   const waiting = i.candidates.filter((id) => !i.filled.includes(id));
+  // Presença: só em turno publicado de hoje ou de antes.
+  const canMark = i.kind === "escala" && !!i.published && !!i.periodId && !!i.needId && i.date <= today();
+  const [marking, setMarking] = useState(open);
   return (
     <Panel className="p-4">
       <div className="flex items-start gap-3">
@@ -182,8 +187,21 @@ function AgendaCard({ item: i, name }: { item: AgendaItem; name: (id: string) =>
         <UserCog className="h-3.5 w-3.5" /> Responsável: {i.responsavelId ? name(i.responsavelId) : "equipe"}
       </div>
 
-      <Section title={i.kind === "vaga" ? (i.status === "confirmada" ? "Selecionados" : "Candidatos ativos") : "Escalados"} ids={i.filled} name={name}
-        empty={i.kind === "escala" ? "Ainda não há escala publicada para este turno." : "Ninguém ainda."} />
+      {canMark && marking ? (
+        <div className="mt-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Presença</p>
+            <Button size="sm" variant="ghost" onClick={() => setMarking(false)}>Fechar</Button>
+          </div>
+          <ShiftAttendance periodId={i.periodId!} needId={i.needId!} compact />
+        </div>
+      ) : (
+        <>
+          <Section title={i.kind === "vaga" ? (i.status === "confirmada" ? "Selecionados" : "Candidatos ativos") : "Escalados"} ids={i.filled} name={name}
+            empty={i.kind === "escala" ? "Ainda não há escala publicada para este turno." : "Ninguém ainda."} />
+          {canMark && <Button size="sm" className="mt-2 w-full" onClick={() => setMarking(true)}><UserCheck /> Marcar presença</Button>}
+        </>
+      )}
       {waiting.length > 0 && (
         <Section title={i.kind === "vaga" ? "Outros candidatos" : "Disponíveis (não escalados)"} ids={waiting} name={name} muted />
       )}

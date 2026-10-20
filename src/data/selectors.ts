@@ -206,6 +206,10 @@ export interface AgendaItem {
   /** Quem se candidatou: disponíveis para o turno, ou candidatos da vaga. */
   candidates: string[];
   responsavelId?: string;
+  /** Turno da escala mensal: período e se a escala já foi publicada (permite marcar presença). */
+  periodId?: string;
+  needId?: string;
+  published?: boolean;
 }
 
 /** Todos os horários criados, com ocupação e candidatos (visão completa da coordenação). */
@@ -229,6 +233,9 @@ export function agendaItems(s: AppState): AgendaItem[] {
         filled: picks,
         candidates: s.availabilities.filter((a) => a.needId === n.id && a.value === "disponivel").map((a) => a.volunteerId),
         responsavelId: n.responsavelId,
+        periodId: p.id,
+        needId: n.id,
+        published: !!draw,
       });
     });
   });

@@ -12,7 +12,7 @@ Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
 - Por isso, a segurança não pode depender de esconder o endereço: ela fica no banco.
 - O app precisa ser simples de usar no celular, por pessoas sem conhecimento técnico.
 
-## Onde paramos (19/10/2026)
+## Onde paramos (20/10/2026)
 
 - O app está pronto e publicado na Vercel a partir da branch `main`.
 - O banco no Supabase está criado, com as regras de acesso aplicadas (migrations 1 a 8).
@@ -21,6 +21,9 @@ Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
 - As telas passaram no teste do `e2e/` (20 telas, em 360px, 390px e 1280px).
 - O PWA funciona: instala, abre sem internet e não guarda dados pessoais no aparelho.
 - **Falta o teste real**: entrar no app publicado, criar usuários e usar no celular.
+- 20/10: a primeira tela do voluntário e do responsável é a **Agenda** (a aba "Início" saiu; `/voluntario` redireciona).
+- 20/10: a aba "Presença" saiu do menu do supervisor; a presença é marcada na **Agenda** (`/supervisor/presenca` redireciona). O responsável continua marcando em "Turnos".
+- 20/10: "Escalas fixas" (horários semanais recorrentes) está **em desenho**, aguardando as respostas do dono (veja "O que falta").
 
 ## O que falta
 
@@ -41,6 +44,12 @@ Feito pelo dono, no app:
 Feito por quem programa, depois que houver o link da Vercel:
 - Definir o segredo `ALLOWED_ORIGINS` da Edge Function com o endereço da Vercel.
 - Corrigir o que aparecer no teste real.
+
+Escalas fixas (pedido de 20/10, aguardando respostas do dono antes de criar tabelas):
+- a) O sorteio continua mensal ou a escala fixa já define quem vai?
+- b) Com mais disponíveis que vagas, a prioridade continua a mesma?
+- c) Pode haver mais de uma escala fixa no mesmo dia da semana?
+- d) A tela mensal "Disponível" continua, ou só as exceções por data?
 
 Ideias sugeridas ao dono, ainda não pedidas:
 - Política "mesmo dia" (vê todos que servem no mesmo dia).
@@ -68,7 +77,8 @@ Ideias sugeridas ao dono, ainda não pedidas:
 - A coordenação registra **presença**, falta e **substituição**.
 - Existem **vagas avulsas**: dias extras com mínimo e máximo de pessoas. O voluntário se candidata e o responsável confirma quem vai.
 - **Avisos automáticos**: candidatura, cancelamento, mínimo/máximo atingido, abaixo do mínimo a 24h, aniversários e lembretes de 24h, 12h, 6h, 3h e 1h antes.
-- **Agenda**: calendário do mês com todos os horários, escalados, candidatos e vagas vazias.
+- **Agenda**: calendário do mês com todos os horários, escalados, candidatos e vagas vazias. Ao abrir um turno publicado de hoje ou passado, a coordenação marca Presente / Faltou / Substituir ali mesmo.
+- **Agenda do voluntário** (primeira tela): próximo turno e aviso de disponibilidade pendente no topo, calendário do mês e lista dos próximos turnos, conforme a política "Quem vê a escala".
 - **Relatórios** em PDF e histórico.
 
 ## Perfis (papéis)
@@ -153,7 +163,9 @@ Ideias sugeridas ao dono, ainda não pedidas:
   - `escala_geral`: vê todos os turnos com os nomes. Não existe tela de agenda individual de outra pessoa.
 - **Abas do menu** (`nav_config`, tela Admin, só o admin altera): liga e desliga abas do supervisor e do voluntário.
   - Aba desligada some do menu e fica bloqueada pela URL.
-  - Abas travadas (sempre ligadas): Dashboard e Configurações do supervisor; Início e Perfil do voluntário.
+  - Abas do supervisor: Dashboard, Equipe, Períodos e necessidades, Disponibilidades, Sorteio, Agenda, Histórico, Relatórios, Configurações e Admin (só o admin).
+  - Abas do voluntário: Agenda (primeira), Disponível, Vagas, Turnos (só responsável), Histórico e Perfil.
+  - Abas travadas (sempre ligadas): Dashboard, Agenda e Configurações do supervisor; Agenda e Perfil do voluntário.
   - Desligar uma aba não remove a permissão no banco.
 
 ## Banco de dados (tabelas principais)

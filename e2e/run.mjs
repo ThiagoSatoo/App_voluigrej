@@ -68,7 +68,7 @@ const SCENARIOS = [
   { who: "anon", user: null, pages: ["/"] },
   { who: "admin", user: fx.users.admin, pages: ["/supervisor", "/supervisor/voluntarios", "/supervisor/periodos", "/supervisor/necessidades", "/supervisor/disponibilidades", "/supervisor/sorteio", "/supervisor/escala", "/supervisor/presenca", "/supervisor/historico", "/supervisor/relatorios", "/supervisor/configuracoes", "/supervisor/admin"] },
   { who: "voluntario", user: fx.users.vol, pages: ["/voluntario", "/voluntario/disponibilidade", "/voluntario/escala", "/voluntario/vagas", "/voluntario/historico", "/voluntario/perfil"] },
-  { who: "responsavel", user: fx.users.resp, pages: ["/voluntario/turnos"] },
+  { who: "responsavel", user: fx.users.resp, pages: ["/voluntario", "/voluntario/escala", "/voluntario/turnos"] },
 ];
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] });

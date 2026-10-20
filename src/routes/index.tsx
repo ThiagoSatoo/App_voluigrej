@@ -40,7 +40,7 @@ function Login() {
   useEffect(() => {
     if (!hydrated || !state.session) return;
     if (state.session.mustChangePassword) navigate({ to: "/trocar-senha" });
-    else navigate({ to: state.session.role === "admin" || state.session.role === "supervisor" ? "/supervisor" : "/voluntario" });
+    else navigate({ to: state.session.role === "admin" || state.session.role === "supervisor" ? "/supervisor" : "/voluntario/escala" });
   }, [hydrated, state.session, navigate]);
 
   const submit = async (e: React.FormEvent) => {

@@ -40,4 +40,12 @@ describe("Abas do menu", () => {
     expect(keys(as("responsavel", cfg), "voluntario")).not.toContain("turnos");
     expect(keys(as("voluntario", cfg), "voluntario")).toContain("perfil");
   });
+
+  it("sem Início nem Presença; a Agenda é a primeira aba do voluntário e fica sempre ligada", () => {
+    const off = { supervisor: { agenda: false }, voluntario: { escala: false } };
+    expect(keys(as("voluntario", off), "voluntario")[0]).toBe("escala");
+    expect(keys(as("responsavel", off), "voluntario")).not.toContain("inicio");
+    expect(keys(as("supervisor", off), "supervisor")).toContain("agenda");
+    expect(keys(as("admin"), "supervisor")).not.toContain("presenca");
+  });
 });
