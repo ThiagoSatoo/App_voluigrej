@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarX2, Plus, Repeat, Undo2 } from "lucide-react";
+import { CalendarCheck, CalendarX2, Plus, Repeat } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
-import { fixedLabel, fixedNeed, isFixedMember, isUnavailable, nextDates, personName, publishedSlotFor, sortFixed } from "@/data/selectors";
+import { backupsOf, fixedLabel, fixedNeed, isFixedMember, isUnavailable, nextDates, personName, publishedSlotFor, sortFixed } from "@/data/selectors";
 import type { FixedSchedule } from "@/data/types";
 import { ConfirmDialog, DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ function MyFixedSchedules() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Minhas escalas" subtitle="Escolha os horários em que você pode servir toda semana. Se não puder em algum dia, toque em “Indisponível”." />
+      <PageHeader title="Minhas escalas" subtitle="Escolha os horários em que você pode servir toda semana. Se não puder em algum dia, toque em “Indisponível”; se mudar de ideia, toque em “Disponível”." />
 
       <section className="space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Participo</h2>
@@ -74,7 +74,8 @@ function dateState(s: ReturnType<typeof useStore>["state"], f: FixedSchedule, me
   const removed = !!need && s.attendance.some((a) => a.needId === need.id && a.volunteerId === meId && (a.status === "cancelado" || a.status === "substituido"));
   const picked = !!slot?.picks.some((p) => p.volunteerId === meId) && !removed;
   if (picked) return { label: "Escalado", tone: "primary", picked, off, removed };
-  if (off) return { label: removed ? "Substituído" : "Indisponível", tone: "destructive", picked, off, removed };
+  if (off) return { label: "Indisponível", tone: "destructive", picked, off, removed };
+  if (need && backupsOf(s, need.id).includes(meId)) return { label: "Backup", tone: "warning", picked, off, removed };
   if (slot) return { label: "Não escalado", tone: "muted", picked, off, removed };
   return { label: "Aguardando sorteio", tone: "info", picked, off, removed };
 }
@@ -99,6 +100,16 @@ function MyFixedCard({ fixed: f, meId }: { fixed: FixedSchedule; meId: string })
     else toast.success("Pronto! A coordenação foi avisada.");
   };
 
+  const available = async (date: string) => {
+    setBusy(date);
+    const r = await repo.markAvailable(f.id, date);
+    setBusy(null);
+    if (!r.ok) { toast.error(r.error); return; }
+    if (r.outcome === "voltou") toast.success("Você voltou para a escala deste dia.");
+    else if (r.outcome === "backup") toast.success("Pronto! Você ficou de backup neste dia.");
+    else toast.success("Pronto! Você está disponível neste dia.");
+  };
+
   return (
     <Panel className="p-4">
       <div className="flex items-start justify-between gap-2">
@@ -119,11 +130,11 @@ function MyFixedCard({ fixed: f, meId }: { fixed: FixedSchedule; meId: string })
                 <div className="text-sm font-semibold">{fmtWeekday(d)}</div>
                 <Pill tone={st.tone}>{st.label}</Pill>
               </div>
-              {st.off && !st.removed && !st.picked ? (
-                <Button size="sm" variant="ghost" disabled={busy === d} onClick={() => act(repo.clearUnavailable(f.id, d), "Aviso desfeito")}><Undo2 /> Desfazer</Button>
-              ) : st.picked || !st.off ? (
+              {st.off && !st.picked ? (
+                <Button size="sm" variant="outline" className="text-success" disabled={busy === d} onClick={() => available(d)}><CalendarCheck /> Disponível</Button>
+              ) : (
                 <Button size="sm" variant="outline" className="text-destructive" disabled={busy === d} onClick={() => setConfirm(d)}><CalendarX2 /> Indisponível</Button>
-              ) : null}
+              )}
             </div>
           );
         })}

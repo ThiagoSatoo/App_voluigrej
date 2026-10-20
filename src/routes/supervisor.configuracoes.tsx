@@ -20,9 +20,9 @@ export const Route = createFileRoute("/supervisor/configuracoes")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Configurações — Painel do Supervisor" },
+      { title: "Configurações — Painel da Coordenação" },
       { name: "description", content: "Dados da igreja e opções do aplicativo." },
-      { property: "og:title", content: "Configurações — Painel do Supervisor" },
+      { property: "og:title", content: "Configurações — Painel da Coordenação" },
       { property: "og:description", content: "Dados da igreja e opções do aplicativo." },
     ],
   }),

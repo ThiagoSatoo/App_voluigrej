@@ -23,7 +23,7 @@ export const Route = createFileRoute("/supervisor/voluntarios")({
   head: () => ({
     meta: [
       { title: "Equipe — Sistema de escalas" },
-      { name: "description", content: "Todos os usuários: voluntários, responsáveis e supervisores." },
+      { name: "description", content: "Todos os usuários: voluntários, responsáveis e coordenadores." },
     ],
   }),
   component: TeamPage,
@@ -141,7 +141,7 @@ function TeamPage() {
           </table>
         </div>
       )}
-      {!isAdmin && <p className="mt-2 text-xs text-muted-foreground">Supervisores e o administrador só podem ser alterados pelo administrador.</p>}
+      {!isAdmin && <p className="mt-2 text-xs text-muted-foreground">Coordenadores e o administrador só podem ser alterados pelo administrador.</p>}
 
       <MemberForm key={editing === "new" ? "new" : editing?.id ?? "none"} editing={editing} onClose={() => setEditing(null)} isAdmin={isAdmin} />
       <PasswordDialog person={pwFor} onClose={() => setPwFor(null)} />

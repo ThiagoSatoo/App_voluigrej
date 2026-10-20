@@ -28,6 +28,8 @@ export const emptyState = (): AppState => ({
   fixedSchedules: [],
   fixedMembers: [],
   fixedExceptions: [],
+  fixedPins: [],
+  fixedReleased: [],
 });
 
 let state: AppState = emptyState();

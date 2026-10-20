@@ -10,6 +10,7 @@ import type {
   DrawSlot,
   FixedException,
   FixedMember,
+  FixedPin,
   FixedSchedule,
   NotifPrefs,
   Opportunity,
@@ -58,6 +59,8 @@ const empty = (): AppState => ({
   fixedSchedules: [],
   fixedMembers: [],
   fixedExceptions: [],
+  fixedPins: [],
+  fixedReleased: [],
 });
 
 export async function loadState(): Promise<AppState> {
@@ -75,7 +78,7 @@ export async function loadState(): Promise<AppState> {
 
   const session: Session = { role: meRow.role, userId: uid, name: meRow.name, mustChangePassword: meRow.must_change_password };
 
-  const [profiles, details, settings, periods, needs, avail, draws, slots, picks, att, subs, opps, dayAv, apps, notifs, prefs, counts, oppCounts, nav, fixed, fixedMembers, fixedExc] =
+  const [profiles, details, settings, periods, needs, avail, draws, slots, picks, att, subs, opps, dayAv, apps, notifs, prefs, counts, oppCounts, nav, fixed, fixedMembers, fixedExc, pins] =
     await Promise.all([
       fetchAll("profiles"),
       fetchAll("volunteer_details"),
@@ -99,6 +102,7 @@ export async function loadState(): Promise<AppState> {
       fetchAll("fixed_schedules"),
       fetchAll("fixed_members"),
       fetchAll("fixed_exceptions"),
+      fetchAll("fixed_pins"),
     ]);
 
   // Fotos ficam em bucket privado: geramos links temporários (1h) só das que o usuário pode ver.
@@ -242,7 +246,9 @@ export async function loadState(): Promise<AppState> {
       active: f.active,
     })),
     fixedMembers: fixedMembers.map((m): FixedMember => ({ fixedId: m.fixed_id, volunteerId: m.volunteer_id })),
-    fixedExceptions: fixedExc.map((e): FixedException => ({ fixedId: e.fixed_id, volunteerId: e.volunteer_id, date: e.date, createdBy: e.created_by })),
+    fixedPins: pins.map((x): FixedPin => ({ fixedId: x.fixed_id, date: x.date, volunteerIds: x.volunteer_ids ?? [] })),
+    fixedReleased: fixedExc.filter((e) => e.cancelled_at).map((e): FixedException => ({ fixedId: e.fixed_id, volunteerId: e.volunteer_id, date: e.date, createdBy: e.created_by })),
+    fixedExceptions: fixedExc.filter((e) => !e.cancelled_at).map((e): FixedException => ({ fixedId: e.fixed_id, volunteerId: e.volunteer_id, date: e.date, createdBy: e.created_by })),
     oppCounts: Object.fromEntries(((oppCounts.data ?? []) as Row[]).map((c) => [c.opportunity_id, c.active])),
   };
 }

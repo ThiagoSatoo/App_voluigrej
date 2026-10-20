@@ -60,6 +60,7 @@ export const ATTENDANCE_STATUS: Record<AttendanceStatus, { label: string; tone: 
   faltou: { label: "Faltou", tone: "destructive" },
   substituido: { label: "Substituído", tone: "warning" },
   cancelado: { label: "Cancelado", tone: "muted" },
+  escalado: { label: "Voltou à escala", tone: "primary" },
 };
 
 export type Tone = "muted" | "success" | "warning" | "accent" | "primary" | "destructive" | "info";

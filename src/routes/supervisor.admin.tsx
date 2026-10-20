@@ -32,7 +32,7 @@ function AdminPage() {
         Desligar uma aba tira a tela do menu e bloqueia quem tentar abri-la pelo endereço. O que cada perfil pode ver e alterar nos dados continua protegido pelas regras do banco.
       </Notice>
       <div className="grid gap-4 md:grid-cols-2">
-        <Area title="Supervisor" area="supervisor" items={SUPERVISOR_NAV.filter((i) => !i.adminOnly)} draft={draft} onToggle={set} />
+        <Area title="Coordenador" area="supervisor" items={SUPERVISOR_NAV.filter((i) => !i.adminOnly)} draft={draft} onToggle={set} />
         <Area title="Voluntário e responsável" area="voluntario" items={VOLUNTEER_NAV} draft={draft} onToggle={set} />
       </div>
       <div className="flex gap-2">

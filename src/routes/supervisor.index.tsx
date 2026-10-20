@@ -14,9 +14,9 @@ export const Route = createFileRoute("/supervisor/")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Dashboard — Painel do Supervisor" },
+      { title: "Dashboard — Painel da Coordenação" },
       { name: "description", content: "Visão geral de voluntários, disponibilidades e escalas." },
-      { property: "og:title", content: "Dashboard — Painel do Supervisor" },
+      { property: "og:title", content: "Dashboard — Painel da Coordenação" },
       { property: "og:description", content: "Visão geral de voluntários, disponibilidades e escalas." },
     ],
   }),

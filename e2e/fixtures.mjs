@@ -92,6 +92,7 @@ export function makeFixtures(today = new Date()) {
   ];
   const fixed_members = vols.slice(0, 24).flatMap((v, i) => fixed_schedules.slice(0, 3).filter((_, k) => (i + k) % 2 === 0 || i === 3).map((f) => ({ fixed_id: f.id, volunteer_id: v.id, created_at: today.toISOString() })));
   const nextSunday = iso(addDays(today, (7 - today.getDay()) % 7 || 7));
+  const fixed_pins = [{ fixed_id: fixed_schedules[0].id, date: nextSunday, volunteer_ids: [vols[1].id, vols[5].id], updated_at: today.toISOString(), updated_by: "Thiago Satoo" }];
   const fixed_exceptions = [{ fixed_id: fixed_schedules[0].id, volunteer_id: vols[3].id, date: nextSunday, created_at: today.toISOString(), created_by: vols[3].name }];
 
   const notificationsFor = (uid) => [
@@ -106,7 +107,7 @@ export function makeFixtures(today = new Date()) {
       attendance, substitutions, opportunities, applications, day_availability, notif_prefs: [],
       app_settings: [{ id: 1, church_name: "Igreja Comunidade da Graça — Unidade Centro", ministry_name: "", visibility_policy: "escala_geral" }],
       nav_config: [{ id: 1, config: {} }],
-      fixed_schedules, fixed_members, fixed_exceptions,
+      fixed_schedules, fixed_members, fixed_exceptions, fixed_pins,
     },
     notificationsFor,
   };

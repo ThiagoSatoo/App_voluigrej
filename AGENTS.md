@@ -15,7 +15,7 @@ Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
 ## Onde paramos (20/10/2026)
 
 - O app está pronto e publicado na Vercel a partir da branch `main`.
-- O banco no Supabase está criado, com as regras de acesso aplicadas (migrations 1 a 11; a 12 aguarda aprovação, veja "O que falta").
+- O banco no Supabase está criado, com as regras de acesso aplicadas (migrations 1 a 16).
 - A Edge Function `manage-users` está publicada.
 - O login é por CPF para todos; a senha inicial é o CPF.
 - As telas passaram no teste do `e2e/` (em 360px, 390px e 1280px).
@@ -23,6 +23,7 @@ Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
 - **Falta o teste real**: entrar no app publicado, criar usuários e usar no celular.
 - 20/10: a primeira tela do voluntário e do responsável é a **Agenda** (a aba "Início" saiu; `/voluntario` redireciona).
 - 20/10: a aba "Presença" saiu do menu do supervisor; a presença é marcada na **Agenda** (`/supervisor/presenca` redireciona). O responsável continua marcando em "Turnos".
+- 20/10: "Supervisor" virou **Coordenador** nas telas (no banco o perfil continua `supervisor`). Botões **Disponível** (voluntário) e **Fixar** (coordenação) nas escalas fixas.
 - 20/10: **Escalas fixas** no ar. "Períodos e necessidades", "Disponibilidades" e "Sorteio" viraram a aba **Escalas** (escalas fixas + vagas avulsas). O voluntário escolhe suas escalas fixas e usa o botão "Indisponível" na aba **Escalas**. Os períodos e sorteios antigos continuam no banco e aparecem na Agenda, no Histórico e nos Relatórios.
 
 ## O que falta
@@ -45,8 +46,6 @@ Feito por quem programa, depois que houver o link da Vercel:
 - Definir o segredo `ALLOWED_ORIGINS` da Edge Function com o endereço da Vercel.
 - Corrigir o que aparecer no teste real.
 
-Banco (quem programa, com aprovação do dono):
-- Aplicar `supabase/migrations/20261020000012_fixed_clear_unavailable.sql` (função `clear_unavailable`, o botão "Desfazer" do voluntário). A ferramenta do Supabase pede confirmação porque a função contém um `delete`. Sem ela, o resto funciona e o "Desfazer" mostra uma mensagem de erro amigável.
 
 Respostas do dono sobre escalas fixas (20/10), já aplicadas:
 - Sorteio por escala fixa, um mês por vez, em rascunho e depois publicado.
@@ -54,6 +53,7 @@ Respostas do dono sobre escalas fixas (20/10), já aplicadas:
 - Várias escalas fixas no mesmo dia, quantas a coordenação quiser.
 - "Indisponível" numa data avisa a coordenação; se a pessoa estava escalada e o turno fica incompleto, o sistema escolhe o substituto sozinho entre os participantes. Sem ninguém livre, a coordenação recebe um alerta.
 - O voluntário entra direto numa escala fixa (sem aprovação).
+- Pedido de 20/10 (2ª parte), já aplicado: no lugar de "Desfazer", o botão **Disponível**; o botão **Fixar** da coordenação; "Supervisor" passa a se chamar **Coordenador** nas telas.
 
 Ideias sugeridas ao dono, ainda não pedidas:
 - Política "mesmo dia" (vê todos que servem no mesmo dia).
@@ -78,6 +78,11 @@ Ideias sugeridas ao dono, ainda não pedidas:
 - O **sorteio** é feito por escala fixa, um mês por vez (`draw_fixed`): o banco cria os turnos do mês (`needs.fixed_id`) e escolhe quem vai. Prioridade: quem serviu menos nos últimos 3 meses, depois 12 meses (contando o que já foi sorteado no mês), desempate aleatório. A tela avisa se a diferença entre participantes passar de 3 dias.
 - O sorteio nunca escala quem marcou "Indisponível" na data nem a mesma pessoa duas vezes no mesmo dia.
 - A escala sai como rascunho e só os voluntários a veem depois de **publicada** (por escala fixa).
+- **Fixar** (`set_fixed_pins`, só a coordenação): escolhe 1 ou mais pessoas para uma escala fixa, numa data ou no mês inteiro. Elas entram garantidas no sorteio (se não marcaram "Indisponível"); o resto das vagas é sorteado. Vale só para o mês: todo mês a coordenação fixa de novo. Ao salvar, o sorteio do mês é refeito em rascunho.
+- **Disponível** (`mark_available`): desfaz o "Indisponível" sem apagar nada (a exceção ganha `cancelled_at`).
+  - Não estava escalado: só volta a contar para o sorteio (sem aviso).
+  - Saiu e o turno ficou sem substituto: volta direto para a escala (presença `escalado`).
+  - Saiu e o lugar foi ocupado (ou o turno seguiu completo): fica de **backup** daquele turno. A coordenação recebe aviso e pode trocar alguém pelo backup em "Substituir" (backups aparecem primeiro). Se outra pessoa ficar indisponível, o substituto automático chama o backup antes dos demais.
 - **Indisponível** (`mark_unavailable`): o voluntário avisa que não pode numa data. A coordenação/responsável recebe aviso. Se ele já estava escalado e o turno fica incompleto, o banco escolhe o substituto sozinho entre os participantes; sem ninguém livre, vira alerta no Dashboard.
 - Antes das escalas fixas existiam períodos mensais com disponibilidade por turno; esses dados antigos continuam no banco e aparecem no histórico.
 - A coordenação registra **presença**, falta e **substituição**.
@@ -90,7 +95,7 @@ Ideias sugeridas ao dono, ainda não pedidas:
 ## Perfis (papéis)
 
 - `admin`: dono do app. Faz tudo. É o único que gerencia supervisores e a tela **Admin**. Não pode ser desativado nem rebaixado.
-- `supervisor`: cuida do app no dia a dia. Gerencia voluntários e responsáveis. Não mexe em supervisores nem no admin.
+- `supervisor` (nas telas: **Coordenador**): cuida do app no dia a dia. Gerencia voluntários e responsáveis. Não mexe em coordenadores nem no admin.
 - `responsavel`: é um voluntário que cuida de turnos e vagas atribuídos a ele. Vê a equipe e os contatos só desses turnos. Marca presença, substitui e gerencia as vagas desses turnos.
 - `voluntario`: vê a própria escala, informa disponibilidade, candidata-se a vagas e altera a foto e a senha.
 - "Coordenação" ou "staff" = `admin` + `supervisor`.
@@ -149,7 +154,7 @@ Ideias sugeridas ao dono, ainda não pedidas:
 - **Toda permissão fica no banco** (RLS + funções `security definer`). Esconder algo na tela não é segurança.
 - Toda regra nova de acesso precisa de uma migration nova em `supabase/migrations/`.
 - Nunca use a chave `service_role` / secret no frontend nem em variáveis `VITE_*`.
-- Ações sensíveis passam por RPC: sorteio (`draw_fixed`, `publish_draw`; `save_draw` é o mensal antigo), indisponibilidade (`mark_unavailable`, `clear_unavailable`), `substitute`, candidaturas (`apply_to_opportunity`, `cancel_application`, `confirm_selection`) e perfil (`set_user_role`).
+- Ações sensíveis passam por RPC: sorteio (`draw_fixed`, `publish_draw`; `save_draw` é o mensal antigo), indisponibilidade (`mark_unavailable`, `mark_available`), fixar (`set_fixed_pins`), `substitute`, candidaturas (`apply_to_opportunity`, `cancel_application`, `confirm_selection`) e perfil (`set_user_role`).
 - Contas e senhas só pela Edge Function `manage-users`.
 - O usuário anônimo não lê nada. A única exceção é `public_app_name()`, que devolve só o nome da instituição.
 - Funções novas: rode `revoke execute ... from public, anon` e dê `grant` só a `authenticated`, quando for o caso.
@@ -179,7 +184,9 @@ Ideias sugeridas ao dono, ainda não pedidas:
 
 - `profiles`: pessoa, papel, status e foto. O `id` é o mesmo de `auth.users`.
 - `volunteer_details`: CPF, telefone, e-mail e nascimento.
-- `fixed_schedules`, `fixed_members` e `fixed_exceptions`: escalas fixas, participantes e "não posso nesse dia".
+- `fixed_schedules`, `fixed_members` e `fixed_exceptions`: escalas fixas, participantes e "não posso nesse dia" (`cancelled_at` = desfeito pelo botão Disponível).
+- `fixed_pins`: pessoas fixadas pela coordenação numa data de uma escala fixa.
+- Backup não tem tabela própria: é quem tem presença `cancelado`/`substituido` no turno e um "Indisponível" desfeito (`cancelled_at`) na data (`_is_backup` no banco, `backupsOf` no app).
 - `periods` e `needs`: mês e turnos. `needs.responsavel_id` é quem cuida do turno; `needs.fixed_id` liga o turno à escala fixa.
 - `availabilities`: disponibilidade por turno (fluxo mensal antigo; só histórico).
 - `draws`, `draw_slots` e `draw_picks`: sorteios e escalados. `draws.fixed_id`: um sorteio por escala fixa e mês.

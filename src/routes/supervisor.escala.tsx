@@ -4,7 +4,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock, LayoutGrid, List, UserC
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useStore } from "@/data/store";
-import { agendaItems, personName, type AgendaItem } from "@/data/selectors";
+import { agendaItems, backupsOf, personName, type AgendaItem } from "@/data/selectors";
 import { DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PersonRow } from "@/components/app/VolunteerAvatar";
 import { ShiftAttendance } from "@/components/app/AttendanceManager";
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/supervisor/escala")({
   head: () => ({
     meta: [
-      { title: "Agenda — Painel do Supervisor" },
+      { title: "Agenda — Painel da Coordenação" },
       { name: "description", content: "Todos os horários criados, com escalados, candidatos e vagas livres." },
     ],
   }),
@@ -158,8 +158,10 @@ function Total({ label, value, tone }: { label: string; value: number; tone?: st
 }
 
 function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: string) => string; open: boolean }) {
+  const { state } = useStore();
   const empty = Math.max(0, i.slots - i.filled.length);
-  const waiting = i.candidates.filter((id) => !i.filled.includes(id));
+  const backups = i.needId ? backupsOf(state, i.needId) : [];
+  const waiting = i.candidates.filter((id) => !i.filled.includes(id) && !backups.includes(id));
   // Presença: só em turno publicado de hoje ou de antes.
   const canMark = i.kind === "escala" && !!i.published && !!i.periodId && !!i.needId && i.date <= today();
   const [marking, setMarking] = useState(open);
@@ -201,6 +203,9 @@ function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: stri
             empty={i.kind === "escala" ? "Ainda não há escala publicada para este turno." : "Ninguém ainda."} />
           {canMark && <Button size="sm" className="mt-2 w-full" onClick={() => setMarking(true)}><UserCheck /> Marcar presença</Button>}
         </>
+      )}
+      {backups.length > 0 && (
+        <Section title="Backup (pode entrar no lugar de alguém)" ids={backups} name={name} />
       )}
       {waiting.length > 0 && (
         <Section title={i.kind === "vaga" ? "Outros candidatos" : "Disponíveis (não escalados)"} ids={waiting} name={name} muted />

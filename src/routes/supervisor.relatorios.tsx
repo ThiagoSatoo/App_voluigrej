@@ -18,9 +18,9 @@ export const Route = createFileRoute("/supervisor/relatorios")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Relatórios — Painel do Supervisor" },
+      { title: "Relatórios — Painel da Coordenação" },
       { name: "description", content: "Relatórios diários, semanais, mensais e personalizados em PDF." },
-      { property: "og:title", content: "Relatórios — Painel do Supervisor" },
+      { property: "og:title", content: "Relatórios — Painel da Coordenação" },
       { property: "og:description", content: "Relatórios de escalas, presenças e substituições em PDF." },
     ],
   }),

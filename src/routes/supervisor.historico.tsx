@@ -12,9 +12,9 @@ export const Route = createFileRoute("/supervisor/historico")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Histórico — Painel do Supervisor" },
+      { title: "Histórico — Painel da Coordenação" },
       { name: "description", content: "Escalas realizadas, presenças, faltas, substituições e versões de sorteio." },
-      { property: "og:title", content: "Histórico — Painel do Supervisor" },
+      { property: "og:title", content: "Histórico — Painel da Coordenação" },
       { property: "og:description", content: "Histórico de escalas e sorteios." },
     ],
   }),

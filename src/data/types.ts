@@ -97,7 +97,14 @@ export interface FixedMember {
   volunteerId: string;
 }
 
-/** "Nesse dia não posso" numa escala fixa. */
+/** Pessoas fixadas pela coordenação numa data de uma escala fixa (entram garantidas no sorteio). */
+export interface FixedPin {
+  fixedId: string;
+  date: string;
+  volunteerIds: string[];
+}
+
+/** "Nesse dia não posso" numa escala fixa (só os avisos ativos; os desfeitos ficam no banco como histórico). */
 export interface FixedException {
   fixedId: string;
   volunteerId: string;
@@ -105,7 +112,7 @@ export interface FixedException {
   createdBy: string;
 }
 
-export type AttendanceStatus = "presente" | "faltou" | "substituido" | "cancelado";
+export type AttendanceStatus = "presente" | "faltou" | "substituido" | "cancelado" | "escalado";
 
 export interface Attendance {
   id: string;
@@ -166,6 +173,9 @@ export interface AppState {
   fixedSchedules: FixedSchedule[];
   fixedMembers: FixedMember[];
   fixedExceptions: FixedException[];
+  fixedPins: FixedPin[];
+  /** Avisos de "Indisponível" desfeitos pelo botão Disponível (usados para saber quem está de backup). */
+  fixedReleased: FixedException[];
   /** Candidaturas ativas por vaga (contagem segura vinda do servidor). */
   oppCounts: Record<string, number>;
 }

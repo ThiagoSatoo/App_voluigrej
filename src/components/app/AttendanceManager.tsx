@@ -4,7 +4,7 @@ import { Mail, Phone, Repeat, UserCheck } from "lucide-react";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
-import { activeVolunteers, attendanceFor, availabilityOf, byPriority, fixedCandidates, personName, publishedSlotFor, sortNeeds, sortPeriods } from "@/data/selectors";
+import { activeVolunteers, attendanceFor, availabilityOf, backupsOf, byPriority, fixedCandidates, personName, publishedSlotFor, sortNeeds, sortPeriods } from "@/data/selectors";
 import type { AttendanceStatus } from "@/data/types";
 import { EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PersonRow, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
@@ -127,7 +127,10 @@ function SubstituteDialog({ outId, periodId, needId, assigned, onClose }: { outI
     : hasData
       ? all.filter((v) => availabilityOf(state, periodId, v.id, needId) === "disponivel")
       : all;
-  const eligible = (filtered.length ? filtered : all).sort(byPriority);
+  // Backups deste turno aparecem primeiro (eles já tinham saído e voltaram a ficar disponíveis).
+  const backups = backupsOf(state, needId);
+  const backupPeople = activeVolunteers(state).filter((v) => backups.includes(v.id) && v.id !== outId);
+  const eligible = [...backupPeople, ...(filtered.length ? filtered : all).filter((v) => !backups.includes(v.id)).sort(byPriority)];
 
   return (
     <Dialog open={!!outId} onOpenChange={(o) => !o && onClose()}>
@@ -141,7 +144,7 @@ function SubstituteDialog({ outId, periodId, needId, assigned, onClose }: { outI
           {eligible.length === 0 && <p className="py-3 text-sm text-muted-foreground">Nenhum voluntário elegível disponível.</p>}
           {eligible.map((v) => (
             <button key={v.id} onClick={() => setInId(v.id)} className={cn("w-full rounded-xl px-2 text-left", inId === v.id && "bg-primary-soft")}>
-              <PersonRow name={v.name} photoUrl={v.photoUrl} sub={`${v.recent3m} recentes · ${v.last12m} em 12 meses`} />
+              <PersonRow name={v.name} photoUrl={v.photoUrl} sub={`${backups.includes(v.id) ? "Backup · " : ""}${v.recent3m} recentes · ${v.last12m} em 12 meses`} />
             </button>
           ))}
         </div>

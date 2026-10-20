@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Pencil, Repeat, Search, Send, Shuffle, Trash2, Users } from "lucide-react";
+import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Pencil, Pin, Repeat, Search, Send, Shuffle, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { addMonths, format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,6 +14,7 @@ import {
   fixedLabel,
   fixedMembersOf,
   isUnavailable,
+  nextDates,
   personName,
   sortFixed,
   sortNeeds,
@@ -31,13 +32,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { firstName, fmtWeekday, today, toDate } from "@/lib/format";
+import { firstName, fmtDM, fmtWeekday, today, toDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/supervisor/periodos")({
   head: () => ({
     meta: [
-      { title: "Escalas — Painel do Supervisor" },
+      { title: "Escalas — Painel da Coordenação" },
       { name: "description", content: "Escalas fixas (horários semanais) e vagas avulsas em um só lugar." },
     ],
   }),
@@ -100,6 +101,7 @@ function FixedSchedulesPage() {
 function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; year: number; month: number; onEdit: () => void }) {
   const { state } = useStore();
   const [members, setMembers] = useState(false);
+  const [pinning, setPinning] = useState(false);
   const [open, setOpen] = useState(false);
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -111,6 +113,8 @@ function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; ye
   const shown = draft ?? published;
   const needs = sortNeeds((period?.needs ?? []).filter((n) => n.fixedId === f.id));
   const name = (id: string) => personName(state, id) ?? "—";
+  const dates = monthDates(f, year, month);
+  const pins = state.fixedPins.filter((p) => p.fixedId === f.id && dates.includes(p.date) && p.volunteerIds.length > 0);
 
   // Equilíbrio do mês: quantas vezes cada participante foi escalado.
   const times = memberIds.map((id) => shown?.slots.reduce((t, sl) => t + (sl.picks.some((p) => p.volunteerId === id) ? 1 : 0), 0) ?? 0);
@@ -148,8 +152,20 @@ function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; ye
         {draft ? <Pill tone="warning">Rascunho #{draft.number}</Pill> : published ? <Pill tone="success">Publicada</Pill> : <Pill tone="muted">Sem sorteio</Pill>}
         {draft && published && <span className="text-xs text-muted-foreground">(há uma versão publicada)</span>}
       </div>
+      {pins.length > 0 && (
+        <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground">
+          <Pin className="mt-0.5 h-3 w-3 shrink-0" />
+          <span>
+            Fixados:{" "}
+            {pins.length === dates.length && pins.every((p) => p.volunteerIds.join() === pins[0].volunteerIds.join())
+              ? `${pins[0].volunteerIds.map((id) => firstName(name(id))).join(", ")} (mês inteiro)`
+              : pins.map((p) => `${fmtDM(p.date)}: ${p.volunteerIds.map((id) => firstName(name(id))).join(", ")}`).join(" · ")}
+          </span>
+        </p>
+      )}
       <div className="mt-2 grid grid-cols-2 gap-2">
         <Button size="sm" variant="outline" onClick={() => setMembers(true)}><Users /> Participantes</Button>
+        <Button size="sm" variant="outline" disabled={!f.active || dates.length === 0} onClick={() => setPinning(true)}><Pin /> Fixar</Button>
         <Button size="sm" variant={shown ? "outline" : "default"} disabled={!f.active || busy || memberIds.length === 0} onClick={draw}>
           <Shuffle /> {busy ? "Sorteando…" : shown ? "Sortear de novo" : "Sortear"}
         </Button>
@@ -182,6 +198,7 @@ function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; ye
                     const off = isUnavailable(state, f.id, p.volunteerId, n.date);
                     return (
                       <span key={p.volunteerId} className={cn("inline-flex max-w-full items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium", off && "bg-destructive-soft text-destructive")}>
+                        {p.tiebreak === "Fixado pela coordenação" && <Pin className="h-3 w-3 shrink-0" aria-label="Fixado" />}
                         <span className="truncate">{firstName(name(p.volunteerId))}</span>
                         {off && <span>(indisponível)</span>}
                       </span>
@@ -200,6 +217,7 @@ function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; ye
       )}
 
       <MembersDialog fixed={f} open={members} onClose={() => setMembers(false)} />
+      {pinning && <PinDialog fixed={f} year={year} month={month} dates={dates} onClose={() => setPinning(false)} />}
       {draft && (
         <ConfirmDialog
           open={confirmPublish}
@@ -211,6 +229,96 @@ function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; ye
         />
       )}
     </Panel>
+  );
+}
+
+/** Datas da escala fixa no mês, de hoje em diante. */
+function monthDates(f: FixedSchedule, year: number, month: number) {
+  const mk = `${year}-${String(month).padStart(2, "0")}`;
+  const from = `${mk}-01` > today() ? `${mk}-01` : today();
+  return nextDates(f, from, 6).filter((d) => d.startsWith(mk));
+}
+
+/**
+ * Fixar pessoas: elas entram garantidas no sorteio desta escala fixa, numa data ou no mês inteiro.
+ * Vale só para o mês escolhido; no mês seguinte a coordenação fixa de novo.
+ */
+function PinDialog({ fixed: f, year, month, dates, onClose }: { fixed: FixedSchedule; year: number; month: number; dates: string[]; onClose: () => void }) {
+  const { state } = useStore();
+  const pinsOf = (d: string) => state.fixedPins.find((p) => p.fixedId === f.id && p.date === d)?.volunteerIds ?? [];
+  const [scope, setScope] = useState<"mes" | "data">("mes");
+  const [date, setDate] = useState(dates[0] ?? "");
+  const [selected, setSelected] = useState<string[]>(() => pinsOf(dates[0] ?? ""));
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const memberIds = fixedMembersOf(state, f.id);
+  const people = activeVolunteers(state)
+    .filter((v) => !q.trim() || v.name.toLowerCase().includes(q.trim().toLowerCase()))
+    .sort((a, b) => Number(selected.includes(b.id)) - Number(selected.includes(a.id)) || Number(memberIds.includes(b.id)) - Number(memberIds.includes(a.id)) || a.name.localeCompare(b.name));
+  const full = selected.length >= f.slots;
+
+  const save = async (ids: string[]) => {
+    setBusy(true);
+    const r = await act(
+      repo.setFixedPins(f.id, scope === "mes" ? dates : [date], ids, year, month),
+      ids.length ? "Fixado! O sorteio do mês foi refeito; confira e publique." : "Fixação removida. O sorteio do mês foi refeito.",
+    );
+    setBusy(false);
+    if (r.ok) onClose();
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[92vh] overflow-y-auto rounded-2xl">
+        <DialogHeader><DialogTitle className="font-display">Fixar pessoas · {fixedLabel(f)}</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">Quem for fixado entra garantido no sorteio. As outras vagas continuam sendo sorteadas. Vale só para este mês.</p>
+        <div className="space-y-1.5">
+          <Label>Fixar para</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" variant={scope === "mes" ? "default" : "outline"} onClick={() => setScope("mes")}>O mês inteiro</Button>
+            <Button type="button" variant={scope === "data" ? "default" : "outline"} onClick={() => setScope("data")}>Só uma data</Button>
+          </div>
+        </div>
+        {scope === "data" && (
+          <Select value={date} onValueChange={(d) => { setDate(d); setSelected(pinsOf(d)); }}>
+            <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+            <SelectContent>{dates.map((d) => <SelectItem key={d} value={d}>{fmtDM(d)} · {fmtWeekday(d)}</SelectItem>)}</SelectContent>
+          </Select>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {selected.length} de {f.slots} vagas fixadas{scope === "mes" ? ` em ${dates.length} ${dates.length === 1 ? "data" : "datas"}` : ""}.
+        </p>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar pelo nome" className="rounded-xl pl-9" />
+        </div>
+        <div className="max-h-[40vh] divide-y overflow-y-auto">
+          {people.map((v) => {
+            const on = selected.includes(v.id);
+            return (
+              <label key={v.id} className="flex items-center gap-3 py-2">
+                <VolunteerAvatar name={v.name} photoUrl={v.photoUrl} size="sm" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{v.name}</span>
+                  {!memberIds.includes(v.id) && <span className="text-xs text-muted-foreground">Não participa desta escala</span>}
+                </span>
+                <Switch
+                  checked={on}
+                  disabled={busy || (!on && full)}
+                  onCheckedChange={(c) => setSelected((s) => (c ? [...s, v.id] : s.filter((x) => x !== v.id)))}
+                  aria-label={`Fixar ${v.name}`}
+                />
+              </label>
+            );
+          })}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="ghost" className="sm:mr-auto" disabled={busy} onClick={() => save([])}>Remover fixação</Button>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button disabled={busy || selected.length === 0} onClick={() => save(selected)}><Pin /> {busy ? "Salvando…" : "Fixar e sortear"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

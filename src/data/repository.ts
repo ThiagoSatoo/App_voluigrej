@@ -180,7 +180,7 @@ export const repo = {
 
   async toggleSupervisor(id: string): Promise<Result> {
     const s = getState();
-    if (s.session?.role !== "admin") return fail("Somente o administrador pode alterar supervisores.");
+    if (s.session?.role !== "admin") return fail("Somente o administrador pode alterar coordenadores.");
     const t = s.supervisors.find((x) => x.id === id);
     if (!t || t.role === "admin") return fail("Não é possível alterar este acesso.");
     return repo.setUserStatus(id, t.status === "ativo" ? "inativo" : "ativo");
@@ -389,8 +389,28 @@ export const repo = {
     }
   },
 
-  async clearUnavailable(fixedId: string, date: string, volunteerId?: string): Promise<Result> {
-    return run(() => supabase.rpc("clear_unavailable", { p_fixed: fixedId, p_date: date, p_vol: volunteerId ?? null }));
+  /** "Disponível": desfaz o "Indisponível". Se o lugar ainda estiver vago, a pessoa volta para a escala. */
+  async markAvailable(fixedId: string, date: string, volunteerId?: string): Promise<Result & { outcome?: string }> {
+    try {
+      const { data, error } = await supabase.rpc("mark_available", { p_fixed: fixedId, p_date: date, p_vol: volunteerId ?? null });
+      if (error) return fail(friendlyError(error));
+      await refresh();
+      return { ok: true, outcome: String(data ?? "") };
+    } catch (e) {
+      return fail(friendlyError(e));
+    }
+  },
+
+  /** Fixa pessoas nas datas informadas (lista vazia = desafixar) e refaz o sorteio do mês em rascunho. */
+  async setFixedPins(fixedId: string, dates: string[], volunteerIds: string[], year: number, month: number): Promise<Result> {
+    if (dates.length === 0) return fail("Escolha a data.");
+    try {
+      const { error } = await supabase.rpc("set_fixed_pins", { p_fixed: fixedId, p_dates: dates, p_vols: volunteerIds });
+      if (error) return fail(friendlyError(error));
+    } catch (e) {
+      return fail(friendlyError(e));
+    }
+    return run(() => supabase.rpc("draw_fixed", { p_fixed: fixedId, p_year: year, p_month: month }));
   },
 
   // ---------- Presença e substituição ----------

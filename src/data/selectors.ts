@@ -114,7 +114,7 @@ export const activeCount = (s: AppState, opportunityId: string) => s.oppCounts[o
 
 /** Pessoas que podem ser responsáveis por um turno ou vaga. */
 export const responsavelOptions = (s: AppState) => [
-  ...s.supervisors.filter((x) => x.status === "ativo").map((x) => ({ id: x.id, name: x.name, kind: x.role === "admin" ? "Administrador" : "Supervisor" })),
+  ...s.supervisors.filter((x) => x.status === "ativo").map((x) => ({ id: x.id, name: x.name, kind: x.role === "admin" ? "Administrador" : "Coordenador" })),
   ...s.volunteers.filter((v) => v.status === "ativo" && v.role === "responsavel").map((v) => ({ id: v.id, name: v.name, kind: "Responsável" })),
 ];
 
@@ -295,7 +295,7 @@ export interface TeamMember {
 
 export const ROLE_LABEL: Record<TeamMember["role"], string> = {
   admin: "Administrador",
-  supervisor: "Supervisor",
+  supervisor: "Coordenador",
   responsavel: "Responsável",
   voluntario: "Voluntário",
 };
@@ -385,4 +385,21 @@ export function fixedDraws(s: AppState, fixedId: string, year: number, month: nu
   const period = s.periods.find((p) => p.year === year && p.month === month);
   if (!period) return { period, draws: [] as AppState["draws"] };
   return { period, draws: s.draws.filter((d) => d.periodId === period.id && d.fixedId === fixedId).sort((a, b) => b.number - a.number) };
+}
+
+/**
+ * Backup de um turno de escala fixa: saiu do turno ("Indisponível") e depois tocou em "Disponível"
+ * sem voltar (o lugar foi ocupado). A coordenação pode trocá-lo por alguém escalado.
+ */
+export function backupsOf(s: AppState, needId: string): string[] {
+  const n = s.periods.flatMap((p) => p.needs).find((x) => x.id === needId);
+  if (!n?.fixedId) return [];
+  return s.attendance
+    .filter((a) => a.needId === needId && (a.status === "cancelado" || a.status === "substituido"))
+    .map((a) => a.volunteerId)
+    .filter(
+      (id) =>
+        s.fixedReleased.some((e) => e.fixedId === n.fixedId && e.volunteerId === id && e.date === n.date) &&
+        !isUnavailable(s, n.fixedId!, id, n.date),
+    );
 }

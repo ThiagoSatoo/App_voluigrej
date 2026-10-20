@@ -27,7 +27,7 @@ function NavList({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin: bo
         </div>
         <div className="min-w-0">
           <div className="font-display text-lg font-semibold leading-tight">{APP_TITLE}</div>
-          <div className="truncate text-xs opacity-70">{state.settings.churchName || (isAdmin ? "Administrador" : "Supervisor")}</div>
+          <div className="truncate text-xs opacity-70">{state.settings.churchName || (isAdmin ? "Administrador" : "Coordenador")}</div>
         </div>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">

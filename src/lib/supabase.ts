@@ -34,7 +34,8 @@ export const AVATAR_BUCKET = "avatars";
 
 /** Converte erros do banco/servidor em mensagens amigáveis em português. */
 export function friendlyError(err: unknown): string {
-  const msg = (err as { message?: string })?.message ?? String(err ?? "");
+  // No banco o perfil se chama "supervisor"; na tela, "coordenador".
+  const msg = ((err as { message?: string })?.message ?? String(err ?? "")).replace(/supervisor(es)?/g, (_, p) => (p ? "coordenadores" : "coordenador"));
   if (/row-level security|permission denied|Acesso negado/i.test(msg)) return "Você não tem permissão para fazer isso.";
   if (/Invalid login credentials/i.test(msg)) return "Login ou senha inválidos.";
   if (/rate limit|too many/i.test(msg)) return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
@@ -44,7 +45,6 @@ export function friendlyError(err: unknown): string {
   if (/duplicate key.*username/i.test(msg)) return "Este usuário já está em uso.";
   if (/foreign key.*fixed_id|violates foreign key constraint "(needs|draws)_fixed_id/i.test(msg)) return "Esta escala fixa já tem turnos gerados. Desative-a em vez de excluir.";
   if (/duplicate key.*fixed_members/i.test(msg)) return "Esta pessoa já participa desta escala fixa.";
-  if (/function public\.clear_unavailable|Could not find the function/i.test(msg)) return "Esta função ainda não foi ativada no servidor. Avise a coordenação.";
   if (/weak|password should/i.test(msg)) return "Senha muito fraca. Use pelo menos 8 caracteres, com letras e números.";
   if (/same_password|should be different/i.test(msg)) return "A nova senha deve ser diferente da atual.";
   // Mensagens geradas pelas funções do banco já estão em português.
