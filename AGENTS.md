@@ -15,7 +15,7 @@ Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
 ## Onde paramos (20/10/2026)
 
 - O app está pronto e publicado na Vercel a partir da branch `main`.
-- O banco no Supabase está criado, com as regras de acesso aplicadas (migrations 1 a 16).
+- O banco no Supabase está criado, com as regras de acesso aplicadas (migrations 1 a 17).
 - A Edge Function `manage-users` está publicada.
 - O login é por CPF para todos; a senha inicial é o CPF.
 - As telas passaram no teste do `e2e/` (em 360px, 390px e 1280px).
@@ -23,6 +23,7 @@ Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
 - **Falta o teste real**: entrar no app publicado, criar usuários e usar no celular.
 - 20/10: a primeira tela do voluntário e do responsável é a **Agenda** (a aba "Início" saiu; `/voluntario` redireciona).
 - 20/10: a aba "Presença" saiu do menu do supervisor; a presença é marcada na **Agenda** (`/supervisor/presenca` redireciona). O responsável continua marcando em "Turnos".
+- 20/10: revisão de saúde. O app carrega só os sorteios em uso (publicados e rascunhos). Saíram 30 componentes visuais, 27 pacotes e o código do fluxo mensal antigo que não eram usados. Pacotes com falhas conhecidas foram atualizados (`bun audit` limpo). Testes novos em `src/test/fixed.test.ts`. Índices novos (migration 17).
 - 20/10: "Supervisor" virou **Coordenador** nas telas (no banco o perfil continua `supervisor`). Botões **Disponível** (voluntário) e **Fixar** (coordenação) nas escalas fixas.
 - 20/10: **Escalas fixas** no ar. "Períodos e necessidades", "Disponibilidades" e "Sorteio" viraram a aba **Escalas** (escalas fixas + vagas avulsas). O voluntário escolhe suas escalas fixas e usa o botão "Indisponível" na aba **Escalas**. Os períodos e sorteios antigos continuam no banco e aparecem na Agenda, no Histórico e nos Relatórios.
 
@@ -54,6 +55,13 @@ Respostas do dono sobre escalas fixas (20/10), já aplicadas:
 - "Indisponível" numa data avisa a coordenação; se a pessoa estava escalada e o turno fica incompleto, o sistema escolhe o substituto sozinho entre os participantes. Sem ninguém livre, a coordenação recebe um alerta.
 - O voluntário entra direto numa escala fixa (sem aprovação).
 - Pedido de 20/10 (2ª parte), já aplicado: no lugar de "Desfazer", o botão **Disponível**; o botão **Fixar** da coordenação; "Supervisor" passa a se chamar **Coordenador** nas telas.
+
+Melhorias opcionais que pedem aprovação do dono no Supabase (a ferramenta pede confirmação por apagar algo):
+- Separar as regras de escrita de `periods` e `needs` (hoje `*_write` "for all" também conta como regra de leitura; ganho pequeno de desempenho). SQL pronto: `drop policy periods_write/needs_write` + políticas `*_insert`, `*_update`, `*_delete` com `is_staff()`.
+- Limpeza mensal do histórico do agendador (`cron.job_run_details`), que cresce cerca de 50 mil linhas por ano.
+
+Manutenção sem urgência:
+- O ESLint aponta cerca de 900 problemas só de formatação (Prettier). Rodar `bunx eslint . --fix` numa mudança separada (mexe em quase todos os arquivos).
 
 Ideias sugeridas ao dono, ainda não pedidas:
 - Política "mesmo dia" (vê todos que servem no mesmo dia).

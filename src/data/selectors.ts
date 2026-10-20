@@ -6,24 +6,10 @@ export const sortNeeds = (needs: Need[]) =>
 
 export const sortPeriods = (ps: Period[]) => [...ps].sort((a, b) => b.year - a.year || b.month - a.month);
 
-export const findVolunteer = (s: AppState, id: string) => s.volunteers.find((v) => v.id === id);
-
 export const activeVolunteers = (s: AppState) => s.volunteers.filter((v) => v.status === "ativo");
-
-/** The period volunteers currently answer availability for. */
-export function availabilityPeriod(s: AppState): Period | undefined {
-  const open = s.periods.find((p) => p.status === "aberta");
-  if (open) return open;
-  return sortPeriods(s.periods).find((p) => ["encerrada", "sorteado", "publicada"].includes(p.status) && !publishedDraw(s, p.id));
-}
 
 export const drawsOf = (s: AppState, periodId: string) =>
   s.draws.filter((d) => d.periodId === periodId).sort((a, b) => b.number - a.number);
-
-export const publishedDraw = (s: AppState, periodId: string) =>
-  s.draws.find((d) => d.periodId === periodId && d.status === "publicado");
-
-export const latestDraw = (s: AppState, periodId: string) => drawsOf(s, periodId)[0];
 
 /** Sorteio publicado que vale para um turno. Um mês pode ter vários (um por escala fixa). */
 export function publishedSlotFor(s: AppState, needId: string) {
@@ -37,35 +23,6 @@ export function publishedSlotFor(s: AppState, needId: string) {
 
 export const availabilityOf = (s: AppState, periodId: string, volunteerId: string, needId: string) =>
   s.availabilities.find((a) => a.periodId === periodId && a.volunteerId === volunteerId && a.needId === needId)?.value;
-
-export const hasResponded = (s: AppState, periodId: string, volunteerId: string) =>
-  s.availabilities.some((a) => a.periodId === periodId && a.volunteerId === volunteerId);
-
-export interface Assignment {
-  period: Period;
-  need: Need;
-  colleagues: string[];
-}
-
-/** Published assignments for a given volunteer, sorted by date. */
-export function assignmentsOf(s: AppState, volunteerId: string): Assignment[] {
-  const out: Assignment[] = [];
-  s.draws
-    .filter((d) => d.status === "publicado")
-    .forEach((d) => {
-      const period = s.periods.find((p) => p.id === d.periodId);
-      if (!period) return;
-      d.slots.forEach((slot) => {
-        if (!slot.picks.some((p) => p.volunteerId === volunteerId)) return;
-        const n = period.needs.find((x) => x.id === slot.needId);
-        if (n) out.push({ period, need: n, colleagues: slot.picks.map((p) => p.volunteerId) });
-      });
-    });
-  return out.sort((a, b) => a.need.date.localeCompare(b.need.date));
-}
-
-export const nextAssignment = (s: AppState, volunteerId: string) =>
-  assignmentsOf(s, volunteerId).find((a) => a.need.date >= today());
 
 /** Next scheduled need across all published scales. */
 export function nextScheduledNeed(s: AppState) {
@@ -350,8 +307,6 @@ import { addDays, format } from "date-fns";
 import { toDate } from "@/lib/format";
 
 export const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-export const WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
 export const sortFixed = (fs: FixedSchedule[]) => [...fs].sort((a, b) => a.weekday - b.weekday || a.start.localeCompare(b.start));
 
 export const fixedLabel = (f: Pick<FixedSchedule, "weekday" | "start" | "end">) => `${WEEKDAYS[f.weekday]} ${f.start}–${f.end}`;

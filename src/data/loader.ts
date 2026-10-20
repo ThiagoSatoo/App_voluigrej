@@ -24,19 +24,35 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = any;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Query = any;
+
 /** Lê uma tabela inteira em páginas (o Supabase devolve no máximo 1000 linhas por vez). */
-async function fetchAll(table: string, select = "*", order?: string): Promise<Row[]> {
+async function fetchAll(table: string, select = "*", filter?: (q: Query) => Query): Promise<Row[]> {
   const out: Row[] = [];
   const size = 1000;
   for (let from = 0; ; from += size) {
     let q = supabase.from(table).select(select).range(from, from + size - 1);
-    if (order) q = q.order(order);
+    if (filter) q = filter(q);
     const { data, error } = await q;
     if (error) throw error;
     out.push(...((data ?? []) as unknown as Row[]));
     if (!data || data.length < size) break;
   }
   return out;
+}
+
+/**
+ * Linhas de draw_slots/draw_picks só dos sorteios em uso (publicados e rascunhos):
+ * as versões trocadas de cada sorteio não são mais lidas, e o carregamento não cresce com o tempo.
+ * Se o filtro falhar por algum motivo, lê a tabela inteira (como antes) para o app não parar.
+ */
+async function fetchActiveDrawRows(table: "draw_slots" | "draw_picks"): Promise<Row[]> {
+  try {
+    return await fetchAll(table, "*, draws!inner(status)", (q) => q.neq("draws.status", "substituido"));
+  } catch {
+    return fetchAll(table);
+  }
 }
 
 const empty = (): AppState => ({
@@ -87,8 +103,9 @@ export async function loadState(): Promise<AppState> {
       fetchAll("needs"),
       fetchAll("availabilities"),
       fetchAll("draws"),
-      fetchAll("draw_slots"),
-      fetchAll("draw_picks"),
+      // Só as linhas dos sorteios em uso (publicados e rascunhos); versões trocadas ficam de fora.
+      fetchActiveDrawRows("draw_slots"),
+      fetchActiveDrawRows("draw_picks"),
       fetchAll("attendance"),
       fetchAll("substitutions"),
       fetchAll("opportunities"),

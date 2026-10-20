@@ -3,7 +3,7 @@ import { AVATAR_BUCKET, cpfLogin, friendlyError, staffLogin, supabase } from "@/
 import { today, validCpf } from "@/lib/format";
 import { getState, refresh } from "./store";
 import type { TeamRole } from "./selectors";
-import type { AppState, AttendanceStatus, AvailabilityValue, Draw, DrawPick, Need, NotifType, PeriodStatus, Settings, Volunteer } from "./types";
+import type { AppState, AttendanceStatus, NotifType, Settings, Volunteer } from "./types";
 
 /**
  * Camada de acesso a dados. As telas só alteram dados por aqui.
@@ -139,14 +139,6 @@ export const repo = {
     return run(() => supabase.rpc("set_user_role", { p_id: id, p_role: role }));
   },
 
-  /** Somente o admin cria supervisores. */
-  async createStaff(name: string, cpfInput: string): Promise<Result> {
-    const cpf = cpfInput.replace(/\D/g, "");
-    if (name.trim().length < 3) return fail("Informe o nome completo.");
-    if (!validCpf(cpf)) return fail("CPF inválido. Confira os números.");
-    return manageUsers({ action: "create_staff", name: name.trim(), cpf });
-  },
-
   /** Volta a senha para o CPF; a pessoa troca no próximo acesso. */
   async resetPassword(userId: string): Promise<Result> {
     return manageUsers({ action: "reset_password", userId });
@@ -176,18 +168,6 @@ export const repo = {
     const v = [...s.volunteers, ...s.supervisors].find((x) => x.id === id);
     if (!v) return fail("Pessoa não encontrada.");
     return repo.setUserStatus(id, v.status === "ativo" ? "inativo" : "ativo");
-  },
-
-  async toggleSupervisor(id: string): Promise<Result> {
-    const s = getState();
-    if (s.session?.role !== "admin") return fail("Somente o administrador pode alterar coordenadores.");
-    const t = s.supervisors.find((x) => x.id === id);
-    if (!t || t.role === "admin") return fail("Não é possível alterar este acesso.");
-    return repo.setUserStatus(id, t.status === "ativo" ? "inativo" : "ativo");
-  },
-
-  async setVolunteerRole(id: string, role: "voluntario" | "responsavel"): Promise<Result> {
-    return run(() => supabase.rpc("set_volunteer_role", { p_id: id, p_role: role }));
   },
 
   /** Envia a foto (já reduzida no aparelho) para o armazenamento privado. `null` remove. */
@@ -225,115 +205,6 @@ export const repo = {
     return run(() => supabase.from("notifications").update({ read: true }).eq("id", id));
   },
 
-  // ---------- Períodos e turnos ----------
-  async createPeriod(data: { month: number; year: number; openDate: string; deadline: string }): Promise<Result> {
-    if (getState().periods.some((p) => p.month === data.month && p.year === data.year)) return fail("Já existe um período para este mês.");
-    return run(() =>
-      supabase.from("periods").insert({ month: data.month, year: data.year, open_date: data.openDate, deadline: data.deadline, status: "rascunho" }),
-    );
-  },
-
-  async updatePeriod(id: string, patch: { openDate?: string; deadline?: string }): Promise<Result> {
-    const row: Record<string, string> = {};
-    if (patch.openDate) row["open_date"] = patch.openDate;
-    if (patch.deadline) row["deadline"] = patch.deadline;
-    return run(() => supabase.from("periods").update(row).eq("id", id));
-  },
-
-  async setPeriodStatus(id: string, status: PeriodStatus): Promise<Result> {
-    return run(() => supabase.from("periods").update({ status }).eq("id", id));
-  },
-
-  async addNeed(periodId: string, n: Omit<Need, "id">): Promise<Result> {
-    if (!validTimeRange(n.start, n.end)) return fail("Informe um horário final posterior ao início, no mesmo dia.");
-    return run(() =>
-      supabase.from("needs").insert({
-        period_id: periodId,
-        date: n.date,
-        start_time: n.start,
-        end_time: n.end,
-        slots: Math.max(1, n.slots),
-        responsavel_id: n.responsavelId ?? null,
-      }),
-    );
-  },
-
-  async updateNeedSlots(_periodId: string, needId: string, slots: number): Promise<Result> {
-    return run(() => supabase.from("needs").update({ slots: Math.max(1, slots) }).eq("id", needId));
-  },
-
-  async setNeedResponsavel(needId: string, responsavelId: string | null): Promise<Result> {
-    return run(() => supabase.from("needs").update({ responsavel_id: responsavelId }).eq("id", needId));
-  },
-
-  /** Define o mesmo responsável para todos os turnos de um dia. */
-  async setDayResponsavel(periodId: string, date: string, responsavelId: string | null): Promise<Result> {
-    return run(() => supabase.from("needs").update({ responsavel_id: responsavelId }).eq("period_id", periodId).eq("date", date));
-  },
-
-  async removeNeed(_periodId: string, needId: string): Promise<Result> {
-    return run(() => supabase.from("needs").delete().eq("id", needId));
-  },
-
-  // ---------- Disponibilidade ----------
-  async setAvailability(periodId: string, volunteerId: string, needId: string, value: AvailabilityValue): Promise<Result> {
-    const p = getState().periods.find((x) => x.id === periodId);
-    if (p?.status !== "aberta") return fail("Período encerrado.");
-    return run(() =>
-      supabase
-        .from("availabilities")
-        .upsert({ period_id: periodId, volunteer_id: volunteerId, need_id: needId, value, updated_at: new Date().toISOString() }),
-    );
-  },
-
-  // ---------- Sorteio ----------
-  /**
-   * Regra: menor nº de escalas nos últimos 3 meses; empate → últimos 12 meses; persistindo → aleatório.
-   * Nunca seleciona voluntários indisponíveis ou sem resposta (o servidor confere de novo).
-   */
-  async runDraw(periodId: string): Promise<(Result & { draw?: Draw })> {
-    const s = getState();
-    const period = s.periods.find((p) => p.id === periodId);
-    if (!period) return fail("Período não encontrado.");
-    const active = s.volunteers.filter((v) => v.status === "ativo");
-    const counts = new Map(active.map((v) => [v.id, { r: v.recent3m, y: v.last12m }]));
-    const busyByDate = new Map<string, Set<string>>();
-    const needs = [...period.needs].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
-    const rand = () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
-
-    const slots = needs.map((n) => {
-      const busy = busyByDate.get(n.date) ?? new Set<string>();
-      const eligible = active
-        .filter((v) => s.availabilities.some((a) => a.periodId === periodId && a.volunteerId === v.id && a.needId === n.id && a.value === "disponivel"))
-        .filter((v) => !busy.has(v.id))
-        .map((v) => ({ id: v.id, ...counts.get(v.id)!, rand: rand() }))
-        .sort((a, b) => a.r - b.r || a.y - b.y || a.rand - b.rand);
-
-      const chosen = eligible.slice(0, n.slots);
-      const picks: DrawPick[] = chosen.map((c, i) => {
-        const neighbors = eligible.filter((e) => e.id !== c.id && e.r === c.r);
-        const tiebreak = neighbors.length === 0 ? "Escalas recentes" : neighbors.some((e) => e.y === c.y) ? "Aleatório" : "Últimos 12 meses";
-        return { volunteerId: c.id, recent3m: c.r, last12m: c.y, priority: i + 1, tiebreak };
-      });
-      chosen.forEach((c) => {
-        const cnt = counts.get(c.id)!;
-        counts.set(c.id, { r: cnt.r + 1, y: cnt.y + 1 });
-        busy.add(c.id);
-      });
-      busyByDate.set(n.date, busy);
-      return { needId: n.id, eligible: eligible.length, picks };
-    });
-
-    try {
-      const { data, error } = await supabase.rpc("save_draw", { p_period: periodId, p_slots: slots, p_created_by: myName() });
-      if (error) return fail(friendlyError(error));
-      await refresh();
-      return { ok: true, draw: getState().draws.find((d) => d.id === data) };
-    } catch (e) {
-      return fail(friendlyError(e));
-    }
-  },
-
   async publishDraw(drawId: string): Promise<Result> {
     return run(() => supabase.rpc("publish_draw", { p_draw: drawId }));
   },
@@ -353,10 +224,6 @@ export const repo = {
       ...(d.active === undefined ? {} : { active: d.active }),
     };
     return run(() => (id ? supabase.from("fixed_schedules").update(row).eq("id", id) : supabase.from("fixed_schedules").insert(row)));
-  },
-
-  async setFixedActive(id: string, active: boolean): Promise<Result> {
-    return run(() => supabase.from("fixed_schedules").update({ active }).eq("id", id));
   },
 
   async removeFixed(id: string): Promise<Result> {
