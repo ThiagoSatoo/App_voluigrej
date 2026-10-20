@@ -1,15 +1,13 @@
 import {
-  CalendarCheck,
   CalendarDays,
   CalendarRange,
-  ClipboardCheck,
   FileText,
   HandHeart,
   History,
+  Repeat,
   LayoutDashboard,
   Settings,
   ShieldCheck,
-  Shuffle,
   SlidersHorizontal,
   UserRound,
   Users,
@@ -37,9 +35,7 @@ export interface NavItem {
 export const SUPERVISOR_NAV: NavItem[] = [
   { key: "dashboard", to: "/supervisor", label: "Dashboard", icon: LayoutDashboard, exact: true, locked: "Tela inicial" },
   { key: "equipe", to: "/supervisor/voluntarios", label: "Equipe", icon: Users },
-  { key: "periodos", to: "/supervisor/periodos", label: "Períodos e necessidades", icon: CalendarRange },
-  { key: "disponibilidades", to: "/supervisor/disponibilidades", label: "Disponibilidades", icon: ClipboardCheck },
-  { key: "sorteio", to: "/supervisor/sorteio", label: "Sorteio", icon: Shuffle },
+  { key: "periodos", to: "/supervisor/periodos", label: "Escalas", icon: CalendarRange, hint: "Escalas fixas, sorteio do mês e vagas avulsas" },
   { key: "agenda", to: "/supervisor/escala", label: "Agenda", icon: CalendarDays, locked: "A presença é marcada nela" },
   { key: "historico", to: "/supervisor/historico", label: "Histórico", icon: History },
   { key: "relatorios", to: "/supervisor/relatorios", label: "Relatórios", icon: FileText },
@@ -49,7 +45,7 @@ export const SUPERVISOR_NAV: NavItem[] = [
 
 export const VOLUNTEER_NAV: NavItem[] = [
   { key: "escala", to: "/voluntario/escala", label: "Agenda", icon: CalendarDays, locked: "Tela inicial" },
-  { key: "disponibilidade", to: "/voluntario/disponibilidade", label: "Disponível", icon: CalendarCheck, hint: "Disponibilidade para a escala mensal" },
+  { key: "disponibilidade", to: "/voluntario/disponibilidade", label: "Escalas", icon: Repeat, hint: "Escalas fixas e o botão Indisponível" },
   { key: "vagas", to: "/voluntario/vagas", label: "Vagas", icon: HandHeart, hint: "Candidatura às vagas avulsas" },
   { key: "turnos", to: "/voluntario/turnos", label: "Turnos", icon: ShieldCheck, responsavelOnly: true, hint: "Só para responsáveis de turno" },
   { key: "historico", to: "/voluntario/historico", label: "Histórico", icon: History },
@@ -76,7 +72,14 @@ export function visibleNav(s: AppState, area: NavArea): NavItem[] {
 /** A rota atual está desligada para esta pessoa? (bloqueia também quem digita o endereço direto) */
 export function routeBlocked(s: AppState, area: NavArea, pathname: string): boolean {
   const items = area === "supervisor" ? SUPERVISOR_NAV : VOLUNTEER_NAV;
-  const extra = area === "supervisor" ? [{ key: "periodos", to: "/supervisor/necessidades" }] : [];
+  const extra =
+    area === "supervisor"
+      ? [
+          { key: "periodos", to: "/supervisor/necessidades" },
+          { key: "periodos", to: "/supervisor/sorteio" },
+          { key: "periodos", to: "/supervisor/disponibilidades" },
+        ]
+      : [];
   const match = [...items, ...extra]
     .filter((it) => pathname === it.to || (!("exact" in it && it.exact) && pathname.startsWith(it.to + "/")))
     .sort((a, b) => b.to.length - a.to.length)[0];

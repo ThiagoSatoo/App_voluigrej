@@ -71,7 +71,7 @@ function AgendaPage() {
         <Tabs value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
           <TabsList className="rounded-xl">
             <TabsTrigger value="todos" className="rounded-lg">Todos</TabsTrigger>
-            <TabsTrigger value="escala" className="rounded-lg">Escala mensal</TabsTrigger>
+            <TabsTrigger value="escala" className="rounded-lg">Escalas</TabsTrigger>
             <TabsTrigger value="vaga" className="rounded-lg">Vagas avulsas</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -137,7 +137,7 @@ function AgendaPage() {
           </div>
         )}
         {shown.length === 0 ? (
-          <EmptyState icon={CalendarDays} title="Nenhum horário" text={day ? "Não há horários neste dia." : "Crie turnos em Períodos ou vagas em Necessidades."} />
+          <EmptyState icon={CalendarDays} title="Nenhum horário" text={day ? "Não há horários neste dia." : "Crie escalas fixas e sorteie o mês na tela Escalas, ou crie vagas avulsas."} />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {shown.map((i) => <AgendaCard key={i.key} item={i} name={name} open={!!day} />)}
@@ -172,7 +172,7 @@ function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: stri
           <div className="flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3.5 w-3.5" /> {i.start} – {i.end}</div>
           {i.note && <div className="truncate text-xs text-muted-foreground">{i.note}</div>}
           <div className="mt-1 flex flex-wrap gap-1.5">
-            <Pill tone={i.kind === "vaga" ? "accent" : "primary"}>{i.kind === "vaga" ? "Vaga avulsa" : "Escala mensal"}</Pill>
+            <Pill tone={i.kind === "vaga" ? "accent" : "primary"}>{i.kind === "vaga" ? "Vaga avulsa" : i.fixedId ? "Escala fixa" : "Escala mensal"}</Pill>
             <Pill tone="muted">{statusLabel(i)}</Pill>
           </div>
         </div>

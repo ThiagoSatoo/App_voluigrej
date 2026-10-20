@@ -41,7 +41,7 @@ export function buildReport(s: AppState, from: string, to: string): Report {
       const ids = sl.picks.map((p) => p.volunteerId);
       const subs = s.attendance.filter((a) => a.needId === n.id && a.status === "substituido").length;
       rows.push({
-        date: n.date, time: fmtTimeRange(n), kind: "Escala mensal", min: n.slots, max: n.slots,
+        date: n.date, time: fmtTimeRange(n), kind: n.fixedId ? "Escala fixa" : "Escala mensal", min: n.slots, max: n.slots,
         volunteers: ids.map(name),
         present: ids.filter((id) => att(n.id, id) === "presente").length,
         absent: ids.filter((id) => att(n.id, id) === "faltou").length,

@@ -13,6 +13,8 @@ export const NOTIF_LABEL: Record<NotifType, string> = {
   lembrete_6h: "Lembrete 6h",
   lembrete_3h: "Lembrete 3h",
   lembrete_1h: "Lembrete 1h",
+  indisponivel: "Indisponibilidade",
+  substituto_escalado: "Escalado como substituto",
 };
 
 export const NOTIF_DESCRIPTION: Record<NotifType, string> = {
@@ -28,6 +30,8 @@ export const NOTIF_DESCRIPTION: Record<NotifType, string> = {
   lembrete_6h: "6 horas antes",
   lembrete_3h: "3 horas antes",
   lembrete_1h: "1 hora antes",
+  indisponivel: "Quando alguém avisar que não pode numa escala fixa.",
+  substituto_escalado: "Quando o sistema escalar você no lugar de alguém.",
 };
 
 export const REMINDERS = [
@@ -39,6 +43,7 @@ export const REMINDERS = [
 ] as const satisfies { type: NotifType; hours: number }[];
 
 export const STAFF_CATEGORIES: NotifType[] = [
+  "indisponivel",
   "nova_candidatura",
   "candidatura_cancelada",
   "minimo_atingido",

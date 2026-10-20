@@ -4,7 +4,7 @@ import { Mail, Phone, Repeat, UserCheck } from "lucide-react";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
-import { activeVolunteers, attendanceFor, availabilityOf, byPriority, personName, publishedDraw, sortNeeds, sortPeriods } from "@/data/selectors";
+import { activeVolunteers, attendanceFor, availabilityOf, byPriority, fixedCandidates, personName, publishedSlotFor, sortNeeds, sortPeriods } from "@/data/selectors";
 import type { AttendanceStatus } from "@/data/types";
 import { EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PersonRow, VolunteerAvatar } from "@/components/app/VolunteerAvatar";
@@ -18,8 +18,9 @@ import { cn } from "@/lib/utils";
 export function AttendanceManager({ scope = "all" }: { scope?: "all" | "mine" }) {
   const { state } = useStore();
   const options = sortPeriods(state.periods)
-    .filter((p) => publishedDraw(state, p.id))
+    .reverse()
     .flatMap((p) => sortNeeds(p.needs).map((n) => ({ p, n })))
+    .filter((o) => publishedSlotFor(state, o.n.id))
     .filter((o) => scope === "all" || o.n.responsavelId === state.session?.userId);
   // Padrão: o turno de hoje (ou o próximo); se não houver, o mais recente.
   const def = options.find((o) => o.n.date >= today()) ?? options[options.length - 1];
@@ -58,7 +59,7 @@ export function AttendanceManager({ scope = "all" }: { scope?: "all" | "mine" })
 export function ShiftAttendance({ periodId, needId, compact }: { periodId: string; needId: string; compact?: boolean }) {
   const { state } = useStore();
   const [subOut, setSubOut] = useState<string | null>(null);
-  const slot = publishedDraw(state, periodId)?.slots.find((s) => s.needId === needId);
+  const slot = publishedSlotFor(state, needId)?.slot;
   const picks = slot?.picks ?? [];
   const outs = state.substitutions.filter((s) => s.needId === needId);
   const mark = (vid: string, st: AttendanceStatus) => act(repo.setAttendance(periodId, needId, vid, st), `Marcado como ${ATTENDANCE_STATUS[st].label.toLowerCase()}`);
@@ -117,14 +118,25 @@ function SubstituteDialog({ outId, periodId, needId, assigned, onClose }: { outI
   const [reason, setReason] = useState("");
   const out = state.volunteers.find((v) => v.id === outId);
   const all = activeVolunteers(state).filter((v) => !assigned.includes(v.id));
+  const need = state.periods.flatMap((p) => p.needs).find((n) => n.id === needId);
+  // Escala fixa: primeiro os participantes disponíveis nesta data; se não houver, todos.
+  const fixedIds = need?.fixedId ? fixedCandidates(state, need.fixedId, need.date) : [];
   const hasData = state.availabilities.some((a) => a.periodId === periodId);
-  const eligible = (hasData ? all.filter((v) => availabilityOf(state, periodId, v.id, needId) === "disponivel") : all).sort(byPriority);
+  const filtered = need?.fixedId
+    ? all.filter((v) => fixedIds.includes(v.id))
+    : hasData
+      ? all.filter((v) => availabilityOf(state, periodId, v.id, needId) === "disponivel")
+      : all;
+  const eligible = (filtered.length ? filtered : all).sort(byPriority);
 
   return (
     <Dialog open={!!outId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader><DialogTitle className="font-display">Substituir {out?.name}</DialogTitle></DialogHeader>
-        <p className="text-xs text-muted-foreground">Ordenado pela prioridade do sorteio (menos escalas recentes primeiro).</p>
+        <p className="text-xs text-muted-foreground">
+          {need?.fixedId && filtered.length === 0 ? "Nenhum participante da escala fixa está livre; mostrando todos. " : ""}
+          Ordenado pela prioridade do sorteio (menos escalas recentes primeiro).
+        </p>
         <div className="max-h-64 divide-y overflow-y-auto">
           {eligible.length === 0 && <p className="py-3 text-sm text-muted-foreground">Nenhum voluntário elegível disponível.</p>}
           {eligible.map((v) => (

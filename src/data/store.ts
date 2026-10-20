@@ -25,6 +25,9 @@ export const emptyState = (): AppState => ({
   notifPrefs: {},
   oppCounts: {},
   navConfig: {},
+  fixedSchedules: [],
+  fixedMembers: [],
+  fixedExceptions: [],
 });
 
 let state: AppState = emptyState();

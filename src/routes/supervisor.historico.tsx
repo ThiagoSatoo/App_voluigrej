@@ -2,7 +2,7 @@ import { fmtTimeRange } from "@/lib/time";
 import { createFileRoute } from "@tanstack/react-router";
 import { Ban, CalendarCheck, CheckCircle2, Repeat, XCircle } from "lucide-react";
 import { useStore } from "@/data/store";
-import { drawsOf, sortPeriods } from "@/data/selectors";
+import { drawsOf, fixedLabel, sortPeriods } from "@/data/selectors";
 import { PageHeader, Panel, Pill, StatCard } from "@/components/app/common";
 import { VolunteerAvatar } from "@/components/app/VolunteerAvatar";
 import { DRAW_STATUS, fmtDM, fmtDMY, fmtDateTime, periodLabel } from "@/lib/format";
@@ -88,7 +88,12 @@ function HistoryPage() {
               <div className="grid gap-2 sm:grid-cols-2">
                 {drawsOf(state, p.id).map((d) => (
                   <div key={d.id} className="flex items-center justify-between rounded-xl border p-3 text-sm">
-                    <div><b>Sorteio #{d.number}</b><div className="text-xs text-muted-foreground">Data: {fmtDMY(d.createdAt.slice(0, 10))}</div></div>
+                    <div className="min-w-0">
+                      <b>Sorteio #{d.number}</b>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {(() => { const f = state.fixedSchedules.find((x) => x.id === d.fixedId); return f ? `${fixedLabel(f)} · ` : ""; })()}Data: {fmtDMY(d.createdAt.slice(0, 10))}
+                      </div>
+                    </div>
                     <Pill tone={DRAW_STATUS[d.status].tone}>{DRAW_STATUS[d.status].label}</Pill>
                   </div>
                 ))}

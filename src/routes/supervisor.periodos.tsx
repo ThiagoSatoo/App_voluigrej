@@ -1,237 +1,323 @@
-import { TimeRangeFields } from "@/components/app/TimeRangeFields";
-import { fmtTimeRange } from "@/lib/time";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarPlus, Minus, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Pencil, Repeat, Search, Send, Shuffle, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
+import { addMonths, format, startOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
+import { act } from "@/lib/act";
+import {
+  WEEKDAYS,
+  activeVolunteers,
+  fixedDraws,
+  fixedLabel,
+  fixedMembersOf,
+  isUnavailable,
+  personName,
+  sortFixed,
+  sortNeeds,
+} from "@/data/selectors";
+import type { FixedSchedule } from "@/data/types";
 import { ResponsavelSelect } from "@/components/app/ResponsavelSelect";
 import { OpportunityManager } from "@/components/app/OpportunityManager";
+import { TimeRangeFields } from "@/components/app/TimeRangeFields";
+import { ConfirmDialog, DateBadge, EmptyState, Notice, PageHeader, Panel, Pill } from "@/components/app/common";
+import { VolunteerAvatar } from "@/components/app/VolunteerAvatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { act } from "@/lib/act";
-import { sortNeeds, sortPeriods } from "@/data/selectors";
-import type { Period, PeriodStatus } from "@/data/types";
-import { ConfirmDialog, DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MONTHS, PERIOD_STATUS, fmtDMY, fmtWeekday, periodLabel, today } from "@/lib/format";
+import { firstName, fmtWeekday, today, toDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/supervisor/periodos")({
   head: () => ({
     meta: [
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { title: "Períodos e necessidades — Painel do Supervisor" },
-      { name: "description", content: "Escala mensal (períodos) e vagas avulsas (necessidades) em um só lugar." },
+      { title: "Escalas — Painel do Supervisor" },
+      { name: "description", content: "Escalas fixas (horários semanais) e vagas avulsas em um só lugar." },
     ],
   }),
-  component: () => <SchedulingPage tab="mensal" />,
+  component: () => <SchedulingPage tab="fixas" />,
 });
 
-/** Períodos (escala mensal) e Necessidades (vagas avulsas) juntos, em abas. */
-export function SchedulingPage({ tab: initial }: { tab: "mensal" | "vagas" }) {
+/** Escalas fixas e vagas avulsas juntas, em abas. */
+export function SchedulingPage({ tab: initial }: { tab: "fixas" | "vagas" }) {
   const [tab, setTab] = useState(initial);
   return (
     <div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList className="mb-4 grid h-11 w-full max-w-md grid-cols-2 rounded-xl">
-          <TabsTrigger value="mensal" className="rounded-lg">Escala mensal</TabsTrigger>
+          <TabsTrigger value="fixas" className="rounded-lg">Escalas fixas</TabsTrigger>
           <TabsTrigger value="vagas" className="rounded-lg">Vagas avulsas</TabsTrigger>
         </TabsList>
-        <TabsContent value="mensal"><PeriodsPage /></TabsContent>
+        <TabsContent value="fixas"><FixedSchedulesPage /></TabsContent>
         <TabsContent value="vagas"><OpportunityManager scope="all" /></TabsContent>
       </Tabs>
     </div>
   );
 }
 
-const NEXT_ACTION: Partial<Record<PeriodStatus, { label: string; to: PeriodStatus; confirm: string }>> = {
-  rascunho: { label: "Abrir disponibilidade", to: "aberta", confirm: "Os voluntários poderão informar disponibilidade para este período." },
-  aberta: { label: "Encerrar disponibilidade", to: "encerrada", confirm: "Após encerrar, os voluntários não poderão mais alterar suas respostas." },
-  publicada: { label: "Encerrar período", to: "encerrado", confirm: "O período será arquivado como encerrado." },
-};
-
-function PeriodsPage() {
+function FixedSchedulesPage() {
   const { state } = useStore();
-  const [creating, setCreating] = useState(false);
-  const periods = sortPeriods(state.periods);
-  const [selected, setSelected] = useState<string>(periods.find((p) => p.status !== "encerrado")?.id ?? periods[0]?.id);
-  const current = state.periods.find((p) => p.id === selected);
+  const [month, setMonth] = useState(() => startOfMonth(toDate(today())));
+  const [editing, setEditing] = useState<FixedSchedule | "new" | null>(null);
+  const list = sortFixed(state.fixedSchedules);
+  const thisMonth = startOfMonth(toDate(today()));
+  const y = month.getFullYear();
+  const m = month.getMonth() + 1;
 
   return (
-    <div>
-      <PageHeader title="Escala mensal" subtitle="Cada mês tem suas próprias datas e horários. Os voluntários informam disponibilidade e o sorteio monta a escala." actions={<Button onClick={() => setCreating(true)}><CalendarPlus /> Novo período</Button>} />
-      <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
-        {periods.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setSelected(p.id)}
-            className={`shrink-0 rounded-2xl border px-4 py-3 text-left transition ${p.id === selected ? "border-primary bg-primary-soft" : "bg-card"}`}
-          >
-            <div className="font-display font-semibold">{periodLabel(p)}</div>
-            <div className="mt-1"><Pill tone={PERIOD_STATUS[p.status].tone}>{PERIOD_STATUS[p.status].label}</Pill></div>
-          </button>
-        ))}
+    <div className="space-y-4">
+      <PageHeader
+        title="Escalas fixas"
+        subtitle="Horários que se repetem toda semana. Cada voluntário escolhe de quais participa; o sorteio do mês decide quem vai em cada data."
+        actions={<Button onClick={() => setEditing("new")}><CalendarPlus /> Nova escala fixa</Button>}
+      />
+
+      <div className="flex items-center gap-1">
+        <Button size="icon" variant="outline" disabled={month <= thisMonth} onClick={() => setMonth(addMonths(month, -1))} aria-label="Mês anterior"><ChevronLeft /></Button>
+        <span className="min-w-36 text-center font-display text-lg font-semibold capitalize">{format(month, "MMMM yyyy", { locale: ptBR })}</span>
+        <Button size="icon" variant="outline" onClick={() => setMonth(addMonths(month, 1))} aria-label="Próximo mês"><ChevronRight /></Button>
+        <span className="ml-2 hidden text-xs text-muted-foreground sm:inline">Mês do sorteio</span>
       </div>
-      {current ? <PeriodDetail period={current} /> : <EmptyState icon={CalendarPlus} title="Nenhum período" text="Crie o primeiro período mensal." />}
-      <NewPeriodDialog open={creating} onClose={() => setCreating(false)} />
+
+      {list.length === 0 && (
+        <EmptyState icon={Repeat} title="Nenhuma escala fixa" text="Crie os horários que se repetem toda semana, por exemplo: Domingo 09:00–11:00, 4 pessoas." />
+      )}
+      <div className="grid gap-3 lg:grid-cols-2">
+        {list.map((f) => <FixedCard key={f.id} fixed={f} year={y} month={m} onEdit={() => setEditing(f)} />)}
+      </div>
+
+      <FixedDialog key={editing === "new" ? "new" : (editing?.id ?? "none")} fixed={editing} onClose={() => setEditing(null)} />
     </div>
   );
 }
 
-function PeriodDetail({ period }: { period: Period }) {
-  const [confirm, setConfirm] = useState(false);
-  const [date, setDate] = useState("");
-  const [start, setStart] = useState("09:00");
-  const [end, setEnd] = useState("10:00");
-  const [slots, setSlots] = useState(4);
-  const editable = period.status === "rascunho" || period.status === "aberta";
-  const action = NEXT_ACTION[period.status];
-  const total = period.needs.reduce((s, n) => s + n.slots, 0);
+function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; year: number; month: number; onEdit: () => void }) {
+  const { state } = useStore();
+  const [members, setMembers] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [confirmPublish, setConfirmPublish] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const memberIds = fixedMembersOf(state, f.id);
+  const { period, draws } = fixedDraws(state, f.id, year, month);
+  const latest = draws.find((d) => d.status !== "substituido");
+  const published = draws.find((d) => d.status === "publicado");
+  const draft = latest?.status === "rascunho" ? latest : undefined;
+  const shown = draft ?? published;
+  const needs = sortNeeds((period?.needs ?? []).filter((n) => n.fixedId === f.id));
+  const name = (id: string) => personName(state, id) ?? "—";
 
-  const [responsavelId, setResponsavelId] = useState<string | null>(null);
-  const add = async () => {
-    if (!date) { toast.error("Escolha uma data."); return; }
-    const [y, m] = date.split("-").map(Number);
-    if (y !== period.year || m !== period.month) { toast.error(`A data precisa estar em ${periodLabel(period)}.`); return; }
-    const result = await repo.addNeed(period.id, { date, start, end, slots, responsavelId: responsavelId ?? undefined });
-    if (!result.ok) { toast.error(result.error); return; }
-    setDate("");
-    toast.success("Necessidade adicionada");
+  // Equilíbrio do mês: quantas vezes cada participante foi escalado.
+  const times = memberIds.map((id) => shown?.slots.reduce((t, sl) => t + (sl.picks.some((p) => p.volunteerId === id) ? 1 : 0), 0) ?? 0);
+  const spread = times.length ? Math.max(...times) - Math.min(...times) : 0;
+  const short = shown ? shown.slots.filter((sl) => sl.picks.length < (needs.find((n) => n.id === sl.needId)?.slots ?? 0)).length : 0;
+
+  const draw = async () => {
+    setBusy(true);
+    const r = await act(repo.drawFixed(f.id, year, month), "Sorteio feito. Confira e publique.");
+    setBusy(false);
+    if (r.ok) setOpen(true);
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-      <div className="space-y-4">
-        <Panel>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="font-display text-2xl font-semibold uppercase">{periodLabel(period)}</h2>
-              <p className="text-sm text-muted-foreground">{period.needs.length} datas/horários · {total} vagas</p>
-            </div>
-            <Pill tone={PERIOD_STATUS[period.status].tone}>{PERIOD_STATUS[period.status].label}</Pill>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Abertura</Label>
-              <Input type="date" disabled={!editable} value={period.openDate} onChange={(e) => e.target.value && act(repo.updatePeriod(period.id, { openDate: e.target.value }))} className="rounded-xl" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Prazo final</Label>
-              <Input type="date" disabled={!editable} value={period.deadline} onChange={(e) => e.target.value && act(repo.updatePeriod(period.id, { deadline: e.target.value }))} className="rounded-xl" />
-            </div>
-          </div>
-          {action && (
-            <Button className="mt-4 w-full sm:w-auto" onClick={() => setConfirm(true)} disabled={action.to === "aberta" && period.needs.length === 0}>
-              {action.label}
-            </Button>
-          )}
-          {period.status === "encerrada" && <p className="mt-3 text-sm text-muted-foreground">Próximo passo: realizar o sorteio na área “Sorteio”.</p>}
-        </Panel>
-
-        <h3 className="font-semibold">Necessidades</h3>
-        {period.needs.length === 0 && <EmptyState icon={CalendarPlus} title="Sem necessidades" text="Adicione as datas, horários e quantidade de voluntários." />}
-        <div className="space-y-2">
-          {sortNeeds(period.needs).map((n) => (
-            <Panel key={n.id} className="flex flex-wrap items-center gap-3 p-3">
-              <DateBadge date={n.date} className="h-12 w-12" />
-              <div className="min-w-32 flex-1">
-                <div className="font-semibold">{fmtDMY(n.date)}</div>
-                <div className="text-xs text-muted-foreground">{fmtWeekday(n.date)} · {fmtTimeRange(n)}</div>
-              </div>
-              {editable ? (
-                <div className="flex items-center gap-1">
-                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => act(repo.updateNeedSlots(period.id, n.id, n.slots - 1))}><Minus /></Button>
-                  <span className="w-14 text-center text-sm font-bold">{n.slots} vol.</span>
-                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => act(repo.updateNeedSlots(period.id, n.id, n.slots + 1))}><Plus /></Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => act(repo.removeNeed(period.id, n.id), "Turno removido")} aria-label="Remover"><Trash2 /></Button>
-                </div>
-              ) : (
-                <Pill tone="primary">{n.slots} voluntários</Pill>
-              )}
-              <div className="flex w-full flex-wrap items-center gap-2 border-t pt-2">
-                <span className="text-xs font-medium text-muted-foreground">Responsável</span>
-                <ResponsavelSelect className="h-9 min-w-48 flex-1" value={n.responsavelId} onChange={(id) => act(repo.setNeedResponsavel(n.id, id), "Responsável atualizado")} />
-                {period.needs.filter((x) => x.date === n.date).length > 1 && (
-                  <Button size="sm" variant="ghost" className="text-xs" onClick={() => act(repo.setDayResponsavel(period.id, n.date, n.responsavelId ?? null), "Aplicado a todos os turnos do dia")}>
-                    Usar no dia todo
-                  </Button>
-                )}
-              </div>
-            </Panel>
-          ))}
+    <Panel className={cn("p-4", !f.active && "opacity-70")}>
+      <div className="flex items-start gap-3">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary-soft text-center text-xs font-bold uppercase text-primary">
+          {WEEKDAYS[f.weekday].slice(0, 3)}
         </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold">{fixedLabel(f)}</div>
+          {f.note && <div className="truncate text-sm text-muted-foreground">{f.note}</div>}
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            <Pill tone="primary">{f.slots} {f.slots === 1 ? "pessoa" : "pessoas"}</Pill>
+            <Pill tone="muted">{memberIds.length} participantes</Pill>
+            {!f.active && <Pill tone="warning">Desativada</Pill>}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">Responsável: {f.responsavelId ? name(f.responsavelId) : "equipe"}</p>
+        </div>
+        <Button size="icon" variant="ghost" onClick={onEdit} aria-label={`Editar ${fixedLabel(f)}`}><Pencil /></Button>
       </div>
 
-      {editable && (
-        <Panel className="h-fit space-y-3">
-          <h3 className="font-semibold">Adicionar necessidade</h3>
-          <div className="space-y-1.5"><Label className="text-xs">Data</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded-xl" /></div>
-          <TimeRangeFields start={start} end={end} onStartChange={setStart} onEndChange={setEnd} />
-          <div className="space-y-1.5"><Label className="text-xs">Voluntários necessários</Label><Input type="number" min={1} value={slots} onChange={(e) => setSlots(Math.max(1, Number(e.target.value)))} className="rounded-xl" /></div>
-          <div className="space-y-1.5"><Label className="text-xs">Responsável (opcional)</Label><ResponsavelSelect value={responsavelId ?? undefined} onChange={setResponsavelId} /></div>
-          <Button className="w-full" onClick={add}><Plus /> Adicionar</Button>
-        </Panel>
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3">
+        <span className="text-xs font-semibold text-muted-foreground">Este mês:</span>
+        {draft ? <Pill tone="warning">Rascunho #{draft.number}</Pill> : published ? <Pill tone="success">Publicada</Pill> : <Pill tone="muted">Sem sorteio</Pill>}
+        {draft && published && <span className="text-xs text-muted-foreground">(há uma versão publicada)</span>}
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Button size="sm" variant="outline" onClick={() => setMembers(true)}><Users /> Participantes</Button>
+        <Button size="sm" variant={shown ? "outline" : "default"} disabled={!f.active || busy || memberIds.length === 0} onClick={draw}>
+          <Shuffle /> {busy ? "Sorteando…" : shown ? "Sortear de novo" : "Sortear"}
+        </Button>
+        {shown && <Button size="sm" variant="outline" onClick={() => setOpen(!open)}>{open ? "Esconder datas" : "Ver datas"}</Button>}
+        {draft && <Button size="sm" onClick={() => setConfirmPublish(true)}><Send /> Publicar</Button>}
+      </div>
+      {memberIds.length === 0 && f.active && <p className="mt-2 text-xs text-muted-foreground">Inscreva participantes (ou peça aos voluntários) antes de sortear.</p>}
+
+      {open && shown && (
+        <div className="mt-3 space-y-2">
+          {spread > 3 && (
+            <Notice tone="warning" icon={AlertTriangle}>Diferença de {spread} dias entre quem mais e quem menos serve neste mês (o ideal é no máximo 3). Verifique as indisponibilidades e sorteie de novo.</Notice>
+          )}
+          {short > 0 && <Notice tone="warning" icon={AlertTriangle}>{short} {short === 1 ? "data ficou" : "datas ficaram"} com menos gente que o necessário.</Notice>}
+          {needs.map((n) => {
+            const slot = shown.slots.find((s) => s.needId === n.id);
+            const picks = slot?.picks ?? [];
+            return (
+              <div key={n.id} className="min-w-0 rounded-xl border p-3">
+                <div className="flex items-center gap-2">
+                  <DateBadge date={n.date} className="h-10 w-10" />
+                  <div className="min-w-0 flex-1 text-sm">
+                    <div className="font-semibold">{fmtWeekday(n.date)}</div>
+                    <div className="text-xs text-muted-foreground">{picks.length}/{n.slots} · {slot?.eligible ?? 0} disponíveis</div>
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {picks.length === 0 && <span className="text-xs text-muted-foreground">Ninguém disponível.</span>}
+                  {picks.map((p) => {
+                    const off = isUnavailable(state, f.id, p.volunteerId, n.date);
+                    return (
+                      <span key={p.volunteerId} className={cn("inline-flex max-w-full items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium", off && "bg-destructive-soft text-destructive")}>
+                        <span className="truncate">{firstName(name(p.volunteerId))}</span>
+                        {off && <span>(indisponível)</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+          {memberIds.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Vezes no mês por participante: {memberIds.map((id, i) => `${firstName(name(id))} ${times[i]}`).join(" · ")}
+            </p>
+          )}
+        </div>
       )}
 
-      {action && (
+      <MembersDialog fixed={f} open={members} onClose={() => setMembers(false)} />
+      {draft && (
         <ConfirmDialog
-          open={confirm}
-          onOpenChange={setConfirm}
-          title={`${action.label}?`}
-          description={action.confirm}
-          confirmLabel={action.label}
-          onConfirm={() => { act(repo.setPeriodStatus(period.id, action.to), PERIOD_STATUS[action.to].label); }}
+          open={confirmPublish}
+          onOpenChange={setConfirmPublish}
+          title="Publicar a escala do mês?"
+          description="Os voluntários passam a ver as datas em que foram escalados. Se já havia uma versão publicada desta escala neste mês, ela é trocada por esta."
+          confirmLabel="Publicar"
+          onConfirm={() => { act(repo.publishDraw(draft.id), "Escala publicada"); }}
         />
       )}
-    </div>
+    </Panel>
   );
 }
 
-function NewPeriodDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  // Sugere o mês seguinte, com disponibilidade aberta no mês atual.
-  const [defaults] = useState(() => {
-    const [y, m] = today().split("-").map(Number);
-    const ny = m === 12 ? y + 1 : y;
-    const nm = m === 12 ? 1 : m + 1;
-    const cur = `${y}-${String(m).padStart(2, "0")}`;
-    return { month: String(nm), year: String(ny), openDate: today(), deadline: `${cur}-25` < today() ? today() : `${cur}-25` };
-  });
-  const [month, setMonth] = useState(defaults.month);
-  const [year, setYear] = useState(defaults.year);
-  const [openDate, setOpenDate] = useState(defaults.openDate);
-  const [deadline, setDeadline] = useState(defaults.deadline);
-  const create = async () => {
-    const r = await repo.createPeriod({ month: Number(month), year: Number(year), openDate, deadline });
-    if (!r.ok) { toast.error(r.error); return; }
-    toast.success("Período criado como rascunho");
-    onClose();
+/** Coordenação inscreve ou remove participantes de uma escala fixa. */
+function MembersDialog({ fixed: f, open, onClose }: { fixed: FixedSchedule; open: boolean; onClose: () => void }) {
+  const { state } = useStore();
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const memberIds = fixedMembersOf(state, f.id);
+  const people = useMemo(
+    () =>
+      activeVolunteers(state)
+        .filter((v) => !q.trim() || v.name.toLowerCase().includes(q.trim().toLowerCase()))
+        .sort((a, b) => Number(memberIds.includes(b.id)) - Number(memberIds.includes(a.id)) || a.name.localeCompare(b.name)),
+    [state, q, memberIds],
+  );
+  const toggle = async (id: string, on: boolean) => {
+    setBusy(id);
+    await act(on ? repo.joinFixed(f.id, id) : repo.leaveFixed(f.id, id), on ? "Participante incluído" : "Participante removido");
+    setBusy(null);
   };
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="rounded-2xl">
-        <DialogHeader><DialogTitle className="font-display">Novo período mensal</DialogTitle></DialogHeader>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label>Mês</Label>
-            <Select value={month} onValueChange={setMonth}>
-              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-              <SelectContent>{MONTHS.map((m, i) => <SelectItem key={m} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5"><Label>Ano</Label><Input type="number" value={year} onChange={(e) => setYear(e.target.value)} className="rounded-xl" /></div>
-          <div className="space-y-1.5"><Label>Abertura</Label><Input type="date" value={openDate} onChange={(e) => setOpenDate(e.target.value)} className="rounded-xl" /></div>
-          <div className="space-y-1.5"><Label>Prazo final</Label><Input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="rounded-xl" /></div>
+      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
+        <DialogHeader><DialogTitle className="font-display">Participantes · {fixedLabel(f)}</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">{memberIds.length} participantes. Marque quem serve sempre neste horário.</p>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar pelo nome" className="rounded-xl pl-9" />
         </div>
-        <p className="text-xs text-muted-foreground">O período começa como <b>Rascunho</b>. Adicione as necessidades e depois abra a disponibilidade.</p>
+        <div className="max-h-[50vh] divide-y overflow-y-auto">
+          {people.map((v) => {
+            const on = memberIds.includes(v.id);
+            return (
+              <label key={v.id} className="flex items-center gap-3 py-2">
+                <VolunteerAvatar name={v.name} photoUrl={v.photoUrl} size="sm" />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{v.name}</span>
+                <Switch checked={on} disabled={busy === v.id} onCheckedChange={(c) => toggle(v.id, c)} aria-label={`${v.name} participa`} />
+              </label>
+            );
+          })}
+          {people.length === 0 && <p className="py-3 text-sm text-muted-foreground">Ninguém encontrado.</p>}
+        </div>
+        <DialogFooter><Button onClick={onClose}>Pronto</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FixedDialog({ fixed, onClose }: { fixed: FixedSchedule | "new" | null; onClose: () => void }) {
+  const { state } = useStore();
+  const f = fixed && fixed !== "new" ? fixed : undefined;
+  const [weekday, setWeekday] = useState(String(f?.weekday ?? 0));
+  const [start, setStart] = useState(f?.start ?? "09:00");
+  const [end, setEnd] = useState(f?.end ?? "11:00");
+  const [slots, setSlots] = useState(f?.slots ?? 4);
+  const [responsavelId, setResponsavelId] = useState<string | null>(f?.responsavelId ?? null);
+  const [note, setNote] = useState(f?.note ?? "");
+  const [active, setActive] = useState(f?.active ?? true);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const used = !!f && state.periods.some((p) => p.needs.some((n) => n.fixedId === f.id));
+
+  const save = async () => {
+    const r = await repo.saveFixed(f?.id ?? null, { weekday: Number(weekday), start, end, slots, responsavelId, note, active });
+    if (!r.ok) { toast.error(r.error); return; }
+    toast.success(f ? "Escala fixa atualizada" : "Escala fixa criada");
+    onClose();
+  };
+
+  return (
+    <Dialog open={!!fixed} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[92vh] overflow-y-auto rounded-2xl">
+        <DialogHeader><DialogTitle className="font-display">{f ? "Editar escala fixa" : "Nova escala fixa"}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Dia da semana</Label>
+            <Select value={weekday} onValueChange={setWeekday} disabled={used}>
+              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectContent>{WEEKDAYS.map((d, i) => <SelectItem key={d} value={String(i)}>{d}</SelectItem>)}</SelectContent>
+            </Select>
+            {used && <p className="text-xs text-muted-foreground">O dia não muda depois do primeiro sorteio. Para outro dia, crie uma nova escala fixa.</p>}
+          </div>
+          <TimeRangeFields start={start} end={end} onStartChange={setStart} onEndChange={setEnd} />
+          <div className="space-y-1.5"><Label>Pessoas necessárias</Label><Input type="number" min={1} value={slots} onChange={(e) => setSlots(Math.max(1, Number(e.target.value)))} className="rounded-xl" /></div>
+          <div className="space-y-1.5"><Label>Responsável (opcional)</Label><ResponsavelSelect value={responsavelId ?? undefined} onChange={setResponsavelId} /></div>
+          <div className="space-y-1.5"><Label>Observação (opcional)</Label><Input value={note} maxLength={120} onChange={(e) => setNote(e.target.value)} placeholder="Ex.: Culto da manhã" className="rounded-xl" /></div>
+          <label className="flex items-center justify-between gap-3 rounded-xl border p-3">
+            <span className="text-sm"><b className="block">Ativa</b><span className="text-xs text-muted-foreground">Desativada: não aparece para os voluntários e não pode ser sorteada.</span></span>
+            <Switch checked={active} onCheckedChange={setActive} aria-label="Ativa" />
+          </label>
+          {f && <p className="text-xs text-muted-foreground">Mudanças de horário e de quantidade valem a partir do próximo sorteio.</p>}
+        </div>
         <DialogFooter className="gap-2">
+          {f && !used && <Button variant="ghost" className="text-destructive sm:mr-auto" onClick={() => setConfirmDelete(true)}><Trash2 /> Excluir</Button>}
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={create}>Criar período</Button>
+          <Button onClick={save}>Salvar</Button>
         </DialogFooter>
+        {f && (
+          <ConfirmDialog
+            open={confirmDelete}
+            onOpenChange={setConfirmDelete}
+            title="Excluir esta escala fixa?"
+            description="Os participantes inscritos também saem dela."
+            confirmLabel="Excluir"
+            onConfirm={async () => { const r = await act(repo.removeFixed(f.id), "Escala fixa excluída"); if (r.ok) onClose(); }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

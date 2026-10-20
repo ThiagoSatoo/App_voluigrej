@@ -28,6 +28,7 @@ export interface Need {
   end: string; // HH:mm
   slots: number;
   responsavelId?: string; // quem cuida deste turno
+  fixedId?: string; // escala fixa que gerou este turno
 }
 
 export interface Period {
@@ -74,6 +75,34 @@ export interface Draw {
   createdBy: string;
   status: DrawStatus;
   slots: DrawSlot[];
+  /** Sorteio de uma escala fixa (vazio = sorteio mensal antigo). */
+  fixedId?: string;
+}
+
+/** Horário que se repete toda semana. weekday: 0 = domingo ... 6 = sábado. */
+export interface FixedSchedule {
+  id: string;
+  weekday: number;
+  start: string;
+  end: string;
+  slots: number;
+  responsavelId?: string;
+  note?: string;
+  active: boolean;
+}
+
+/** Quem participa sempre de uma escala fixa. */
+export interface FixedMember {
+  fixedId: string;
+  volunteerId: string;
+}
+
+/** "Nesse dia não posso" numa escala fixa. */
+export interface FixedException {
+  fixedId: string;
+  volunteerId: string;
+  date: string;
+  createdBy: string;
 }
 
 export type AttendanceStatus = "presente" | "faltou" | "substituido" | "cancelado";
@@ -134,6 +163,9 @@ export interface AppState {
   notifPrefs: Record<string, NotifPrefs>;
   /** Abas do menu ligadas/desligadas por perfil (tela Admin). */
   navConfig: Partial<Record<"supervisor" | "voluntario", Record<string, boolean>>>;
+  fixedSchedules: FixedSchedule[];
+  fixedMembers: FixedMember[];
+  fixedExceptions: FixedException[];
   /** Candidaturas ativas por vaga (contagem segura vinda do servidor). */
   oppCounts: Record<string, number>;
 }
@@ -166,7 +198,9 @@ export type NotifType =
   | "lembrete_12h"
   | "lembrete_6h"
   | "lembrete_3h"
-  | "lembrete_1h";
+  | "lembrete_1h"
+  | "indisponivel"
+  | "substituto_escalado";
 
 /** Preferências por usuário: categoria → ativada. Ausente = ativada. */
 export type NotifPrefs = Partial<Record<NotifType, boolean>>;

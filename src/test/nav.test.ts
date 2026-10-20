@@ -11,26 +11,26 @@ const as = (role: Role, navConfig: AppState["navConfig"] = {}): AppState => ({
 const keys = (s: AppState, a: "supervisor" | "voluntario") => visibleNav(s, a).map((i) => i.key);
 
 describe("Abas do menu", () => {
-  const cfg = { supervisor: { sorteio: false, configuracoes: false }, voluntario: { vagas: false, perfil: false, turnos: false } };
+  const cfg = { supervisor: { historico: false, configuracoes: false }, voluntario: { vagas: false, perfil: false, turnos: false } };
 
   it("supervisor não vê aba desligada nem a tela Admin; abas travadas continuam", () => {
     const k = keys(as("supervisor", cfg), "supervisor");
-    expect(k).not.toContain("sorteio");
+    expect(k).not.toContain("historico");
     expect(k).not.toContain("admin");
     expect(k).toContain("configuracoes"); // travada
   });
 
   it("admin vê tudo, inclusive Admin, mesmo com abas desligadas", () => {
     const k = keys(as("admin", cfg), "supervisor");
-    expect(k).toContain("sorteio");
+    expect(k).toContain("historico");
     expect(k).toContain("admin");
   });
 
   it("bloqueia acesso pelo endereço às abas desligadas", () => {
-    expect(routeBlocked(as("supervisor", cfg), "supervisor", "/supervisor/sorteio")).toBe(true);
+    expect(routeBlocked(as("supervisor", cfg), "supervisor", "/supervisor/historico")).toBe(true);
     expect(routeBlocked(as("supervisor", cfg), "supervisor", "/supervisor/admin")).toBe(true);
     expect(routeBlocked(as("supervisor", cfg), "supervisor", "/supervisor")).toBe(false);
-    expect(routeBlocked(as("admin", cfg), "supervisor", "/supervisor/sorteio")).toBe(false);
+    expect(routeBlocked(as("admin", cfg), "supervisor", "/supervisor/historico")).toBe(false);
     expect(routeBlocked(as("voluntario", cfg), "voluntario", "/voluntario/vagas")).toBe(true);
   });
 
@@ -47,5 +47,15 @@ describe("Abas do menu", () => {
     expect(keys(as("responsavel", off), "voluntario")).not.toContain("inicio");
     expect(keys(as("supervisor", off), "supervisor")).toContain("agenda");
     expect(keys(as("admin"), "supervisor")).not.toContain("presenca");
+  });
+
+  it("Escalas: sem abas de Disponibilidades e Sorteio; endereços antigos seguem a aba Escalas", () => {
+    const k = keys(as("admin"), "supervisor");
+    expect(k).toContain("periodos");
+    expect(k).not.toContain("sorteio");
+    expect(k).not.toContain("disponibilidades");
+    const off = as("supervisor", { supervisor: { periodos: false } });
+    expect(routeBlocked(off, "supervisor", "/supervisor/sorteio")).toBe(true);
+    expect(routeBlocked(off, "supervisor", "/supervisor/disponibilidades")).toBe(true);
   });
 });

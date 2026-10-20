@@ -25,6 +25,16 @@ export const publishedDraw = (s: AppState, periodId: string) =>
 
 export const latestDraw = (s: AppState, periodId: string) => drawsOf(s, periodId)[0];
 
+/** Sorteio publicado que vale para um turno. Um mês pode ter vários (um por escala fixa). */
+export function publishedSlotFor(s: AppState, needId: string) {
+  for (const d of s.draws) {
+    if (d.status !== "publicado") continue;
+    const slot = d.slots.find((sl) => sl.needId === needId);
+    if (slot) return { draw: d, slot };
+  }
+  return undefined;
+}
+
 export const availabilityOf = (s: AppState, periodId: string, volunteerId: string, needId: string) =>
   s.availabilities.find((a) => a.periodId === periodId && a.volunteerId === volunteerId && a.needId === needId)?.value;
 
@@ -209,6 +219,7 @@ export interface AgendaItem {
   /** Turno da escala mensal: período e se a escala já foi publicada (permite marcar presença). */
   periodId?: string;
   needId?: string;
+  fixedId?: string;
   published?: boolean;
 }
 
@@ -216,12 +227,12 @@ export interface AgendaItem {
 export function agendaItems(s: AppState): AgendaItem[] {
   const out: AgendaItem[] = [];
   s.periods.forEach((p) => {
-    const draw = publishedDraw(s, p.id);
     p.needs.forEach((n) => {
       const removed = s.attendance
         .filter((a) => a.needId === n.id && (a.status === "cancelado" || a.status === "substituido"))
         .map((a) => a.volunteerId);
-      const picks = draw?.slots.find((sl) => sl.needId === n.id)?.picks.map((pk) => pk.volunteerId).filter((id) => !removed.includes(id)) ?? [];
+      const pub = publishedSlotFor(s, n.id);
+      const picks = pub?.slot.picks.map((pk) => pk.volunteerId).filter((id) => !removed.includes(id)) ?? [];
       out.push({
         key: `n:${n.id}`,
         kind: "escala",
@@ -231,11 +242,14 @@ export function agendaItems(s: AppState): AgendaItem[] {
         slots: n.slots,
         status: p.status,
         filled: picks,
-        candidates: s.availabilities.filter((a) => a.needId === n.id && a.value === "disponivel").map((a) => a.volunteerId),
+        candidates: n.fixedId
+          ? fixedCandidates(s, n.fixedId, n.date)
+          : s.availabilities.filter((a) => a.needId === n.id && a.value === "disponivel").map((a) => a.volunteerId),
         responsavelId: n.responsavelId,
         periodId: p.id,
         needId: n.id,
-        published: !!draw,
+        fixedId: n.fixedId,
+        published: !!pub,
       });
     });
   });
@@ -328,4 +342,47 @@ export function canManageMember(s: AppState, m: TeamMember) {
   if (m.role === "admin") return false;
   if (m.role === "supervisor") return me.role === "admin";
   return me.role === "admin" || me.role === "supervisor";
+}
+
+// ---------- Escalas fixas ----------
+import type { FixedSchedule } from "./types";
+import { addDays, format } from "date-fns";
+import { toDate } from "@/lib/format";
+
+export const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+export const WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+export const sortFixed = (fs: FixedSchedule[]) => [...fs].sort((a, b) => a.weekday - b.weekday || a.start.localeCompare(b.start));
+
+export const fixedLabel = (f: Pick<FixedSchedule, "weekday" | "start" | "end">) => `${WEEKDAYS[f.weekday]} ${f.start}–${f.end}`;
+
+export const fixedMembersOf = (s: AppState, fixedId: string) => s.fixedMembers.filter((m) => m.fixedId === fixedId).map((m) => m.volunteerId);
+
+export const isFixedMember = (s: AppState, fixedId: string, volunteerId: string) => s.fixedMembers.some((m) => m.fixedId === fixedId && m.volunteerId === volunteerId);
+
+export const isUnavailable = (s: AppState, fixedId: string, volunteerId: string, date: string) =>
+  s.fixedExceptions.some((e) => e.fixedId === fixedId && e.volunteerId === volunteerId && e.date === date);
+
+/** Participantes ativos da escala fixa que não avisaram indisponibilidade nesta data. */
+export const fixedCandidates = (s: AppState, fixedId: string, date: string) =>
+  fixedMembersOf(s, fixedId).filter(
+    (id) => s.volunteers.some((v) => v.id === id && v.status === "ativo") && !isUnavailable(s, fixedId, id, date),
+  );
+
+/** Próximas datas da escala fixa a partir de "from" (inclusive). */
+export function nextDates(f: Pick<FixedSchedule, "weekday">, from: string, count: number): string[] {
+  const start = toDate(from);
+  const first = addDays(start, (f.weekday - start.getDay() + 7) % 7);
+  return Array.from({ length: count }, (_, i) => format(addDays(first, i * 7), "yyyy-MM-dd"));
+}
+
+/** Turno gerado pela escala fixa nesta data (se já houve sorteio do mês). */
+export const fixedNeed = (s: AppState, fixedId: string, date: string) =>
+  s.periods.flatMap((p) => p.needs.map((n) => ({ p, n }))).find((x) => x.n.fixedId === fixedId && x.n.date === date);
+
+/** Sorteios de uma escala fixa num mês, do mais novo para o mais antigo. */
+export function fixedDraws(s: AppState, fixedId: string, year: number, month: number) {
+  const period = s.periods.find((p) => p.year === year && p.month === month);
+  if (!period) return { period, draws: [] as AppState["draws"] };
+  return { period, draws: s.draws.filter((d) => d.periodId === period.id && d.fixedId === fixedId).sort((a, b) => b.number - a.number) };
 }

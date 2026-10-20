@@ -338,6 +338,61 @@ export const repo = {
     return run(() => supabase.rpc("publish_draw", { p_draw: drawId }));
   },
 
+  // ---------- Escalas fixas ----------
+  async saveFixed(id: string | null, d: { weekday: number; start: string; end: string; slots: number; responsavelId?: string | null; note?: string; active?: boolean }): Promise<Result> {
+    if (d.weekday < 0 || d.weekday > 6) return fail("Escolha o dia da semana.");
+    if (!validTimeRange(d.start, d.end)) return fail("O horário final deve ser depois do inicial.");
+    if (!Number.isInteger(d.slots) || d.slots < 1) return fail("Informe quantas pessoas são necessárias.");
+    const row = {
+      weekday: d.weekday,
+      start_time: d.start,
+      end_time: d.end,
+      slots: d.slots,
+      responsavel_id: d.responsavelId ?? null,
+      note: d.note?.trim() || null,
+      ...(d.active === undefined ? {} : { active: d.active }),
+    };
+    return run(() => (id ? supabase.from("fixed_schedules").update(row).eq("id", id) : supabase.from("fixed_schedules").insert(row)));
+  },
+
+  async setFixedActive(id: string, active: boolean): Promise<Result> {
+    return run(() => supabase.from("fixed_schedules").update({ active }).eq("id", id));
+  },
+
+  async removeFixed(id: string): Promise<Result> {
+    return run(() => supabase.from("fixed_schedules").delete().eq("id", id));
+  },
+
+  /** Entrar numa escala fixa (o próprio voluntário, ou a coordenação por ele). */
+  async joinFixed(fixedId: string, volunteerId: string): Promise<Result> {
+    return run(() => supabase.from("fixed_members").insert({ fixed_id: fixedId, volunteer_id: volunteerId }));
+  },
+
+  async leaveFixed(fixedId: string, volunteerId: string): Promise<Result> {
+    return run(() => supabase.from("fixed_members").delete().eq("fixed_id", fixedId).eq("volunteer_id", volunteerId));
+  },
+
+  /** Sorteio de uma escala fixa para um mês. Fica em rascunho até publicar. */
+  async drawFixed(fixedId: string, year: number, month: number): Promise<Result> {
+    return run(() => supabase.rpc("draw_fixed", { p_fixed: fixedId, p_year: year, p_month: month }));
+  },
+
+  /** "Indisponível" numa data. O servidor avisa e, se faltar gente, escolhe o substituto. */
+  async markUnavailable(fixedId: string, date: string, volunteerId?: string): Promise<Result & { outcome?: string }> {
+    try {
+      const { data, error } = await supabase.rpc("mark_unavailable", { p_fixed: fixedId, p_date: date, p_vol: volunteerId ?? null });
+      if (error) return fail(friendlyError(error));
+      await refresh();
+      return { ok: true, outcome: String(data ?? "") };
+    } catch (e) {
+      return fail(friendlyError(e));
+    }
+  },
+
+  async clearUnavailable(fixedId: string, date: string, volunteerId?: string): Promise<Result> {
+    return run(() => supabase.rpc("clear_unavailable", { p_fixed: fixedId, p_date: date, p_vol: volunteerId ?? null }));
+  },
+
   // ---------- Presença e substituição ----------
   async setAttendance(periodId: string, needId: string, volunteerId: string, status: AttendanceStatus): Promise<Result> {
     return run(() =>

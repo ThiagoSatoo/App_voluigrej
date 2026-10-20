@@ -83,6 +83,17 @@ export function makeFixtures(today = new Date()) {
   const attendance = draw_picks.slice(0, 10).map((p, i) => ({ id: randomUUID(), period_id: period.id, need_id: p.need_id, volunteer_id: p.volunteer_id, status: i % 4 === 0 ? "faltou" : "presente", recorded_at: today.toISOString(), recorded_by: "Marta Helena Souza" }));
   const substitutions = [{ id: randomUUID(), period_id: period.id, need_id: draw_picks[2].need_id, out_id: vols[10].id, in_id: draw_picks[2].volunteer_id, at: today.toISOString(), recorded_by: "Marta Helena Souza", reason: "Viagem de trabalho" }];
 
+  // Escalas fixas (horários semanais), participantes e um "não posso" do voluntário de teste.
+  const fixed_schedules = [
+    { id: randomUUID(), weekday: 0, start_time: "09:00", end_time: "11:30", slots: 4, responsavel_id: vols[0].id, note: "Culto da manhã", active: true, created_at: today.toISOString() },
+    { id: randomUUID(), weekday: 0, start_time: "18:30", end_time: "21:00", slots: 6, responsavel_id: null, note: null, active: true, created_at: today.toISOString() },
+    { id: randomUUID(), weekday: 3, start_time: "19:30", end_time: "21:30", slots: 3, responsavel_id: sups[0].id, note: "Culto de quarta — recepção e estacionamento", active: true, created_at: today.toISOString() },
+    { id: randomUUID(), weekday: 6, start_time: "15:00", end_time: "17:00", slots: 2, responsavel_id: null, note: "Ensaio", active: false, created_at: today.toISOString() },
+  ];
+  const fixed_members = vols.slice(0, 24).flatMap((v, i) => fixed_schedules.slice(0, 3).filter((_, k) => (i + k) % 2 === 0 || i === 3).map((f) => ({ fixed_id: f.id, volunteer_id: v.id, created_at: today.toISOString() })));
+  const nextSunday = iso(addDays(today, (7 - today.getDay()) % 7 || 7));
+  const fixed_exceptions = [{ fixed_id: fixed_schedules[0].id, volunteer_id: vols[3].id, date: nextSunday, created_at: today.toISOString(), created_by: vols[3].name }];
+
   const notificationsFor = (uid) => [
     { id: randomUUID(), type: "candidatura_cancelada", recipient_id: uid, key: null, opportunity_id: opportunities[0].id, message: "Fernanda Costa cancelou a candidatura. A escala está abaixo do mínimo (2/3).", created_at: today.toISOString(), read: false },
     { id: randomUUID(), type: "aniversario_7d", recipient_id: uid, key: null, opportunity_id: null, message: "Daqui a 7 dias é aniversário de Maria Aparecida dos Santos Oliveira.", created_at: today.toISOString(), read: true },
@@ -95,6 +106,7 @@ export function makeFixtures(today = new Date()) {
       attendance, substitutions, opportunities, applications, day_availability, notif_prefs: [],
       app_settings: [{ id: 1, church_name: "Igreja Comunidade da Graça — Unidade Centro", ministry_name: "", visibility_policy: "escala_geral" }],
       nav_config: [{ id: 1, config: {} }],
+      fixed_schedules, fixed_members, fixed_exceptions,
     },
     notificationsFor,
   };

@@ -1,15 +1,15 @@
 import { useMemo, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { CalendarCheck, CalendarDays, ChevronLeft, ChevronRight, Clock, Lock } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, Lock, Repeat } from "lucide-react";
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useStore } from "@/data/store";
-import { availabilityPeriod, hasResponded, myScheduleItems, personName, scheduleItems, type ScheduleItem } from "@/data/selectors";
+import { myScheduleItems, personName, scheduleItems, type ScheduleItem } from "@/data/selectors";
 import { DateBadge, EmptyState, Notice, Panel, Pill } from "@/components/app/common";
 import { VolunteerAvatar } from "@/components/app/VolunteerAvatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { firstName, fmtDM, fmtLong, fmtWeekday, today, toDate } from "@/lib/format";
+import { firstName, fmtLong, fmtWeekday, today, toDate } from "@/lib/format";
 import { visibleNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
@@ -45,8 +45,8 @@ function MyAgenda() {
   const [day, setDay] = useState<string | null>(null);
 
   const next = mine.find((a) => a.date >= today());
-  const period = availabilityPeriod(state);
-  const pending = !!period && period.status === "aberta" && !hasResponded(state, period.id, meId);
+  // Ainda não escolheu nenhuma escala fixa (e há escalas para escolher).
+  const pending = state.fixedSchedules.some((f) => f.active) && !state.fixedMembers.some((m) => m.volunteerId === meId);
   const canAnswer = visibleNav(state, "voluntario").some((it) => it.key === "disponibilidade");
 
   const mk = format(month, "yyyy-MM");
@@ -81,10 +81,10 @@ function MyAgenda() {
         ) : (
           <Panel className="p-3 text-sm text-muted-foreground">Você ainda não tem turno publicado.</Panel>
         )}
-        {pending && period && (
-          <Notice tone="warning" icon={CalendarCheck}>
-            Informe sua disponibilidade até {fmtDM(period.deadline)}.{" "}
-            {canAnswer && <Link to="/voluntario/disponibilidade" className="font-bold underline underline-offset-2">Responder agora</Link>}
+        {pending && (
+          <Notice tone="warning" icon={Repeat}>
+            Você ainda não escolheu em quais escalas fixas pode servir.{" "}
+            {canAnswer && <Link to="/voluntario/disponibilidade" className="font-bold underline underline-offset-2">Escolher agora</Link>}
           </Notice>
         )}
       </div>

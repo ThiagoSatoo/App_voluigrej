@@ -8,6 +8,9 @@ import type {
   DayAvailability,
   Draw,
   DrawSlot,
+  FixedException,
+  FixedMember,
+  FixedSchedule,
   NotifPrefs,
   Opportunity,
   Period,
@@ -52,6 +55,9 @@ const empty = (): AppState => ({
   notifPrefs: {},
   oppCounts: {},
   navConfig: {},
+  fixedSchedules: [],
+  fixedMembers: [],
+  fixedExceptions: [],
 });
 
 export async function loadState(): Promise<AppState> {
@@ -69,7 +75,7 @@ export async function loadState(): Promise<AppState> {
 
   const session: Session = { role: meRow.role, userId: uid, name: meRow.name, mustChangePassword: meRow.must_change_password };
 
-  const [profiles, details, settings, periods, needs, avail, draws, slots, picks, att, subs, opps, dayAv, apps, notifs, prefs, counts, oppCounts, nav] =
+  const [profiles, details, settings, periods, needs, avail, draws, slots, picks, att, subs, opps, dayAv, apps, notifs, prefs, counts, oppCounts, nav, fixed, fixedMembers, fixedExc] =
     await Promise.all([
       fetchAll("profiles"),
       fetchAll("volunteer_details"),
@@ -90,6 +96,9 @@ export async function loadState(): Promise<AppState> {
       supabase.rpc("scale_counts"),
       supabase.rpc("opportunity_counts"),
       supabase.from("nav_config").select("config").maybeSingle(),
+      fetchAll("fixed_schedules"),
+      fetchAll("fixed_members"),
+      fetchAll("fixed_exceptions"),
     ]);
 
   // Fotos ficam em bucket privado: geramos links temporários (1h) só das que o usuário pode ver.
@@ -153,7 +162,7 @@ export async function loadState(): Promise<AppState> {
     status: p.status,
     needs: needs
       .filter((n) => n.period_id === p.id)
-      .map((n) => ({ id: n.id, date: n.date, start: n.start_time, end: n.end_time, slots: n.slots, responsavelId: n.responsavel_id ?? undefined })),
+      .map((n) => ({ id: n.id, date: n.date, start: n.start_time, end: n.end_time, slots: n.slots, responsavelId: n.responsavel_id ?? undefined, fixedId: n.fixed_id ?? undefined })),
   }));
 
   const drawList: Draw[] = draws.map((d) => ({
@@ -163,6 +172,7 @@ export async function loadState(): Promise<AppState> {
     createdAt: d.created_at,
     createdBy: d.created_by,
     status: d.status,
+    fixedId: d.fixed_id ?? undefined,
     slots: slots
       .filter((s) => s.draw_id === d.id)
       .map(
@@ -221,6 +231,18 @@ export async function loadState(): Promise<AppState> {
     })),
     notifPrefs: prefMap,
     navConfig: (nav.data?.config ?? {}) as AppState["navConfig"],
+    fixedSchedules: fixed.map((f): FixedSchedule => ({
+      id: f.id,
+      weekday: f.weekday,
+      start: f.start_time,
+      end: f.end_time,
+      slots: f.slots,
+      responsavelId: f.responsavel_id ?? undefined,
+      note: f.note ?? undefined,
+      active: f.active,
+    })),
+    fixedMembers: fixedMembers.map((m): FixedMember => ({ fixedId: m.fixed_id, volunteerId: m.volunteer_id })),
+    fixedExceptions: fixedExc.map((e): FixedException => ({ fixedId: e.fixed_id, volunteerId: e.volunteer_id, date: e.date, createdBy: e.created_by })),
     oppCounts: Object.fromEntries(((oppCounts.data ?? []) as Row[]).map((c) => [c.opportunity_id, c.active])),
   };
 }

@@ -67,7 +67,7 @@ function Profile() {
 
       <Panel>
         <p className="font-display text-lg font-semibold">Notificações</p>
-        <NotifPrefsList categories={[]} />
+        <NotifPrefsList categories={me.role === "responsavel" ? ["substituto_escalado", "indisponivel"] : ["substituto_escalado"]} />
       </Panel>
 
       <Button variant="ghost" size="lg" className="w-full text-destructive" onClick={async () => { await repo.logout(); navigate({ to: "/" }); }}>

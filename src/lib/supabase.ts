@@ -42,6 +42,9 @@ export function friendlyError(err: unknown): string {
   if (/duplicate key.*cpf/i.test(msg)) return "Já existe um voluntário com este CPF.";
   if (/duplicate key.*(month|year)/i.test(msg)) return "Já existe um período para este mês.";
   if (/duplicate key.*username/i.test(msg)) return "Este usuário já está em uso.";
+  if (/foreign key.*fixed_id|violates foreign key constraint "(needs|draws)_fixed_id/i.test(msg)) return "Esta escala fixa já tem turnos gerados. Desative-a em vez de excluir.";
+  if (/duplicate key.*fixed_members/i.test(msg)) return "Esta pessoa já participa desta escala fixa.";
+  if (/function public\.clear_unavailable|Could not find the function/i.test(msg)) return "Esta função ainda não foi ativada no servidor. Avise a coordenação.";
   if (/weak|password should/i.test(msg)) return "Senha muito fraca. Use pelo menos 8 caracteres, com letras e números.";
   if (/same_password|should be different/i.test(msg)) return "A nova senha deve ser diferente da atual.";
   // Mensagens geradas pelas funções do banco já estão em português.
