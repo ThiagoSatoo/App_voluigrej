@@ -13,7 +13,7 @@ atualize as seções afetadas (principalmente "Situação atual" e "O que falta"
 
 ## Situação atual
 
-- No ar na Vercel, publicado a partir da branch `main` (cada push na `main` publica).
+- No ar em **https://paroquiasjpapp.vercel.app** (Vercel), publicado a partir da branch `main` (cada push na `main` publica).
 - Banco no Supabase com 18 migrations aplicadas (`supabase/migrations/`, iguais às do banco).
 - Edge Function `manage-users` publicada (contas e senhas).
 - Admin já entrou, tem CPF e senha definitiva. Nome da instituição: "Paróquia Nossa Senhora do Monte Claro". Já existe 1 escala fixa criada.
@@ -28,8 +28,9 @@ Com o dono:
 - Já feito pelo dono: configurações de Authentication (cadastro público e confirmação de e-mail desligados, regra de senha). O aviso do Supabase ainda mostra "Leaked password protection" desligada; esse recurso só existe nos planos pagos.
 - As contas de teste `52601815906@cpf…` e `08301661305@cpf…` ficam por decisão do dono (testes). Estão desativadas.
 
+- Criar o segredo `ALLOWED_ORIGINS` = `https://paroquiasjpapp.vercel.app` no painel do Supabase (Edge Functions → Secrets). Pelo MCP, o campo é preenchido pelo dono e expira se ele não estiver acompanhando. Enquanto não existir, a função `manage-users` aceita qualquer origem (risco baixo: exige login e confere o perfil). A função ignora barra no final e espaços; sem o segredo, ou com ele vazio, aceita todas.
+
 Feito por quem programa:
-- Definir o segredo `ALLOWED_ORIGINS` da Edge Function com o endereço da Vercel (hoje aceita qualquer origem; o risco é baixo porque exige login e confere o perfil).
 - Corrigir o que aparecer no teste real.
 
 Opcionais (precisam de aprovação do dono, porque a ferramenta do Supabase pede confirmação para `drop`/`delete`):

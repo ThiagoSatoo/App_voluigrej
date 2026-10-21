@@ -7,7 +7,12 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const CPF_DOMAIN = "cpf.escala-voluntarios.app";
 const BAN_FOREVER = "876000h"; // ~100 anos
 
-const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "*").split(",").map((s) => s.trim());
+// Endereços do app que podem chamar esta função (separados por vírgula). Barra no final é ignorada.
+const configuredOrigins = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+  .split(",")
+  .map((s) => s.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+const ALLOWED_ORIGINS = configuredOrigins.length ? configuredOrigins : ["*"];
 
 function cors(req: Request) {
   const origin = req.headers.get("origin") ?? "";
