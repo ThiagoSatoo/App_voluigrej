@@ -33,29 +33,93 @@ export interface NavItem {
 }
 
 export const SUPERVISOR_NAV: NavItem[] = [
-  { key: "dashboard", to: "/supervisor", label: "Dashboard", icon: LayoutDashboard, exact: true, locked: "Tela inicial" },
+  {
+    key: "dashboard",
+    to: "/supervisor",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    exact: true,
+    locked: "Tela inicial",
+  },
   { key: "equipe", to: "/supervisor/voluntarios", label: "Equipe", icon: Users },
-  { key: "periodos", to: "/supervisor/periodos", label: "Escalas", icon: CalendarRange, hint: "Escalas fixas, sorteio do mês e vagas avulsas" },
-  { key: "agenda", to: "/supervisor/escala", label: "Agenda", icon: CalendarDays, locked: "A presença é marcada nela" },
+  {
+    key: "periodos",
+    to: "/supervisor/periodos",
+    label: "Escalas",
+    icon: CalendarRange,
+    hint: "Escalas fixas, sorteio do mês e vagas avulsas",
+  },
+  {
+    key: "agenda",
+    to: "/supervisor/escala",
+    label: "Agenda",
+    icon: CalendarDays,
+    locked: "A presença é marcada nela",
+  },
   { key: "historico", to: "/supervisor/historico", label: "Histórico", icon: History },
   { key: "relatorios", to: "/supervisor/relatorios", label: "Relatórios", icon: FileText },
-  { key: "configuracoes", to: "/supervisor/configuracoes", label: "Configurações", icon: Settings, locked: "Tem a troca de senha e a foto da conta" },
-  { key: "admin", to: "/supervisor/admin", label: "Admin", icon: SlidersHorizontal, adminOnly: true, locked: "Só o administrador vê" },
+  {
+    key: "configuracoes",
+    to: "/supervisor/configuracoes",
+    label: "Configurações",
+    icon: Settings,
+    locked: "Tem a troca de senha e a foto da conta",
+  },
+  {
+    key: "admin",
+    to: "/supervisor/admin",
+    label: "Admin",
+    icon: SlidersHorizontal,
+    adminOnly: true,
+    locked: "Só o administrador vê",
+  },
 ];
 
 export const VOLUNTEER_NAV: NavItem[] = [
-  { key: "escala", to: "/voluntario/escala", label: "Agenda", icon: CalendarDays, locked: "Tela inicial" },
-  { key: "disponibilidade", to: "/voluntario/disponibilidade", label: "Escalas", icon: Repeat, hint: "Escalas fixas e o botão Indisponível" },
-  { key: "vagas", to: "/voluntario/vagas", label: "Vagas", icon: HandHeart, hint: "Candidatura às vagas avulsas" },
-  { key: "turnos", to: "/voluntario/turnos", label: "Turnos", icon: ShieldCheck, responsavelOnly: true, hint: "Só para responsáveis de turno" },
+  {
+    key: "escala",
+    to: "/voluntario/escala",
+    label: "Agenda",
+    icon: CalendarDays,
+    locked: "Tela inicial",
+  },
+  {
+    key: "disponibilidade",
+    to: "/voluntario/disponibilidade",
+    label: "Escalas",
+    icon: Repeat,
+    hint: "Escalas fixas e o botão Indisponível",
+  },
+  {
+    key: "vagas",
+    to: "/voluntario/vagas",
+    label: "Vagas",
+    icon: HandHeart,
+    hint: "Candidatura às vagas avulsas",
+  },
+  {
+    key: "turnos",
+    to: "/voluntario/turnos",
+    label: "Turnos",
+    icon: ShieldCheck,
+    responsavelOnly: true,
+    hint: "Só para responsáveis de turno",
+  },
   { key: "historico", to: "/voluntario/historico", label: "Histórico", icon: History },
-  { key: "perfil", to: "/voluntario/perfil", label: "Perfil", icon: UserRound, locked: "Tem a senha e o botão Sair" },
+  {
+    key: "perfil",
+    to: "/voluntario/perfil",
+    label: "Perfil",
+    icon: UserRound,
+    locked: "Tem a senha e o botão Sair",
+  },
 ];
 
 export type NavConfig = Partial<Record<NavArea, Record<string, boolean>>>;
 
 /** Aba ligada? Ausente = ligada. Abas travadas estão sempre ligadas. */
-export const navEnabled = (config: NavConfig, area: NavArea, item: NavItem) => !!item.locked || config[area]?.[item.key] !== false;
+export const navEnabled = (config: NavConfig, area: NavArea, item: NavItem) =>
+  !!item.locked || config[area]?.[item.key] !== false;
 
 /** Abas que a pessoa logada vê no menu. O administrador vê tudo. */
 export function visibleNav(s: AppState, area: NavArea): NavItem[] {
@@ -81,7 +145,10 @@ export function routeBlocked(s: AppState, area: NavArea, pathname: string): bool
         ]
       : [];
   const match = [...items, ...extra]
-    .filter((it) => pathname === it.to || (!("exact" in it && it.exact) && pathname.startsWith(it.to + "/")))
+    .filter(
+      (it) =>
+        pathname === it.to || (!("exact" in it && it.exact) && pathname.startsWith(it.to + "/")),
+    )
     .sort((a, b) => b.to.length - a.to.length)[0];
   if (!match) return false;
   const item = items.find((it) => it.key === match.key)!;

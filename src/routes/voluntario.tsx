@@ -18,11 +18,24 @@ function VolunteerLayout() {
   return (
     <div className="min-h-screen">
       <main className="pb-safe relative mx-auto max-w-2xl px-4 pt-6 sm:px-6">
-        <div className="absolute right-3 top-3 z-10"><NotificationBell className="bg-card/80 backdrop-blur" /></div>
-        {blocked ? <EmptyState icon={EyeOff} title="Tela desativada" text="Esta área foi desativada pela coordenação." /> : <Outlet />}
+        <div className="absolute right-3 top-3 z-10">
+          <NotificationBell className="bg-card/80 backdrop-blur" />
+        </div>
+        {blocked ? (
+          <EmptyState
+            icon={EyeOff}
+            title="Tela desativada"
+            text="Esta área foi desativada pela coordenação."
+          />
+        ) : (
+          <Outlet />
+        )}
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        <div className="mx-auto grid max-w-2xl" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+        <div
+          className="mx-auto grid max-w-2xl"
+          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        >
           {items.map((it) => (
             <Link
               key={it.key}

@@ -6,7 +6,7 @@ export function oneHourLater(start: string): string {
 }
 
 export const validTimeRange = (start: string, end: string) =>
-  /^([01]\d|2[0-3]):[0-5]\d$/.test(start) &&
-  /^([01]\d|2[0-3]):[0-5]\d$/.test(end) && end > start;
+  /^([01]\d|2[0-3]):[0-5]\d$/.test(start) && /^([01]\d|2[0-3]):[0-5]\d$/.test(end) && end > start;
 
-export const fmtTimeRange = (range: { start: string; end: string }) => `${range.start} – ${range.end}`;
+export const fmtTimeRange = (range: { start: string; end: string }) =>
+  `${range.start} – ${range.end}`;

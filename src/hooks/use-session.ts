@@ -15,9 +15,17 @@ export function useRequireRole(area: "supervisor" | "voluntario") {
   const ok =
     hydrated &&
     !!session &&
-    (area === "supervisor" ? role === "admin" || role === "supervisor" : role === "voluntario" || role === "responsavel");
-  const me = area === "voluntario" && session ? state.volunteers.find((v) => v.id === session.userId) : undefined;
-  const staff = area === "supervisor" && session ? state.supervisors.find((x) => x.id === session.userId) : undefined;
+    (area === "supervisor"
+      ? role === "admin" || role === "supervisor"
+      : role === "voluntario" || role === "responsavel");
+  const me =
+    area === "voluntario" && session
+      ? state.volunteers.find((v) => v.id === session.userId)
+      : undefined;
+  const staff =
+    area === "supervisor" && session
+      ? state.supervisors.find((x) => x.id === session.userId)
+      : undefined;
 
   useEffect(() => {
     if (!hydrated) return;

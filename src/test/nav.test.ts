@@ -11,7 +11,10 @@ const as = (role: Role, navConfig: AppState["navConfig"] = {}): AppState => ({
 const keys = (s: AppState, a: "supervisor" | "voluntario") => visibleNav(s, a).map((i) => i.key);
 
 describe("Abas do menu", () => {
-  const cfg = { supervisor: { historico: false, configuracoes: false }, voluntario: { vagas: false, perfil: false, turnos: false } };
+  const cfg = {
+    supervisor: { historico: false, configuracoes: false },
+    voluntario: { vagas: false, perfil: false, turnos: false },
+  };
 
   it("supervisor não vê aba desligada nem a tela Admin; abas travadas continuam", () => {
     const k = keys(as("supervisor", cfg), "supervisor");

@@ -38,16 +38,24 @@ function MyHistory() {
         <StatCard icon={Repeat} label="Substituído" value={count("substituido")} tone="warning" />
       </div>
       {records.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="Nenhum registro ainda" text="Após servir em uma escala, sua presença aparecerá aqui." />
+        <EmptyState
+          icon={ClipboardList}
+          title="Nenhum registro ainda"
+          text="Após servir em uma escala, sua presença aparecerá aqui."
+        />
       ) : (
         <div className="space-y-2">
           {records.map(({ a, need }) => (
             <Panel key={a.id} className="flex items-center justify-between gap-3 p-4">
               <div>
                 <div className="font-semibold">{fmtLong(need!.date)}</div>
-                <div className="text-xs text-muted-foreground">{need ? fmtTimeRange(need) : ""} · registrado em {fmtDateTime(a.recordedAt)}</div>
+                <div className="text-xs text-muted-foreground">
+                  {need ? fmtTimeRange(need) : ""} · registrado em {fmtDateTime(a.recordedAt)}
+                </div>
               </div>
-              <Pill tone={ATTENDANCE_STATUS[a.status].tone}>{ATTENDANCE_STATUS[a.status].label}</Pill>
+              <Pill tone={ATTENDANCE_STATUS[a.status].tone}>
+                {ATTENDANCE_STATUS[a.status].label}
+              </Pill>
             </Panel>
           ))}
         </div>

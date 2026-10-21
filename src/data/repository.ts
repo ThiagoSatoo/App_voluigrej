@@ -27,7 +27,9 @@ async function run(op: () => PromiseLike<{ error: unknown }>): Promise<Result> {
 }
 
 /** Chama a função de servidor que gerencia contas (precisa da chave secreta, que nunca vai ao navegador). */
-async function manageUsers<T = Record<string, unknown>>(body: Record<string, unknown>): Promise<({ ok: true } & T) | { ok: false; error: string }> {
+async function manageUsers<T = Record<string, unknown>>(
+  body: Record<string, unknown>,
+): Promise<({ ok: true } & T) | { ok: false; error: string }> {
   try {
     const { data, error } = await supabase.functions.invoke("manage-users", { body });
     if (error) {
@@ -81,12 +83,14 @@ export const repo = {
 
   async changePassword(current: string, next: string): Promise<Result> {
     if (next.length < 8) return fail("A nova senha deve ter pelo menos 8 caracteres.");
-    if (!/[a-zA-Z]/.test(next) || !/\d/.test(next)) return fail("Use letras e números na nova senha.");
+    if (!/[a-zA-Z]/.test(next) || !/\d/.test(next))
+      return fail("Use letras e números na nova senha.");
     if (next === current) return fail("A nova senha deve ser diferente da atual.");
     const { data } = await supabase.auth.getUser();
     const email = data.user?.email;
     if (!email) return fail("Sessão expirada. Entre novamente.");
-    if (next.replace(/\D/g, "") === email.split("@")[0]) return fail("A nova senha não pode ser o seu CPF.");
+    if (next.replace(/\D/g, "") === email.split("@")[0])
+      return fail("A nova senha não pode ser o seu CPF.");
     // Confirma a senha atual antes de trocar.
     const check = await supabase.auth.signInWithPassword({ email, password: current });
     if (check.error) return fail("Senha atual incorreta.");
@@ -98,18 +102,30 @@ export const repo = {
   // ---------- Pessoas (contas criadas no servidor; login e senha inicial = CPF) ----------
   /** Cria ou edita qualquer pessoa da equipe. Supervisor só pode ser criado/definido pelo admin (o servidor confere). */
   async saveVolunteer(
-    data: Pick<Volunteer, "name" | "cpf" | "phone" | "email" | "birthDate"> & { id?: string; photo?: Blob | null; role?: TeamRole },
+    data: Pick<Volunteer, "name" | "cpf" | "phone" | "email" | "birthDate"> & {
+      id?: string;
+      photo?: Blob | null;
+      role?: TeamRole;
+    },
   ): Promise<Result> {
     const cpf = data.cpf.replace(/\D/g, "");
     if (data.name.trim().length < 3) return fail("Informe o nome completo.");
     if (!validCpf(cpf)) return fail("CPF inválido. Confira os números.");
-    if (data.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.birthDate)) return fail("Data de nascimento inválida.");
-    if (data.birthDate && data.birthDate > today()) return fail("A data de nascimento não pode ser futura.");
+    if (data.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.birthDate))
+      return fail("Data de nascimento inválida.");
+    if (data.birthDate && data.birthDate > today())
+      return fail("A data de nascimento não pode ser futura.");
     const s = getState();
     const everyone = [...s.volunteers, ...s.supervisors];
     const dup = everyone.find((v) => v.cpf === cpf && v.id !== data.id);
     if (dup) return fail("Já existe uma pessoa com este CPF.");
-    const payload = { name: data.name.trim(), cpf, phone: data.phone.trim(), email: data.email.trim(), birthDate: data.birthDate || null };
+    const payload = {
+      name: data.name.trim(),
+      cpf,
+      phone: data.phone.trim(),
+      email: data.email.trim(),
+      birthDate: data.birthDate || null,
+    };
 
     if (data.id) {
       const current = everyone.find((v) => v.id === data.id);
@@ -118,7 +134,13 @@ export const repo = {
         if (!r.ok) return r;
       }
       const r = await run(() =>
-        supabase.rpc("staff_update_volunteer", { p_id: data.id, p_name: payload.name, p_phone: payload.phone, p_email: payload.email, p_birth: payload.birthDate }),
+        supabase.rpc("staff_update_volunteer", {
+          p_id: data.id,
+          p_name: payload.name,
+          p_phone: payload.phone,
+          p_email: payload.email,
+          p_birth: payload.birthDate,
+        }),
       );
       if (!r.ok) return r;
       if (data.role && current && current.role !== data.role && current.role !== "admin") {
@@ -129,7 +151,11 @@ export const repo = {
       return ok;
     }
 
-    const r = await manageUsers<{ id: string }>({ action: "create_volunteer", ...payload, role: data.role ?? "voluntario" });
+    const r = await manageUsers<{ id: string }>({
+      action: "create_volunteer",
+      ...payload,
+      role: data.role ?? "voluntario",
+    });
     if (!r.ok) return r;
     if (data.photo) await repo.setPhoto(r.id, data.photo);
     return ok;
@@ -173,16 +199,24 @@ export const repo = {
   /** Envia a foto (já reduzida no aparelho) para o armazenamento privado. `null` remove. */
   async setPhoto(userId: string, photo: Blob | null): Promise<Result> {
     try {
-      const old = [...getState().volunteers, ...getState().supervisors].find((x) => x.id === userId)?.photoPath;
+      const old = [...getState().volunteers, ...getState().supervisors].find(
+        (x) => x.id === userId,
+      )?.photoPath;
       let path: string | null = null;
       if (photo) {
         if (photo.size > 2 * 1024 * 1024) return fail("A foto deve ter no máximo 2 MB.");
-        if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type)) return fail("Formato de imagem não suportado.");
+        if (!["image/jpeg", "image/png", "image/webp"].includes(photo.type))
+          return fail("Formato de imagem não suportado.");
         path = `${userId}/avatar-${Date.now()}.jpg`;
-        const up = await supabase.storage.from(AVATAR_BUCKET).upload(path, photo, { contentType: photo.type, upsert: false });
+        const up = await supabase.storage
+          .from(AVATAR_BUCKET)
+          .upload(path, photo, { contentType: photo.type, upsert: false });
         if (up.error) return fail(friendlyError(up.error));
       }
-      const { error } = await supabase.from("profiles").update({ photo_path: path }).eq("id", userId);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ photo_path: path })
+        .eq("id", userId);
       if (error) return fail(friendlyError(error));
       if (old) await supabase.storage.from(AVATAR_BUCKET).remove([old]);
       await refresh();
@@ -198,7 +232,13 @@ export const repo = {
   },
 
   async markAllNotificationsRead(userId: string): Promise<Result> {
-    return run(() => supabase.from("notifications").update({ read: true }).eq("recipient_id", userId).eq("read", false));
+    return run(() =>
+      supabase
+        .from("notifications")
+        .update({ read: true })
+        .eq("recipient_id", userId)
+        .eq("read", false),
+    );
   },
 
   async markNotificationRead(id: string): Promise<Result> {
@@ -210,10 +250,22 @@ export const repo = {
   },
 
   // ---------- Escalas fixas ----------
-  async saveFixed(id: string | null, d: { weekday: number; start: string; end: string; slots: number; responsavelId?: string | null; note?: string; active?: boolean }): Promise<Result> {
+  async saveFixed(
+    id: string | null,
+    d: {
+      weekday: number;
+      start: string;
+      end: string;
+      slots: number;
+      responsavelId?: string | null;
+      note?: string;
+      active?: boolean;
+    },
+  ): Promise<Result> {
     if (d.weekday < 0 || d.weekday > 6) return fail("Escolha o dia da semana.");
     if (!validTimeRange(d.start, d.end)) return fail("O horário final deve ser depois do inicial.");
-    if (!Number.isInteger(d.slots) || d.slots < 1) return fail("Informe quantas pessoas são necessárias.");
+    if (!Number.isInteger(d.slots) || d.slots < 1)
+      return fail("Informe quantas pessoas são necessárias.");
     const row = {
       weekday: d.weekday,
       start_time: d.start,
@@ -223,7 +275,11 @@ export const repo = {
       note: d.note?.trim() || null,
       ...(d.active === undefined ? {} : { active: d.active }),
     };
-    return run(() => (id ? supabase.from("fixed_schedules").update(row).eq("id", id) : supabase.from("fixed_schedules").insert(row)));
+    return run(() =>
+      id
+        ? supabase.from("fixed_schedules").update(row).eq("id", id)
+        : supabase.from("fixed_schedules").insert(row),
+    );
   },
 
   async removeFixed(id: string): Promise<Result> {
@@ -232,22 +288,40 @@ export const repo = {
 
   /** Entrar numa escala fixa (o próprio voluntário, ou a coordenação por ele). */
   async joinFixed(fixedId: string, volunteerId: string): Promise<Result> {
-    return run(() => supabase.from("fixed_members").insert({ fixed_id: fixedId, volunteer_id: volunteerId }));
+    return run(() =>
+      supabase.from("fixed_members").insert({ fixed_id: fixedId, volunteer_id: volunteerId }),
+    );
   },
 
   async leaveFixed(fixedId: string, volunteerId: string): Promise<Result> {
-    return run(() => supabase.from("fixed_members").delete().eq("fixed_id", fixedId).eq("volunteer_id", volunteerId));
+    return run(() =>
+      supabase
+        .from("fixed_members")
+        .delete()
+        .eq("fixed_id", fixedId)
+        .eq("volunteer_id", volunteerId),
+    );
   },
 
   /** Sorteio de uma escala fixa para um mês. Fica em rascunho até publicar. */
   async drawFixed(fixedId: string, year: number, month: number): Promise<Result> {
-    return run(() => supabase.rpc("draw_fixed", { p_fixed: fixedId, p_year: year, p_month: month }));
+    return run(() =>
+      supabase.rpc("draw_fixed", { p_fixed: fixedId, p_year: year, p_month: month }),
+    );
   },
 
   /** "Indisponível" numa data. O servidor avisa e, se faltar gente, escolhe o substituto. */
-  async markUnavailable(fixedId: string, date: string, volunteerId?: string): Promise<Result & { outcome?: string }> {
+  async markUnavailable(
+    fixedId: string,
+    date: string,
+    volunteerId?: string,
+  ): Promise<Result & { outcome?: string }> {
     try {
-      const { data, error } = await supabase.rpc("mark_unavailable", { p_fixed: fixedId, p_date: date, p_vol: volunteerId ?? null });
+      const { data, error } = await supabase.rpc("mark_unavailable", {
+        p_fixed: fixedId,
+        p_date: date,
+        p_vol: volunteerId ?? null,
+      });
       if (error) return fail(friendlyError(error));
       await refresh();
       return { ok: true, outcome: String(data ?? "") };
@@ -257,9 +331,17 @@ export const repo = {
   },
 
   /** "Disponível": desfaz o "Indisponível". Se o lugar ainda estiver vago, a pessoa volta para a escala. */
-  async markAvailable(fixedId: string, date: string, volunteerId?: string): Promise<Result & { outcome?: string }> {
+  async markAvailable(
+    fixedId: string,
+    date: string,
+    volunteerId?: string,
+  ): Promise<Result & { outcome?: string }> {
     try {
-      const { data, error } = await supabase.rpc("mark_available", { p_fixed: fixedId, p_date: date, p_vol: volunteerId ?? null });
+      const { data, error } = await supabase.rpc("mark_available", {
+        p_fixed: fixedId,
+        p_date: date,
+        p_vol: volunteerId ?? null,
+      });
       if (error) return fail(friendlyError(error));
       await refresh();
       return { ok: true, outcome: String(data ?? "") };
@@ -269,33 +351,73 @@ export const repo = {
   },
 
   /** Fixa pessoas nas datas informadas (lista vazia = desafixar) e refaz o sorteio do mês em rascunho. */
-  async setFixedPins(fixedId: string, dates: string[], volunteerIds: string[], year: number, month: number): Promise<Result> {
+  async setFixedPins(
+    fixedId: string,
+    dates: string[],
+    volunteerIds: string[],
+    year: number,
+    month: number,
+  ): Promise<Result> {
     if (dates.length === 0) return fail("Escolha a data.");
     try {
-      const { error } = await supabase.rpc("set_fixed_pins", { p_fixed: fixedId, p_dates: dates, p_vols: volunteerIds });
+      const { error } = await supabase.rpc("set_fixed_pins", {
+        p_fixed: fixedId,
+        p_dates: dates,
+        p_vols: volunteerIds,
+      });
       if (error) return fail(friendlyError(error));
     } catch (e) {
       return fail(friendlyError(e));
     }
-    return run(() => supabase.rpc("draw_fixed", { p_fixed: fixedId, p_year: year, p_month: month }));
+    return run(() =>
+      supabase.rpc("draw_fixed", { p_fixed: fixedId, p_year: year, p_month: month }),
+    );
   },
 
   // ---------- Presença e substituição ----------
-  async setAttendance(periodId: string, needId: string, volunteerId: string, status: AttendanceStatus): Promise<Result> {
+  async setAttendance(
+    periodId: string,
+    needId: string,
+    volunteerId: string,
+    status: AttendanceStatus,
+  ): Promise<Result> {
     return run(() =>
       supabase.from("attendance").upsert(
-        { period_id: periodId, need_id: needId, volunteer_id: volunteerId, status, recorded_at: new Date().toISOString(), recorded_by: myName() },
+        {
+          period_id: periodId,
+          need_id: needId,
+          volunteer_id: volunteerId,
+          status,
+          recorded_at: new Date().toISOString(),
+          recorded_by: myName(),
+        },
         { onConflict: "need_id,volunteer_id" },
       ),
     );
   },
 
-  async substitute(_periodId: string, needId: string, outId: string, inId: string, reason: string): Promise<Result> {
-    return run(() => supabase.rpc("substitute", { p_need: needId, p_out: outId, p_in: inId, p_reason: reason }));
+  async substitute(
+    _periodId: string,
+    needId: string,
+    outId: string,
+    inId: string,
+    reason: string,
+  ): Promise<Result> {
+    return run(() =>
+      supabase.rpc("substitute", { p_need: needId, p_out: outId, p_in: inId, p_reason: reason }),
+    );
   },
 
   // ---------- Vagas avulsas e candidaturas ----------
-  async createOpportunity(d: { date: string; start: string; end: string; min: number; max: number; note?: string; responsavelId?: string }): Promise<Result> {
+  async createOpportunity(d: {
+    date: string;
+    start: string;
+    end: string;
+    min: number;
+    max: number;
+    note?: string;
+    responsavelId?: string;
+  }): Promise<Result> {
     if (!d.date) return fail("Informe a data.");
     if (d.date < today()) return fail("A data não pode estar no passado.");
     if (!d.start || !d.end) return fail("Informe o horário inicial e final.");
@@ -303,7 +425,8 @@ export const repo = {
     if (d.min < 1) return fail("A quantidade mínima deve ser pelo menos 1.");
     if (d.max < d.min) return fail("A quantidade máxima não pode ser menor que a mínima.");
     const s = getState().session;
-    const responsavel = s?.role === "responsavel" ? s.userId : (d.responsavelId ?? s?.userId ?? null);
+    const responsavel =
+      s?.role === "responsavel" ? s.userId : (d.responsavelId ?? s?.userId ?? null);
     return run(() =>
       supabase.from("opportunities").insert({
         date: d.date,
@@ -319,7 +442,9 @@ export const repo = {
   },
 
   async setOpportunityResponsavel(id: string, responsavelId: string | null): Promise<Result> {
-    return run(() => supabase.from("opportunities").update({ responsavel_id: responsavelId }).eq("id", id));
+    return run(() =>
+      supabase.from("opportunities").update({ responsavel_id: responsavelId }).eq("id", id),
+    );
   },
 
   async removeOpportunity(id: string): Promise<Result> {
@@ -327,12 +452,22 @@ export const repo = {
   },
 
   /** Substitui os dias disponíveis do voluntário dentro de `weekDates` por `selected`. */
-  async setWeekAvailability(volunteerId: string, weekDates: string[], selected: string[]): Promise<Result> {
+  async setWeekAvailability(
+    volunteerId: string,
+    weekDates: string[],
+    selected: string[],
+  ): Promise<Result> {
     try {
-      const del = await supabase.from("day_availability").delete().eq("volunteer_id", volunteerId).in("date", weekDates);
+      const del = await supabase
+        .from("day_availability")
+        .delete()
+        .eq("volunteer_id", volunteerId)
+        .in("date", weekDates);
       if (del.error) return fail(friendlyError(del.error));
       if (selected.length) {
-        const ins = await supabase.from("day_availability").insert(selected.map((date) => ({ volunteer_id: volunteerId, date })));
+        const ins = await supabase
+          .from("day_availability")
+          .insert(selected.map((date) => ({ volunteer_id: volunteerId, date })));
         if (ins.error) return fail(friendlyError(ins.error));
       }
       await refresh();
@@ -351,12 +486,19 @@ export const repo = {
   },
 
   async confirmSelection(opportunityId: string, selectedIds: string[]): Promise<Result> {
-    return run(() => supabase.rpc("confirm_selection", { p_opp: opportunityId, p_selected: selectedIds }));
+    return run(() =>
+      supabase.rpc("confirm_selection", { p_opp: opportunityId, p_selected: selectedIds }),
+    );
   },
 
   // ---------- Abas do menu (só admin; o banco confere) ----------
   async setNavConfig(config: AppState["navConfig"]): Promise<Result> {
-    return run(() => supabase.from("nav_config").update({ config, updated_at: new Date().toISOString() }).eq("id", 1));
+    return run(() =>
+      supabase
+        .from("nav_config")
+        .update({ config, updated_at: new Date().toISOString() })
+        .eq("id", 1),
+    );
   },
 
   /** Nome da instituição para a tela de login (antes de entrar). */

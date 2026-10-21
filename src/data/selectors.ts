@@ -4,7 +4,8 @@ import type { AppState, Need, Period, Volunteer } from "./types";
 export const sortNeeds = (needs: Need[]) =>
   [...needs].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
 
-export const sortPeriods = (ps: Period[]) => [...ps].sort((a, b) => b.year - a.year || b.month - a.month);
+export const sortPeriods = (ps: Period[]) =>
+  [...ps].sort((a, b) => b.year - a.year || b.month - a.month);
 
 export const activeVolunteers = (s: AppState) => s.volunteers.filter((v) => v.status === "ativo");
 
@@ -21,8 +22,15 @@ export function publishedSlotFor(s: AppState, needId: string) {
   return undefined;
 }
 
-export const availabilityOf = (s: AppState, periodId: string, volunteerId: string, needId: string) =>
-  s.availabilities.find((a) => a.periodId === periodId && a.volunteerId === volunteerId && a.needId === needId)?.value;
+export const availabilityOf = (
+  s: AppState,
+  periodId: string,
+  volunteerId: string,
+  needId: string,
+) =>
+  s.availabilities.find(
+    (a) => a.periodId === periodId && a.volunteerId === volunteerId && a.needId === needId,
+  )?.value;
 
 /** Next scheduled need across all published scales. */
 export function nextScheduledNeed(s: AppState) {
@@ -30,7 +38,11 @@ export function nextScheduledNeed(s: AppState) {
     .filter((d) => d.status === "publicado")
     .flatMap((d) => {
       const period = s.periods.find((p) => p.id === d.periodId)!;
-      return d.slots.map((slot) => ({ period, slot, need: period.needs.find((n) => n.id === slot.needId)! }));
+      return d.slots.map((slot) => ({
+        period,
+        slot,
+        need: period.needs.find((n) => n.id === slot.needId)!,
+      }));
     })
     .filter((x) => x.need && x.need.date >= today())
     .sort((a, b) => a.need.date.localeCompare(b.need.date));
@@ -38,10 +50,13 @@ export function nextScheduledNeed(s: AppState) {
 }
 
 export const attendanceFor = (s: AppState, needId: string, volunteerId: string) =>
-  s.attendance.filter((a) => a.needId === needId && a.volunteerId === volunteerId).sort((a, b) => b.recordedAt.localeCompare(a.recordedAt))[0];
+  s.attendance
+    .filter((a) => a.needId === needId && a.volunteerId === volunteerId)
+    .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt))[0];
 
 /** Priority rule: fewer recent (3m), then fewer in 12m. */
-export const byPriority = (a: Volunteer, b: Volunteer) => a.recent3m - b.recent3m || a.last12m - b.last12m;
+export const byPriority = (a: Volunteer, b: Volunteer) =>
+  a.recent3m - b.recent3m || a.last12m - b.last12m;
 
 // ---------- Necessidades avulsas e candidaturas ----------
 import type { Opportunity } from "./types";
@@ -51,7 +66,11 @@ export const sortOpportunities = (os: Opportunity[]) =>
   [...os].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
 
 export const activeApplicants = (s: AppState, opportunityId: string) =>
-  s.applications.filter((a) => a.opportunityId === opportunityId && (a.status === "candidatado" || a.status === "selecionado"));
+  s.applications.filter(
+    (a) =>
+      a.opportunityId === opportunityId &&
+      (a.status === "candidatado" || a.status === "selecionado"),
+  );
 
 export const myApplication = (s: AppState, opportunityId: string, volunteerId: string) =>
   s.applications.find((a) => a.opportunityId === opportunityId && a.volunteerId === volunteerId);
@@ -60,23 +79,37 @@ export const availableDays = (s: AppState, volunteerId: string) =>
   new Set(s.dayAvailability.filter((d) => d.volunteerId === volunteerId).map((d) => d.date));
 
 /** Red = below min, green = min reached, blue = max reached. */
-export function fillState(count: number, o: Pick<Opportunity, "min" | "max">): { tone: Tone; label: string } {
+export function fillState(
+  count: number,
+  o: Pick<Opportunity, "min" | "max">,
+): { tone: Tone; label: string } {
   if (count >= o.max) return { tone: "info", label: "Máximo atingido" };
   if (count >= o.min) return { tone: "success", label: "Mínimo atingido" };
   return { tone: "destructive", label: "Abaixo do mínimo" };
 }
 
 /** Quantidade de candidaturas ativas (o servidor informa a contagem mesmo quando o usuário não vê os nomes). */
-export const activeCount = (s: AppState, opportunityId: string) => s.oppCounts[opportunityId] ?? activeApplicants(s, opportunityId).length;
+export const activeCount = (s: AppState, opportunityId: string) =>
+  s.oppCounts[opportunityId] ?? activeApplicants(s, opportunityId).length;
 
 /** Pessoas que podem ser responsáveis por um turno ou vaga. */
 export const responsavelOptions = (s: AppState) => [
-  ...s.supervisors.filter((x) => x.status === "ativo").map((x) => ({ id: x.id, name: x.name, kind: x.role === "admin" ? "Administrador" : "Coordenador" })),
-  ...s.volunteers.filter((v) => v.status === "ativo" && v.role === "responsavel").map((v) => ({ id: v.id, name: v.name, kind: "Responsável" })),
+  ...s.supervisors
+    .filter((x) => x.status === "ativo")
+    .map((x) => ({
+      id: x.id,
+      name: x.name,
+      kind: x.role === "admin" ? "Administrador" : "Coordenador",
+    })),
+  ...s.volunteers
+    .filter((v) => v.status === "ativo" && v.role === "responsavel")
+    .map((v) => ({ id: v.id, name: v.name, kind: "Responsável" })),
 ];
 
 export const personName = (s: AppState, id?: string) =>
-  id ? (s.volunteers.find((v) => v.id === id)?.name ?? s.supervisors.find((x) => x.id === id)?.name) : undefined;
+  id
+    ? (s.volunteers.find((v) => v.id === id)?.name ?? s.supervisors.find((x) => x.id === id)?.name)
+    : undefined;
 
 // ---------- Visão de agenda (escala mensal + vagas confirmadas) ----------
 import type { VisibilityPolicy } from "./types";
@@ -106,7 +139,11 @@ export function scheduleItems(s: AppState): ScheduleItem[] {
       d.slots.forEach((slot) => {
         const n = period?.needs.find((x) => x.id === slot.needId);
         if (!n) return;
-        const out_ = s.attendance.filter((a) => a.needId === n.id && (a.status === "cancelado" || a.status === "substituido")).map((a) => a.volunteerId);
+        const out_ = s.attendance
+          .filter(
+            (a) => a.needId === n.id && (a.status === "cancelado" || a.status === "substituido"),
+          )
+          .map((a) => a.volunteerId);
         out.push({
           key: `n:${n.id}`,
           kind: "escala",
@@ -131,14 +168,17 @@ export function scheduleItems(s: AppState): ScheduleItem[] {
         end: o.end,
         note: o.note,
         slots: o.max,
-        people: s.applications.filter((a) => a.opportunityId === o.id && a.status === "selecionado").map((a) => a.volunteerId),
+        people: s.applications
+          .filter((a) => a.opportunityId === o.id && a.status === "selecionado")
+          .map((a) => a.volunteerId),
         responsavelId: o.responsavelId,
       }),
     );
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
 }
 
-export const myScheduleItems = (s: AppState, userId: string) => scheduleItems(s).filter((i) => i.people.includes(userId));
+export const myScheduleItems = (s: AppState, userId: string) =>
+  scheduleItems(s).filter((i) => i.people.includes(userId));
 
 export const VISIBILITY_OPTIONS: { value: VisibilityPolicy; title: string; text: string }[] = [
   {
@@ -189,10 +229,13 @@ export function agendaItems(s: AppState): AgendaItem[] {
   s.periods.forEach((p) => {
     p.needs.forEach((n) => {
       const removed = s.attendance
-        .filter((a) => a.needId === n.id && (a.status === "cancelado" || a.status === "substituido"))
+        .filter(
+          (a) => a.needId === n.id && (a.status === "cancelado" || a.status === "substituido"),
+        )
         .map((a) => a.volunteerId);
       const pub = publishedSlotFor(s, n.id);
-      const picks = pub?.slot.picks.map((pk) => pk.volunteerId).filter((id) => !removed.includes(id)) ?? [];
+      const picks =
+        pub?.slot.picks.map((pk) => pk.volunteerId).filter((id) => !removed.includes(id)) ?? [];
       out.push({
         key: `n:${n.id}`,
         kind: "escala",
@@ -204,7 +247,9 @@ export function agendaItems(s: AppState): AgendaItem[] {
         filled: picks,
         candidates: n.fixedId
           ? fixedCandidates(s, n.fixedId, n.date)
-          : s.availabilities.filter((a) => a.needId === n.id && a.value === "disponivel").map((a) => a.volunteerId),
+          : s.availabilities
+              .filter((a) => a.needId === n.id && a.value === "disponivel")
+              .map((a) => a.volunteerId),
         responsavelId: n.responsavelId,
         periodId: p.id,
         needId: n.id,
@@ -226,7 +271,9 @@ export function agendaItems(s: AppState): AgendaItem[] {
       slots: o.max,
       min: o.min,
       status: o.status,
-      filled: apps.filter((a) => (confirmed ? a.status === "selecionado" : a.status === "candidatado")).map((a) => a.volunteerId),
+      filled: apps
+        .filter((a) => (confirmed ? a.status === "selecionado" : a.status === "candidatado"))
+        .map((a) => a.volunteerId),
       candidates: apps.filter((a) => a.status !== "cancelado").map((a) => a.volunteerId),
       responsavelId: o.responsavelId,
     });
@@ -260,7 +307,12 @@ export const ROLE_LABEL: Record<TeamMember["role"], string> = {
   voluntario: "Voluntário",
 };
 
-export const ROLE_ORDER: Record<TeamMember["role"], number> = { admin: 0, supervisor: 1, responsavel: 2, voluntario: 3 };
+export const ROLE_ORDER: Record<TeamMember["role"], number> = {
+  admin: 0,
+  supervisor: 1,
+  responsavel: 2,
+  voluntario: 3,
+};
 
 /** Admin, supervisores, responsáveis e voluntários numa lista só. */
 export function teamMembers(s: AppState): TeamMember[] {
@@ -310,25 +362,37 @@ import { addDays, format } from "date-fns";
 import { toDate } from "@/lib/format";
 
 export const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-export const sortFixed = (fs: FixedSchedule[]) => [...fs].sort((a, b) => a.weekday - b.weekday || a.start.localeCompare(b.start));
+export const sortFixed = (fs: FixedSchedule[]) =>
+  [...fs].sort((a, b) => a.weekday - b.weekday || a.start.localeCompare(b.start));
 
-export const fixedLabel = (f: Pick<FixedSchedule, "weekday" | "start" | "end">) => `${WEEKDAYS[f.weekday]} ${f.start}–${f.end}`;
+export const fixedLabel = (f: Pick<FixedSchedule, "weekday" | "start" | "end">) =>
+  `${WEEKDAYS[f.weekday]} ${f.start}–${f.end}`;
 
-export const fixedMembersOf = (s: AppState, fixedId: string) => s.fixedMembers.filter((m) => m.fixedId === fixedId).map((m) => m.volunteerId);
+export const fixedMembersOf = (s: AppState, fixedId: string) =>
+  s.fixedMembers.filter((m) => m.fixedId === fixedId).map((m) => m.volunteerId);
 
-export const isFixedMember = (s: AppState, fixedId: string, volunteerId: string) => s.fixedMembers.some((m) => m.fixedId === fixedId && m.volunteerId === volunteerId);
+export const isFixedMember = (s: AppState, fixedId: string, volunteerId: string) =>
+  s.fixedMembers.some((m) => m.fixedId === fixedId && m.volunteerId === volunteerId);
 
 export const isUnavailable = (s: AppState, fixedId: string, volunteerId: string, date: string) =>
-  s.fixedExceptions.some((e) => e.fixedId === fixedId && e.volunteerId === volunteerId && e.date === date);
+  s.fixedExceptions.some(
+    (e) => e.fixedId === fixedId && e.volunteerId === volunteerId && e.date === date,
+  );
 
 /** Participantes ativos da escala fixa que não avisaram indisponibilidade nesta data. */
 export const fixedCandidates = (s: AppState, fixedId: string, date: string) =>
   fixedMembersOf(s, fixedId).filter(
-    (id) => s.volunteers.some((v) => v.id === id && v.status === "ativo") && !isUnavailable(s, fixedId, id, date),
+    (id) =>
+      s.volunteers.some((v) => v.id === id && v.status === "ativo") &&
+      !isUnavailable(s, fixedId, id, date),
   );
 
 /** Próximas datas da escala fixa a partir de "from" (inclusive). */
-export function nextDates(f: Pick<FixedSchedule, "weekday">, from: string, count: number): string[] {
+export function nextDates(
+  f: Pick<FixedSchedule, "weekday">,
+  from: string,
+  count: number,
+): string[] {
   const start = toDate(from);
   const first = addDays(start, (f.weekday - start.getDay() + 7) % 7);
   return Array.from({ length: count }, (_, i) => format(addDays(first, i * 7), "yyyy-MM-dd"));
@@ -336,13 +400,20 @@ export function nextDates(f: Pick<FixedSchedule, "weekday">, from: string, count
 
 /** Turno gerado pela escala fixa nesta data (se já houve sorteio do mês). */
 export const fixedNeed = (s: AppState, fixedId: string, date: string) =>
-  s.periods.flatMap((p) => p.needs.map((n) => ({ p, n }))).find((x) => x.n.fixedId === fixedId && x.n.date === date);
+  s.periods
+    .flatMap((p) => p.needs.map((n) => ({ p, n })))
+    .find((x) => x.n.fixedId === fixedId && x.n.date === date);
 
 /** Sorteios de uma escala fixa num mês, do mais novo para o mais antigo. */
 export function fixedDraws(s: AppState, fixedId: string, year: number, month: number) {
   const period = s.periods.find((p) => p.year === year && p.month === month);
   if (!period) return { period, draws: [] as AppState["draws"] };
-  return { period, draws: s.draws.filter((d) => d.periodId === period.id && d.fixedId === fixedId).sort((a, b) => b.number - a.number) };
+  return {
+    period,
+    draws: s.draws
+      .filter((d) => d.periodId === period.id && d.fixedId === fixedId)
+      .sort((a, b) => b.number - a.number),
+  };
 }
 
 /**
@@ -357,8 +428,9 @@ export function backupsOf(s: AppState, needId: string): string[] {
     .map((a) => a.volunteerId)
     .filter(
       (id) =>
-        s.fixedReleased.some((e) => e.fixedId === n.fixedId && e.volunteerId === id && e.date === n.date) &&
-        !isUnavailable(s, n.fixedId!, id, n.date),
+        s.fixedReleased.some(
+          (e) => e.fixedId === n.fixedId && e.volunteerId === id && e.date === n.date,
+        ) && !isUnavailable(s, n.fixedId!, id, n.date),
     );
 }
 
@@ -366,7 +438,14 @@ export function backupsOf(s: AppState, needId: string): string[] {
 export function fixedDayStatus(s: AppState, fixedId: string, volunteerId: string, date: string) {
   const need = fixedNeed(s, fixedId, date)?.n;
   const slot = need ? publishedSlotFor(s, need.id)?.slot : undefined;
-  const removed = !!need && s.attendance.some((a) => a.needId === need.id && a.volunteerId === volunteerId && (a.status === "cancelado" || a.status === "substituido"));
+  const removed =
+    !!need &&
+    s.attendance.some(
+      (a) =>
+        a.needId === need.id &&
+        a.volunteerId === volunteerId &&
+        (a.status === "cancelado" || a.status === "substituido"),
+    );
   return {
     need,
     /** Já houve sorteio publicado para esta data. */
@@ -382,6 +461,14 @@ export function fixedDayStatus(s: AppState, fixedId: string, volunteerId: string
 
 /** Data e hora de agora em São Paulo, no formato "YYYY-MM-DDTHH:mm". */
 function nowLocal() {
-  const parts = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date());
   return parts.replace(" ", "T");
 }

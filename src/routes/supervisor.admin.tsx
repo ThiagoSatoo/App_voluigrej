@@ -4,7 +4,14 @@ import { Lock, ShieldCheck } from "lucide-react";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
-import { SUPERVISOR_NAV, VOLUNTEER_NAV, navEnabled, type NavArea, type NavConfig, type NavItem } from "@/lib/nav";
+import {
+  SUPERVISOR_NAV,
+  VOLUNTEER_NAV,
+  navEnabled,
+  type NavArea,
+  type NavConfig,
+  type NavItem,
+} from "@/lib/nav";
 import { EmptyState, Notice, PageHeader, Panel } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -20,20 +27,43 @@ function AdminPage() {
   const [draft, setDraft] = useState<NavConfig>(state.navConfig);
   const [busy, setBusy] = useState(false);
   if (state.session?.role !== "admin")
-    return <EmptyState icon={ShieldCheck} title="Acesso restrito" text="Somente o administrador acessa esta tela." />;
+    return (
+      <EmptyState
+        icon={ShieldCheck}
+        title="Acesso restrito"
+        text="Somente o administrador acessa esta tela."
+      />
+    );
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(state.navConfig);
-  const set = (area: NavArea, key: string, on: boolean) => setDraft((d) => ({ ...d, [area]: { ...d[area], [key]: on } }));
+  const set = (area: NavArea, key: string, on: boolean) =>
+    setDraft((d) => ({ ...d, [area]: { ...d[area], [key]: on } }));
 
   return (
     <div className="max-w-3xl space-y-4">
-      <PageHeader title="Admin" subtitle="Escolha quais abas do menu cada perfil vê. Você, como administrador, sempre vê todas." />
+      <PageHeader
+        title="Admin"
+        subtitle="Escolha quais abas do menu cada perfil vê. Você, como administrador, sempre vê todas."
+      />
       <Notice tone="primary" icon={ShieldCheck}>
-        Desligar uma aba tira a tela do menu e bloqueia quem tentar abri-la pelo endereço. O que cada perfil pode ver e alterar nos dados continua protegido pelas regras do banco.
+        Desligar uma aba tira a tela do menu e bloqueia quem tentar abri-la pelo endereço. O que
+        cada perfil pode ver e alterar nos dados continua protegido pelas regras do banco.
       </Notice>
       <div className="grid gap-4 md:grid-cols-2">
-        <Area title="Coordenador" area="supervisor" items={SUPERVISOR_NAV.filter((i) => !i.adminOnly)} draft={draft} onToggle={set} />
-        <Area title="Voluntário e responsável" area="voluntario" items={VOLUNTEER_NAV} draft={draft} onToggle={set} />
+        <Area
+          title="Coordenador"
+          area="supervisor"
+          items={SUPERVISOR_NAV.filter((i) => !i.adminOnly)}
+          draft={draft}
+          onToggle={set}
+        />
+        <Area
+          title="Voluntário e responsável"
+          area="voluntario"
+          items={VOLUNTEER_NAV}
+          draft={draft}
+          onToggle={set}
+        />
       </div>
       <div className="flex gap-2">
         <Button
@@ -46,7 +76,13 @@ function AdminPage() {
         >
           {busy ? "Salvando…" : "Salvar"}
         </Button>
-        <Button variant="outline" disabled={!dirty || busy} onClick={() => setDraft(state.navConfig)}>Desfazer</Button>
+        <Button
+          variant="outline"
+          disabled={!dirty || busy}
+          onClick={() => setDraft(state.navConfig)}
+        >
+          Desfazer
+        </Button>
       </div>
     </div>
   );
@@ -70,7 +106,9 @@ function Area({
     <Panel>
       <div className="mb-1 flex items-baseline justify-between">
         <p className="font-display text-lg font-semibold">{title}</p>
-        <span className="text-xs text-muted-foreground">{on} de {items.length} ligadas</span>
+        <span className="text-xs text-muted-foreground">
+          {on} de {items.length} ligadas
+        </span>
       </div>
       <div className="divide-y">
         {items.map((it) => (

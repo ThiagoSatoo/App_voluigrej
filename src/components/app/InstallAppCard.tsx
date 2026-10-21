@@ -16,7 +16,8 @@ export function InstallAppCard() {
       <p className="mt-4 flex items-start gap-2 rounded-2xl border bg-card/70 p-3 text-xs text-muted-foreground">
         <Share className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>
-          Para instalar no iPhone: abra no <b>Safari</b>, toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.
+          Para instalar no iPhone: abra no <b>Safari</b>, toque em <b>Compartilhar</b> e depois em{" "}
+          <b>Adicionar à Tela de Início</b>.
         </span>
       </p>
     );

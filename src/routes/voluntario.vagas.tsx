@@ -2,12 +2,26 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { addDays, format, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarSearch, Check, ChevronLeft, ChevronRight, Clock, HandHeart, X } from "lucide-react";
+import {
+  CalendarSearch,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  HandHeart,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
-import { activeCount, availableDays, fillState, myApplication, sortOpportunities } from "@/data/selectors";
+import {
+  activeCount,
+  availableDays,
+  fillState,
+  myApplication,
+  sortOpportunities,
+} from "@/data/selectors";
 import { DateBadge, EmptyState, Notice, PageHeader, Panel, Pill } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,9 +34,15 @@ export const Route = createFileRoute("/voluntario/vagas")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { title: "Vagas — Área do Voluntário" },
-      { name: "description", content: "Marque seus dias disponíveis e candidate-se às escalas compatíveis." },
+      {
+        name: "description",
+        content: "Marque seus dias disponíveis e candidate-se às escalas compatíveis.",
+      },
       { property: "og:title", content: "Vagas — Área do Voluntário" },
-      { property: "og:description", content: "Marque seus dias disponíveis e candidate-se às escalas." },
+      {
+        property: "og:description",
+        content: "Marque seus dias disponíveis e candidate-se às escalas.",
+      },
     ],
   }),
   component: VagasPage,
@@ -33,14 +53,25 @@ const iso = (d: Date) => format(d, "yyyy-MM-dd");
 function VagasPage() {
   return (
     <div className="space-y-4">
-      <PageHeader title="Vagas" subtitle="Disponibilidade não é candidatura: primeiro marque seus dias, depois escolha onde quer servir." />
+      <PageHeader
+        title="Vagas"
+        subtitle="Disponibilidade não é candidatura: primeiro marque seus dias, depois escolha onde quer servir."
+      />
       <Tabs defaultValue="vagas">
         <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl">
-          <TabsTrigger value="semana" className="rounded-lg">Minha semana</TabsTrigger>
-          <TabsTrigger value="vagas" className="rounded-lg">Escalas disponíveis</TabsTrigger>
+          <TabsTrigger value="semana" className="rounded-lg">
+            Minha semana
+          </TabsTrigger>
+          <TabsTrigger value="vagas" className="rounded-lg">
+            Escalas disponíveis
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="semana" className="mt-4"><WeekAvailability /></TabsContent>
-        <TabsContent value="vagas" className="mt-4"><AvailableScales /></TabsContent>
+        <TabsContent value="semana" className="mt-4">
+          <WeekAvailability />
+        </TabsContent>
+        <TabsContent value="vagas" className="mt-4">
+          <AvailableScales />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -55,21 +86,46 @@ function WeekAvailability() {
   const saved = availableDays(state, meId);
   const [sel, setSel] = useState<string[]>([]);
   useEffect(() => setSel(days.filter((d) => saved.has(d))), [offset]); // eslint-disable-line react-hooks/exhaustive-deps
-  const dirty = sel.length !== days.filter((d) => saved.has(d)).length || sel.some((d) => !saved.has(d));
+  const dirty =
+    sel.length !== days.filter((d) => saved.has(d)).length || sel.some((d) => !saved.has(d));
 
   return (
     <div className="space-y-3">
       <Panel className="flex items-center justify-between p-3">
-        <Button variant="ghost" size="icon" disabled={offset === 0} onClick={() => setOffset((o) => o - 1)} aria-label="Semana anterior"><ChevronLeft /></Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={offset === 0}
+          onClick={() => setOffset((o) => o - 1)}
+          aria-label="Semana anterior"
+        >
+          <ChevronLeft />
+        </Button>
         <div className="text-center">
-          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Semana</div>
-          <div className="font-display font-semibold">{fmtDM(days[0])} a {fmtDM(days[6])}</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Semana
+          </div>
+          <div className="font-display font-semibold">
+            {fmtDM(days[0])} a {fmtDM(days[6])}
+          </div>
         </div>
-        <Button variant="ghost" size="icon" disabled={offset >= 11} onClick={() => setOffset((o) => o + 1)} aria-label="Próxima semana"><ChevronRight /></Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={offset >= 11}
+          onClick={() => setOffset((o) => o + 1)}
+          aria-label="Próxima semana"
+        >
+          <ChevronRight />
+        </Button>
       </Panel>
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="outline" onClick={() => setSel(days)}>Selecionar todos</Button>
-        <Button variant="outline" onClick={() => setSel([])}>Desmarcar todos</Button>
+        <Button variant="outline" onClick={() => setSel(days)}>
+          Selecionar todos
+        </Button>
+        <Button variant="outline" onClick={() => setSel([])}>
+          Desmarcar todos
+        </Button>
       </div>
       <div className="space-y-2">
         {days.map((d) => {
@@ -78,18 +134,35 @@ function WeekAvailability() {
             <button
               key={d}
               onClick={() => setSel((s) => (on ? s.filter((x) => x !== d) : [...s, d]))}
-              className={cn("flex w-full items-center gap-3 rounded-2xl border-2 bg-card p-3 text-left transition", on ? "border-success bg-success-soft" : "border-border")}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-2xl border-2 bg-card p-3 text-left transition",
+                on ? "border-success bg-success-soft" : "border-border",
+              )}
             >
               <DateBadge date={d} className="h-11 w-11" />
-              <span className="flex-1 font-semibold capitalize">{format(toDate(d), "EEEE", { locale: ptBR })}</span>
-              <span className={cn("grid h-7 w-7 place-items-center rounded-full border-2", on ? "border-success bg-success text-success-foreground" : "border-input")}>
+              <span className="flex-1 font-semibold capitalize">
+                {format(toDate(d), "EEEE", { locale: ptBR })}
+              </span>
+              <span
+                className={cn(
+                  "grid h-7 w-7 place-items-center rounded-full border-2",
+                  on ? "border-success bg-success text-success-foreground" : "border-input",
+                )}
+              >
                 {on && <Check className="h-4 w-4" />}
               </span>
             </button>
           );
         })}
       </div>
-      <Button size="lg" className="w-full" disabled={!dirty} onClick={() => { act(repo.setWeekAvailability(meId, days, sel), "Disponibilidade da semana salva"); }}>
+      <Button
+        size="lg"
+        className="w-full"
+        disabled={!dirty}
+        onClick={() => {
+          act(repo.setWeekAvailability(meId, days, sel), "Disponibilidade da semana salva");
+        }}
+      >
         Salvar semana
       </Button>
     </div>
@@ -100,12 +173,26 @@ function AvailableScales() {
   const { state } = useStore();
   const meId = state.session!.userId;
   const days = availableDays(state, meId);
-  const list = sortOpportunities(state.opportunities).filter((o) => o.date >= today() && days.has(o.date));
+  const list = sortOpportunities(state.opportunities).filter(
+    (o) => o.date >= today() && days.has(o.date),
+  );
 
   if (days.size === 0)
-    return <EmptyState icon={CalendarSearch} title="Marque seus dias primeiro" text="Vá em “Minha semana” e marque os dias em que você está disponível." />;
+    return (
+      <EmptyState
+        icon={CalendarSearch}
+        title="Marque seus dias primeiro"
+        text="Vá em “Minha semana” e marque os dias em que você está disponível."
+      />
+    );
   if (list.length === 0)
-    return <EmptyState icon={HandHeart} title="Nenhuma escala compatível" text="Ainda não há necessidades nos dias em que você marcou disponibilidade." />;
+    return (
+      <EmptyState
+        icon={HandHeart}
+        title="Nenhuma escala compatível"
+        text="Ainda não há necessidades nos dias em que você marcou disponibilidade."
+      />
+    );
 
   return (
     <div className="space-y-3">
@@ -121,31 +208,65 @@ function AvailableScales() {
               <DateBadge date={o.date} />
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{fmtLong(o.date)}</div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3.5 w-3.5" /> {o.start} – {o.end}</div>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" /> {o.start} – {o.end}
+                </div>
                 {o.note && <div className="truncate text-xs text-muted-foreground">{o.note}</div>}
               </div>
               <Pill tone={fill.tone}>{fill.label}</Pill>
             </div>
             <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-              <span>Mín. <b>{o.min}</b></span>
-              <span>Máx. <b>{o.max}</b></span>
-              <span>Candidatos <b>{count}</b></span>
+              <span>
+                Mín. <b>{o.min}</b>
+              </span>
+              <span>
+                Máx. <b>{o.max}</b>
+              </span>
+              <span>
+                Candidatos <b>{count}</b>
+              </span>
             </div>
             <div className="mt-3">
-              {mine?.status === "selecionado" && <Notice tone="success" icon={Check}>Selecionado</Notice>}
-              {mine?.status === "nao_selecionado" && <Notice tone="muted" icon={X}>Não selecionado</Notice>}
+              {mine?.status === "selecionado" && (
+                <Notice tone="success" icon={Check}>
+                  Selecionado
+                </Notice>
+              )}
+              {mine?.status === "nao_selecionado" && (
+                <Notice tone="muted" icon={X}>
+                  Não selecionado
+                </Notice>
+              )}
               {open && applied && (
                 <div className="flex items-center gap-2">
-                  <div className="flex h-11 flex-1 items-center justify-center rounded-xl bg-success-soft font-semibold text-success">✓ Candidatado</div>
-                  <Button variant="outline" className="h-11" onClick={() => { act(repo.cancelApplication(o.id, meId), "Candidatura cancelada"); }}>Cancelar</Button>
+                  <div className="flex h-11 flex-1 items-center justify-center rounded-xl bg-success-soft font-semibold text-success">
+                    ✓ Candidatado
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="h-11"
+                    onClick={() => {
+                      act(repo.cancelApplication(o.id, meId), "Candidatura cancelada");
+                    }}
+                  >
+                    Cancelar
+                  </Button>
                 </div>
               )}
               {open && !applied && (
-                <Button size="lg" className="w-full" onClick={() => { act(repo.applyTo(o.id, meId), "Candidatura enviada!"); }}>
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => {
+                    act(repo.applyTo(o.id, meId), "Candidatura enviada!");
+                  }}
+                >
                   Quero participar
                 </Button>
               )}
-              {!open && !mine && <p className="text-sm text-muted-foreground">Seleção encerrada.</p>}
+              {!open && !mine && (
+                <p className="text-sm text-muted-foreground">Seleção encerrada.</p>
+              )}
             </div>
           </Panel>
         );

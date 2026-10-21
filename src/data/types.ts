@@ -19,7 +19,8 @@ export interface Volunteer {
   joinedAt: string;
 }
 
-export type PeriodStatus = "rascunho" | "aberta" | "encerrada" | "sorteado" | "publicada" | "encerrado";
+export type PeriodStatus =
+  "rascunho" | "aberta" | "encerrada" | "sorteado" | "publicada" | "encerrado";
 
 export interface Need {
   id: string;

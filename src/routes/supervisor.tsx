@@ -27,7 +27,9 @@ function NavList({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin: bo
         </div>
         <div className="min-w-0">
           <div className="font-display text-lg font-semibold leading-tight">{APP_TITLE}</div>
-          <div className="truncate text-xs opacity-70">{state.settings.churchName || (isAdmin ? "Administrador" : "Coordenador")}</div>
+          <div className="truncate text-xs opacity-70">
+            {state.settings.churchName || (isAdmin ? "Administrador" : "Coordenador")}
+          </div>
         </div>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
@@ -77,7 +79,11 @@ function SupervisorLayout() {
           </div>
           <div className="min-w-0 leading-tight">
             <div className="font-display font-semibold">{APP_TITLE}</div>
-            {state.settings.churchName && <div className="truncate text-[11px] text-muted-foreground">{state.settings.churchName}</div>}
+            {state.settings.churchName && (
+              <div className="truncate text-[11px] text-muted-foreground">
+                {state.settings.churchName}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center">
@@ -94,8 +100,18 @@ function SupervisorLayout() {
         </SheetContent>
       </Sheet>
       <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
-        <div className="-mt-2 mb-2 hidden justify-end lg:flex"><NotificationBell /></div>
-        {blocked ? <EmptyState icon={EyeOff} title="Tela desativada" text="Esta área foi desativada pelo administrador." /> : <Outlet />}
+        <div className="-mt-2 mb-2 hidden justify-end lg:flex">
+          <NotificationBell />
+        </div>
+        {blocked ? (
+          <EmptyState
+            icon={EyeOff}
+            title="Tela desativada"
+            text="Esta área foi desativada pelo administrador."
+          />
+        ) : (
+          <Outlet />
+        )}
       </main>
     </div>
   );

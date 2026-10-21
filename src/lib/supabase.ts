@@ -28,26 +28,42 @@ export const supabase = createClient(url ?? "http://localhost", key ?? "missing-
 export const LOGIN_DOMAIN_CPF = "cpf.escala-voluntarios.app";
 export const LOGIN_DOMAIN_STAFF = "equipe.escala-voluntarios.app";
 export const cpfLogin = (cpf: string) => `${cpf.replace(/\D/g, "")}@${LOGIN_DOMAIN_CPF}`;
-export const staffLogin = (username: string) => `${username.trim().toLowerCase()}@${LOGIN_DOMAIN_STAFF}`;
+export const staffLogin = (username: string) =>
+  `${username.trim().toLowerCase()}@${LOGIN_DOMAIN_STAFF}`;
 
 export const AVATAR_BUCKET = "avatars";
 
 /** Converte erros do banco/servidor em mensagens amigáveis em português. */
 export function friendlyError(err: unknown): string {
   // No banco o perfil se chama "supervisor"; na tela, "coordenador".
-  const msg = ((err as { message?: string })?.message ?? String(err ?? "")).replace(/supervisor(es)?/g, (_, p) => (p ? "coordenadores" : "coordenador"));
-  if (/row-level security|permission denied|Acesso negado/i.test(msg)) return "Você não tem permissão para fazer isso.";
+  const msg = ((err as { message?: string })?.message ?? String(err ?? "")).replace(
+    /supervisor(es)?/g,
+    (_, p) => (p ? "coordenadores" : "coordenador"),
+  );
+  if (/row-level security|permission denied|Acesso negado/i.test(msg))
+    return "Você não tem permissão para fazer isso.";
   if (/Invalid login credentials/i.test(msg)) return "Login ou senha inválidos.";
-  if (/rate limit|too many/i.test(msg)) return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
-  if (/Failed to fetch|NetworkError|network/i.test(msg)) return "Sem conexão com o servidor. Verifique sua internet.";
+  if (/rate limit|too many/i.test(msg))
+    return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+  if (/Failed to fetch|NetworkError|network/i.test(msg))
+    return "Sem conexão com o servidor. Verifique sua internet.";
   if (/duplicate key.*cpf/i.test(msg)) return "Já existe um voluntário com este CPF.";
   if (/duplicate key.*(month|year)/i.test(msg)) return "Já existe um período para este mês.";
   if (/duplicate key.*username/i.test(msg)) return "Este usuário já está em uso.";
-  if (/foreign key.*fixed_id|violates foreign key constraint "(needs|draws)_fixed_id/i.test(msg)) return "Esta escala fixa já tem turnos gerados. Desative-a em vez de excluir.";
-  if (/duplicate key.*fixed_members/i.test(msg)) return "Esta pessoa já participa desta escala fixa.";
-  if (/weak|password should/i.test(msg)) return "Senha muito fraca. Use pelo menos 8 caracteres, com letras e números.";
-  if (/same_password|should be different/i.test(msg)) return "A nova senha deve ser diferente da atual.";
+  if (/foreign key.*fixed_id|violates foreign key constraint "(needs|draws)_fixed_id/i.test(msg))
+    return "Esta escala fixa já tem turnos gerados. Desative-a em vez de excluir.";
+  if (/duplicate key.*fixed_members/i.test(msg))
+    return "Esta pessoa já participa desta escala fixa.";
+  if (/weak|password should/i.test(msg))
+    return "Senha muito fraca. Use pelo menos 8 caracteres, com letras e números.";
+  if (/same_password|should be different/i.test(msg))
+    return "A nova senha deve ser diferente da atual.";
   // Mensagens geradas pelas funções do banco já estão em português.
-  if (msg && msg.length < 200 && /[áéíóúãõçà]|não|Somente|inválid|escala|turno|Voluntário|Selecione/i.test(msg)) return msg;
+  if (
+    msg &&
+    msg.length < 200 &&
+    /[áéíóúãõçà]|não|Somente|inválid|escala|turno|Voluntário|Selecione/i.test(msg)
+  )
+    return msg;
   return "Não foi possível concluir. Tente novamente.";
 }

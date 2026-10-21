@@ -38,32 +38,55 @@ function SettingsPage() {
       <PageHeader title="Configurações" />
       <Tabs defaultValue="geral">
         <TabsList className="mb-4 h-11 rounded-xl">
-          <TabsTrigger value="geral" className="rounded-lg">Geral</TabsTrigger>
-          <TabsTrigger value="notificacoes" className="rounded-lg">Notificações</TabsTrigger>
+          <TabsTrigger value="geral" className="rounded-lg">
+            Geral
+          </TabsTrigger>
+          <TabsTrigger value="notificacoes" className="rounded-lg">
+            Notificações
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="notificacoes">
           <Panel>
-            <p className="mb-1 text-sm text-muted-foreground">Preferências do seu usuário. Cada categoria pode ser ativada ou desativada separadamente.</p>
+            <p className="mb-1 text-sm text-muted-foreground">
+              Preferências do seu usuário. Cada categoria pode ser ativada ou desativada
+              separadamente.
+            </p>
             <NotifPrefsList categories={STAFF_CATEGORIES} />
           </Panel>
         </TabsContent>
         <TabsContent value="geral" className="space-y-4">
-      <Panel className="space-y-3">
-        {([["churchName", "Nome da instituição (aparece abaixo de “Sistema de escalas”)"]] as const).map(([k, l]) => (
-          <div key={k} className="space-y-1.5">
-            <Label>{l}</Label>
-            <Input value={s[k]} onChange={(e) => setS({ ...s, [k]: e.target.value })} className="h-11 rounded-xl" />
-          </div>
-        ))}
-        <Button onClick={() => act(repo.updateSettings({ churchName: s.churchName }), "Configurações salvas")}>Salvar</Button>
-      </Panel>
-      <VisibilityPolicyCard />
-      <Panel className="space-y-3">
-        <p className="font-semibold">Minha conta</p>
-        <MyCpfCard />
-        <MyPhoto />
-        <Button variant="outline" onClick={() => navigate({ to: "/trocar-senha" })}><KeyRound /> Alterar minha senha</Button>
-      </Panel>
+          <Panel className="space-y-3">
+            {(
+              [
+                ["churchName", "Nome da instituição (aparece abaixo de “Sistema de escalas”)"],
+              ] as const
+            ).map(([k, l]) => (
+              <div key={k} className="space-y-1.5">
+                <Label>{l}</Label>
+                <Input
+                  value={s[k]}
+                  onChange={(e) => setS({ ...s, [k]: e.target.value })}
+                  className="h-11 rounded-xl"
+                />
+              </div>
+            ))}
+            <Button
+              onClick={() =>
+                act(repo.updateSettings({ churchName: s.churchName }), "Configurações salvas")
+              }
+            >
+              Salvar
+            </Button>
+          </Panel>
+          <VisibilityPolicyCard />
+          <Panel className="space-y-3">
+            <p className="font-semibold">Minha conta</p>
+            <MyCpfCard />
+            <MyPhoto />
+            <Button variant="outline" onClick={() => navigate({ to: "/trocar-senha" })}>
+              <KeyRound /> Alterar minha senha
+            </Button>
+          </Panel>
         </TabsContent>
       </Tabs>
     </div>
@@ -79,9 +102,21 @@ function MyPhoto() {
       <VolunteerAvatar name={me.name} photoUrl={me.photoUrl} size="lg" />
       <div className="flex flex-col gap-1.5">
         <PhotoPicker onPick={(photo) => act(repo.setPhoto(me.id, photo), "Foto atualizada")}>
-          {(open) => <Button variant="outline" size="sm" onClick={open}><Camera /> {me.photoUrl ? "Trocar foto" : "Adicionar foto"}</Button>}
+          {(open) => (
+            <Button variant="outline" size="sm" onClick={open}>
+              <Camera /> {me.photoUrl ? "Trocar foto" : "Adicionar foto"}
+            </Button>
+          )}
         </PhotoPicker>
-        {me.photoUrl && <Button variant="ghost" size="sm" onClick={() => act(repo.setPhoto(me.id, null), "Foto removida")}><Trash2 /> Remover</Button>}
+        {me.photoUrl && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => act(repo.setPhoto(me.id, null), "Foto removida")}
+          >
+            <Trash2 /> Remover
+          </Button>
+        )}
       </div>
     </div>
   );

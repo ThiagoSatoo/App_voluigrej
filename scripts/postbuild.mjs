@@ -42,21 +42,29 @@ const csp = [
   "upgrade-insecure-requests",
 ].join("; ");
 
-html = html.replace(/<meta charSet="utf-8"\/>/i, (m) => `${m}<meta http-equiv="Content-Security-Policy" content="${csp}"/>`);
-if (!html.includes("Content-Security-Policy")) throw new Error("Não foi possível inserir a CSP no HTML.");
+html = html.replace(
+  /<meta charSet="utf-8"\/>/i,
+  (m) => `${m}<meta http-equiv="Content-Security-Policy" content="${csp}"/>`,
+);
+if (!html.includes("Content-Security-Policy"))
+  throw new Error("Não foi possível inserir a CSP no HTML.");
 // Confere o resultado final: todo script embutido precisa estar liberado, senão o app quebra no navegador.
 const finalScripts = [];
 (function walk(node) {
-  if (node.nodeName === "script" && !node.attrs.some((a) => a.name === "src")) finalScripts.push(node.childNodes.map((c) => c.value ?? "").join(""));
+  if (node.nodeName === "script" && !node.attrs.some((a) => a.name === "src"))
+    finalScripts.push(node.childNodes.map((c) => c.value ?? "").join(""));
   (node.childNodes ?? []).forEach(walk);
   if (node.content) walk(node.content);
 })(parse(html));
 const missing = finalScripts.filter((t) => !csp.includes(sha(t)));
-if (missing.length) throw new Error(`CSP: ${missing.length} script(s) embutido(s) não liberado(s).`);
+if (missing.length)
+  throw new Error(`CSP: ${missing.length} script(s) embutido(s) não liberado(s).`);
 fs.writeFileSync(shellPath, html);
 
 const buildId = createHash("sha256").update(html).digest("hex").slice(0, 12);
 const swPath = `${dir}/sw.js`;
 fs.writeFileSync(swPath, fs.readFileSync(swPath, "utf8").replace("__BUILD_ID__", buildId));
 
-console.log(`[postbuild] CSP com ${hashes.length} script(s) embutido(s); service worker ${buildId}`);
+console.log(
+  `[postbuild] CSP com ${hashes.length} script(s) embutido(s); service worker ${buildId}`,
+);

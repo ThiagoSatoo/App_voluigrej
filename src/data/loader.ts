@@ -32,7 +32,10 @@ async function fetchAll(table: string, select = "*", filter?: (q: Query) => Quer
   const out: Row[] = [];
   const size = 1000;
   for (let from = 0; ; from += size) {
-    let q = supabase.from(table).select(select).range(from, from + size - 1);
+    let q = supabase
+      .from(table)
+      .select(select)
+      .range(from, from + size - 1);
     if (filter) q = filter(q);
     const { data, error } = await q;
     if (error) throw error;
@@ -49,7 +52,9 @@ async function fetchAll(table: string, select = "*", filter?: (q: Query) => Quer
  */
 async function fetchActiveDrawRows(table: "draw_slots" | "draw_picks"): Promise<Row[]> {
   try {
-    return await fetchAll(table, "*, draws!inner(status)", (q) => q.neq("draws.status", "substituido"));
+    return await fetchAll(table, "*, draws!inner(status)", (q) =>
+      q.neq("draws.status", "substituido"),
+    );
   } catch {
     return fetchAll(table);
   }
@@ -84,7 +89,11 @@ export async function loadState(): Promise<AppState> {
   const uid = auth.session?.user.id;
   if (!uid) return empty();
 
-  const { data: meRow, error: meErr } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
+  const { data: meRow, error: meErr } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", uid)
+    .maybeSingle();
   if (meErr) throw meErr;
   // Sem perfil visível = conta inexistente ou desativada.
   if (!meRow || meRow.status !== "ativo") {
@@ -92,35 +101,68 @@ export async function loadState(): Promise<AppState> {
     return empty();
   }
 
-  const session: Session = { role: meRow.role, userId: uid, name: meRow.name, mustChangePassword: meRow.must_change_password };
+  const session: Session = {
+    role: meRow.role,
+    userId: uid,
+    name: meRow.name,
+    mustChangePassword: meRow.must_change_password,
+  };
 
-  const [profiles, details, settings, periods, needs, avail, draws, slots, picks, att, subs, opps, dayAv, apps, notifs, prefs, counts, oppCounts, nav, fixed, fixedMembers, fixedExc, pins] =
-    await Promise.all([
-      fetchAll("profiles"),
-      fetchAll("volunteer_details"),
-      supabase.from("app_settings").select("*").maybeSingle(),
-      fetchAll("periods"),
-      fetchAll("needs"),
-      fetchAll("availabilities"),
-      fetchAll("draws"),
-      // Só as linhas dos sorteios em uso (publicados e rascunhos); versões trocadas ficam de fora.
-      fetchActiveDrawRows("draw_slots"),
-      fetchActiveDrawRows("draw_picks"),
-      fetchAll("attendance"),
-      fetchAll("substitutions"),
-      fetchAll("opportunities"),
-      fetchAll("day_availability"),
-      fetchAll("applications"),
-      supabase.from("notifications").select("*").eq("recipient_id", uid).order("created_at", { ascending: false }).limit(300),
-      fetchAll("notif_prefs"),
-      supabase.rpc("scale_counts"),
-      supabase.rpc("opportunity_counts"),
-      supabase.from("nav_config").select("config").maybeSingle(),
-      fetchAll("fixed_schedules"),
-      fetchAll("fixed_members"),
-      fetchAll("fixed_exceptions"),
-      fetchAll("fixed_pins"),
-    ]);
+  const [
+    profiles,
+    details,
+    settings,
+    periods,
+    needs,
+    avail,
+    draws,
+    slots,
+    picks,
+    att,
+    subs,
+    opps,
+    dayAv,
+    apps,
+    notifs,
+    prefs,
+    counts,
+    oppCounts,
+    nav,
+    fixed,
+    fixedMembers,
+    fixedExc,
+    pins,
+  ] = await Promise.all([
+    fetchAll("profiles"),
+    fetchAll("volunteer_details"),
+    supabase.from("app_settings").select("*").maybeSingle(),
+    fetchAll("periods"),
+    fetchAll("needs"),
+    fetchAll("availabilities"),
+    fetchAll("draws"),
+    // Só as linhas dos sorteios em uso (publicados e rascunhos); versões trocadas ficam de fora.
+    fetchActiveDrawRows("draw_slots"),
+    fetchActiveDrawRows("draw_picks"),
+    fetchAll("attendance"),
+    fetchAll("substitutions"),
+    fetchAll("opportunities"),
+    fetchAll("day_availability"),
+    fetchAll("applications"),
+    supabase
+      .from("notifications")
+      .select("*")
+      .eq("recipient_id", uid)
+      .order("created_at", { ascending: false })
+      .limit(300),
+    fetchAll("notif_prefs"),
+    supabase.rpc("scale_counts"),
+    supabase.rpc("opportunity_counts"),
+    supabase.from("nav_config").select("config").maybeSingle(),
+    fetchAll("fixed_schedules"),
+    fetchAll("fixed_members"),
+    fetchAll("fixed_exceptions"),
+    fetchAll("fixed_pins"),
+  ]);
 
   // Fotos ficam em bucket privado: geramos links temporários (1h) só das que o usuário pode ver.
   const paths = profiles.map((p) => p.photo_path).filter(Boolean) as string[];
@@ -183,7 +225,15 @@ export async function loadState(): Promise<AppState> {
     status: p.status,
     needs: needs
       .filter((n) => n.period_id === p.id)
-      .map((n) => ({ id: n.id, date: n.date, start: n.start_time, end: n.end_time, slots: n.slots, responsavelId: n.responsavel_id ?? undefined, fixedId: n.fixed_id ?? undefined })),
+      .map((n) => ({
+        id: n.id,
+        date: n.date,
+        start: n.start_time,
+        end: n.end_time,
+        slots: n.slots,
+        responsavelId: n.responsavel_id ?? undefined,
+        fixedId: n.fixed_id ?? undefined,
+      })),
   }));
 
   const drawList: Draw[] = draws.map((d) => ({
@@ -196,16 +246,20 @@ export async function loadState(): Promise<AppState> {
     fixedId: d.fixed_id ?? undefined,
     slots: slots
       .filter((s) => s.draw_id === d.id)
-      .map(
-        (s): DrawSlot => ({
-          needId: s.need_id,
-          eligible: s.eligible,
-          picks: picks
-            .filter((pk) => pk.draw_id === d.id && pk.need_id === s.need_id)
-            .sort((a, b) => a.priority - b.priority)
-            .map((pk) => ({ volunteerId: pk.volunteer_id, recent3m: pk.recent3m, last12m: pk.last12m, priority: pk.priority, tiebreak: pk.tiebreak })),
-        }),
-      ),
+      .map((s): DrawSlot => ({
+        needId: s.need_id,
+        eligible: s.eligible,
+        picks: picks
+          .filter((pk) => pk.draw_id === d.id && pk.need_id === s.need_id)
+          .sort((a, b) => a.priority - b.priority)
+          .map((pk) => ({
+            volunteerId: pk.volunteer_id,
+            recent3m: pk.recent3m,
+            last12m: pk.last12m,
+            priority: pk.priority,
+            tiebreak: pk.tiebreak,
+          })),
+      })),
   }));
 
   const prefMap: Record<string, NotifPrefs> = {};
@@ -222,10 +276,33 @@ export async function loadState(): Promise<AppState> {
     volunteers,
     supervisors,
     periods: periodList,
-    availabilities: avail.map((a): Availability => ({ periodId: a.period_id, volunteerId: a.volunteer_id, needId: a.need_id, value: a.value, updatedAt: a.updated_at })),
+    availabilities: avail.map((a): Availability => ({
+      periodId: a.period_id,
+      volunteerId: a.volunteer_id,
+      needId: a.need_id,
+      value: a.value,
+      updatedAt: a.updated_at,
+    })),
     draws: drawList,
-    attendance: att.map((a): Attendance => ({ id: a.id, periodId: a.period_id, needId: a.need_id, volunteerId: a.volunteer_id, status: a.status, recordedAt: a.recorded_at, supervisor: a.recorded_by })),
-    substitutions: subs.map((s): Substitution => ({ id: s.id, periodId: s.period_id, needId: s.need_id, outId: s.out_id, inId: s.in_id, at: s.at, supervisor: s.recorded_by, reason: s.reason })),
+    attendance: att.map((a): Attendance => ({
+      id: a.id,
+      periodId: a.period_id,
+      needId: a.need_id,
+      volunteerId: a.volunteer_id,
+      status: a.status,
+      recordedAt: a.recorded_at,
+      supervisor: a.recorded_by,
+    })),
+    substitutions: subs.map((s): Substitution => ({
+      id: s.id,
+      periodId: s.period_id,
+      needId: s.need_id,
+      outId: s.out_id,
+      inId: s.in_id,
+      at: s.at,
+      supervisor: s.recorded_by,
+      reason: s.reason,
+    })),
     opportunities: opps.map((o): Opportunity => ({
       id: o.id,
       date: o.date,
@@ -238,8 +315,17 @@ export async function loadState(): Promise<AppState> {
       createdAt: o.created_at,
       responsavelId: o.responsavel_id ?? undefined,
     })),
-    dayAvailability: dayAv.map((d): DayAvailability => ({ volunteerId: d.volunteer_id, date: d.date })),
-    applications: apps.map((a): Application => ({ id: a.id, opportunityId: a.opportunity_id, volunteerId: a.volunteer_id, status: a.status, updatedAt: a.updated_at })),
+    dayAvailability: dayAv.map((d): DayAvailability => ({
+      volunteerId: d.volunteer_id,
+      date: d.date,
+    })),
+    applications: apps.map((a): Application => ({
+      id: a.id,
+      opportunityId: a.opportunity_id,
+      volunteerId: a.volunteer_id,
+      status: a.status,
+      updatedAt: a.updated_at,
+    })),
     notifications: ((notifs.data ?? []) as Row[]).map((n): AppNotification => ({
       id: n.id,
       type: n.type,
@@ -262,10 +348,33 @@ export async function loadState(): Promise<AppState> {
       note: f.note ?? undefined,
       active: f.active,
     })),
-    fixedMembers: fixedMembers.map((m): FixedMember => ({ fixedId: m.fixed_id, volunteerId: m.volunteer_id })),
-    fixedPins: pins.map((x): FixedPin => ({ fixedId: x.fixed_id, date: x.date, volunteerIds: x.volunteer_ids ?? [] })),
-    fixedReleased: fixedExc.filter((e) => e.cancelled_at).map((e): FixedException => ({ fixedId: e.fixed_id, volunteerId: e.volunteer_id, date: e.date, createdBy: e.created_by })),
-    fixedExceptions: fixedExc.filter((e) => !e.cancelled_at).map((e): FixedException => ({ fixedId: e.fixed_id, volunteerId: e.volunteer_id, date: e.date, createdBy: e.created_by })),
-    oppCounts: Object.fromEntries(((oppCounts.data ?? []) as Row[]).map((c) => [c.opportunity_id, c.active])),
+    fixedMembers: fixedMembers.map((m): FixedMember => ({
+      fixedId: m.fixed_id,
+      volunteerId: m.volunteer_id,
+    })),
+    fixedPins: pins.map((x): FixedPin => ({
+      fixedId: x.fixed_id,
+      date: x.date,
+      volunteerIds: x.volunteer_ids ?? [],
+    })),
+    fixedReleased: fixedExc
+      .filter((e) => e.cancelled_at)
+      .map((e): FixedException => ({
+        fixedId: e.fixed_id,
+        volunteerId: e.volunteer_id,
+        date: e.date,
+        createdBy: e.created_by,
+      })),
+    fixedExceptions: fixedExc
+      .filter((e) => !e.cancelled_at)
+      .map((e): FixedException => ({
+        fixedId: e.fixed_id,
+        volunteerId: e.volunteer_id,
+        date: e.date,
+        createdBy: e.created_by,
+      })),
+    oppCounts: Object.fromEntries(
+      ((oppCounts.data ?? []) as Row[]).map((c) => [c.opportunity_id, c.active]),
+    ),
   };
 }

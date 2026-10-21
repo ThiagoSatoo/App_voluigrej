@@ -20,7 +20,9 @@ function reloadOnce() {
 
 /** A tela aberta é de uma versão antiga? Compara o arquivo principal com o do servidor. */
 async function isStale(): Promise<boolean> {
-  const mine = document.querySelector<HTMLScriptElement>('script[type="module"][src*="/assets/index-"]')?.src;
+  const mine = document.querySelector<HTMLScriptElement>(
+    'script[type="module"][src*="/assets/index-"]',
+  )?.src;
   if (!mine) return false;
   try {
     const html = await (await fetch("/_shell.html", { cache: "no-store" })).text();
@@ -58,7 +60,10 @@ export function registerServiceWorker() {
     if (!hadController || !(await isStale())) return;
     if (Date.now() - shownAt < AUTO_RELOAD_WINDOW) return reloadOnce();
     pending = true;
-    toast("Nova versão do app disponível", { duration: Infinity, action: { label: "Atualizar", onClick: reloadOnce } });
+    toast("Nova versão do app disponível", {
+      duration: Infinity,
+      action: { label: "Atualizar", onClick: reloadOnce },
+    });
   });
 
   const register = async () => {
@@ -83,7 +88,10 @@ export function registerServiceWorker() {
   else window.addEventListener("load", () => void register(), { once: true });
 }
 
-type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+type InstallEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: string }>;
+};
 
 /** Estado do botão "Instalar app": Android/desktop usam o aviso do navegador; iPhone precisa de instruções. */
 export function useInstallPrompt() {
@@ -93,7 +101,8 @@ export function useInstallPrompt() {
 
   useEffect(() => {
     const standalone =
-      window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
     setInstalled(standalone);
     setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
     const onPrompt = (e: Event) => {

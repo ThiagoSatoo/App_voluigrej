@@ -53,10 +53,13 @@ export const STAFF_CATEGORIES: NotifType[] = [
   "aniversario_dia",
 ];
 
-export const prefEnabled = (s: AppState, userId: string, type: NotifType) => s.notifPrefs[userId]?.[type] !== false;
+export const prefEnabled = (s: AppState, userId: string, type: NotifType) =>
+  s.notifPrefs[userId]?.[type] !== false;
 
 /** Current user id for notifications (staff id or volunteer id). */
 export const currentUserId = (s: AppState) => s.session?.userId ?? "";
 
 export const notificationsOf = (s: AppState, userId: string): AppNotification[] =>
-  s.notifications.filter((n) => n.recipientId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  s.notifications
+    .filter((n) => n.recipientId === userId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));

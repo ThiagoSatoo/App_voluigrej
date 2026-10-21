@@ -6,7 +6,8 @@ import type { AttendanceStatus, DrawStatus, PeriodStatus } from "@/data/types";
 export const APP_TITLE = "Sistema de escalas";
 
 /** Data de hoje (YYYY-MM-DD) no fuso de São Paulo. */
-export const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+export const today = () =>
+  new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export const toDate = (d: string) => new Date(`${d}T12:00:00`);
@@ -15,16 +16,35 @@ export const fmtDM = (d: string) => format(toDate(d), "dd/MM");
 export const fmtDMY = (d: string) => format(toDate(d), "dd/MM/yyyy");
 export const fmtWeekday = (d: string) => cap(format(toDate(d), "EEEE", { locale: ptBR }));
 export const fmtDay = (d: string) => format(toDate(d), "dd");
-export const fmtMonShort = (d: string) => format(toDate(d), "MMM", { locale: ptBR }).replace(".", "").toUpperCase();
+export const fmtMonShort = (d: string) =>
+  format(toDate(d), "MMM", { locale: ptBR }).replace(".", "").toUpperCase();
 export const fmtDateTime = (iso: string) => format(new Date(iso), "dd/MM/yyyy 'às' HH:mm");
 
-export const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-export const periodLabel = (p: { month: number; year: number }) => `${MONTHS[p.month - 1]} ${p.year}`;
+export const MONTHS = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+export const periodLabel = (p: { month: number; year: number }) =>
+  `${MONTHS[p.month - 1]} ${p.year}`;
 
-export const maskCpf = (c: string) => (c.length === 11 ? `${c.slice(0, 3)}.***.***-${c.slice(9)}` : c);
+export const maskCpf = (c: string) =>
+  c.length === 11 ? `${c.slice(0, 3)}.***.***-${c.slice(9)}` : c;
 export const formatCpfInput = (v: string) => {
   const d = v.replace(/\D/g, "").slice(0, 11);
-  return d.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  return d
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 };
 /** CPF com 11 dígitos e dígitos verificadores corretos. */
 export function validCpf(input: string) {

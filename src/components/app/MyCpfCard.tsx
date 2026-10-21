@@ -15,14 +15,26 @@ export function MyCpfCard() {
   const [cpf, setCpf] = useState("");
   const [busy, setBusy] = useState(false);
   if (!me) return null;
-  if (me.cpf) return <p className="text-sm text-muted-foreground">Seu login é o CPF <b className="font-mono text-foreground">{me.cpf}</b>.</p>;
+  if (me.cpf)
+    return (
+      <p className="text-sm text-muted-foreground">
+        Seu login é o CPF <b className="font-mono text-foreground">{me.cpf}</b>.
+      </p>
+    );
   return (
     <div className="space-y-2">
       <Notice tone="warning" icon={IdCard}>
-        Cadastre seu CPF. Depois disso, você passa a entrar com o CPF em vez do usuário “{me.username}”. Sua senha atual continua a mesma.
+        Cadastre seu CPF. Depois disso, você passa a entrar com o CPF em vez do usuário “
+        {me.username}”. Sua senha atual continua a mesma.
       </Notice>
       <div className="flex gap-2">
-        <Input inputMode="numeric" placeholder="Seu CPF" value={formatCpfInput(cpf)} onChange={(e) => setCpf(e.target.value)} className="h-11 rounded-xl" />
+        <Input
+          inputMode="numeric"
+          placeholder="Seu CPF"
+          value={formatCpfInput(cpf)}
+          onChange={(e) => setCpf(e.target.value)}
+          className="h-11 rounded-xl"
+        />
         <Button
           disabled={busy || !validCpf(cpf)}
           onClick={async () => {
@@ -34,7 +46,9 @@ export function MyCpfCard() {
           Salvar
         </Button>
       </div>
-      {cpf.replace(/\D/g, "").length === 11 && !validCpf(cpf) && <p className="text-xs font-medium text-destructive">CPF inválido. Confira os números.</p>}
+      {cpf.replace(/\D/g, "").length === 11 && !validCpf(cpf) && (
+        <p className="text-xs font-medium text-destructive">CPF inválido. Confira os números.</p>
+      )}
     </div>
   );
 }

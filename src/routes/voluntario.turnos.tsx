@@ -17,13 +17,23 @@ export const Route = createFileRoute("/voluntario/turnos")({
 function ResponsavelPage() {
   const { state } = useStore();
   if (state.session?.role !== "responsavel")
-    return <EmptyState icon={ShieldCheck} title="Acesso restrito" text="Esta área é para responsáveis de turno." />;
+    return (
+      <EmptyState
+        icon={ShieldCheck}
+        title="Acesso restrito"
+        text="Esta área é para responsáveis de turno."
+      />
+    );
   return (
     <div className="pb-4">
       <Tabs defaultValue="escala">
         <TabsList className="mb-4 grid h-11 w-[calc(100%-3rem)] grid-cols-2 rounded-xl">
-          <TabsTrigger value="escala" className="rounded-lg">Escala e presença</TabsTrigger>
-          <TabsTrigger value="vagas" className="rounded-lg">Vagas</TabsTrigger>
+          <TabsTrigger value="escala" className="rounded-lg">
+            Escala e presença
+          </TabsTrigger>
+          <TabsTrigger value="vagas" className="rounded-lg">
+            Vagas
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="escala">
           <AttendanceManager scope="mine" />

@@ -21,7 +21,9 @@ const palettes = [
 
 const initials = (name: string) => {
   const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+  return (
+    (parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")
+  ).toUpperCase();
 };
 
 /**
@@ -42,11 +44,30 @@ export function VolunteerAvatar({
   const [broken, setBroken] = useState(false);
   const hash = [...name].reduce((h, c) => h + c.charCodeAt(0), 0);
   return (
-    <div className={cn("relative shrink-0 overflow-hidden rounded-full ring-2 ring-card", sizes[size], className)}>
+    <div
+      className={cn(
+        "relative shrink-0 overflow-hidden rounded-full ring-2 ring-card",
+        sizes[size],
+        className,
+      )}
+    >
       {photoUrl && !broken ? (
-        <img src={photoUrl} alt={name} className="h-full w-full object-cover" onError={() => setBroken(true)} loading="lazy" />
+        <img
+          src={photoUrl}
+          alt={name}
+          className="h-full w-full object-cover"
+          onError={() => setBroken(true)}
+          loading="lazy"
+        />
       ) : (
-        <div className={cn("grid h-full w-full place-items-center font-display font-semibold", palettes[hash % palettes.length])}>{initials(name)}</div>
+        <div
+          className={cn(
+            "grid h-full w-full place-items-center font-display font-semibold",
+            palettes[hash % palettes.length],
+          )}
+        >
+          {initials(name)}
+        </div>
       )}
     </div>
   );
@@ -56,7 +77,13 @@ export function VolunteerAvatar({
  * Abre a câmera/galeria e devolve a foto reduzida (máx. 512 px, JPEG).
  * Redesenhar no canvas também remove metadados como a localização GPS.
  */
-export function PhotoPicker({ onPick, children }: { onPick: (photo: Blob, previewUrl: string) => void; children: (open: () => void) => React.ReactNode }) {
+export function PhotoPicker({
+  onPick,
+  children,
+}: {
+  onPick: (photo: Blob, previewUrl: string) => void;
+  children: (open: () => void) => React.ReactNode;
+}) {
   const ref = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -86,7 +113,11 @@ export function PhotoPicker({ onPick, children }: { onPick: (photo: Blob, previe
             c.height = Math.round(img.height * s);
             c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
             URL.revokeObjectURL(url);
-            c.toBlob((blob) => blob && onPick(blob, c.toDataURL("image/jpeg", 0.85)), "image/jpeg", 0.85);
+            c.toBlob(
+              (blob) => blob && onPick(blob, c.toDataURL("image/jpeg", 0.85)),
+              "image/jpeg",
+              0.85,
+            );
           };
           img.onerror = () => {
             URL.revokeObjectURL(url);
@@ -100,7 +131,17 @@ export function PhotoPicker({ onPick, children }: { onPick: (photo: Blob, previe
   );
 }
 
-export function PersonRow({ name, photoUrl, sub, right }: { name: string; photoUrl?: string; sub?: React.ReactNode; right?: React.ReactNode }) {
+export function PersonRow({
+  name,
+  photoUrl,
+  sub,
+  right,
+}: {
+  name: string;
+  photoUrl?: string;
+  sub?: React.ReactNode;
+  right?: React.ReactNode;
+}) {
   return (
     <div className="flex items-center gap-3 py-2">
       <VolunteerAvatar name={name} photoUrl={photoUrl} size="sm" />

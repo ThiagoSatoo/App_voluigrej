@@ -90,14 +90,23 @@ export function AvailabilityControl({
       <div
         role="group"
         aria-label={self ? "Sua disponibilidade neste dia" : `Disponibilidade de ${name} neste dia`}
-        className={cn("grid h-9 grid-cols-2 overflow-hidden rounded-full border bg-card text-xs font-semibold", (busy || st.closed) && "opacity-60", className)}
+        className={cn(
+          "grid h-9 grid-cols-2 overflow-hidden rounded-full border bg-card text-xs font-semibold",
+          (busy || st.closed) && "opacity-60",
+          className,
+        )}
       >
         <button
           type="button"
           disabled={busy || st.closed}
           aria-pressed={!st.off}
           onClick={() => choose(false)}
-          className={cn("flex items-center justify-center gap-1 px-2 transition", !st.off ? "bg-success-soft text-success" : "text-muted-foreground hover:bg-success-soft")}
+          className={cn(
+            "flex items-center justify-center gap-1 px-2 transition",
+            !st.off
+              ? "bg-success-soft text-success"
+              : "text-muted-foreground hover:bg-success-soft",
+          )}
         >
           <Check className="h-3.5 w-3.5 shrink-0" /> Disponível
         </button>
@@ -106,7 +115,12 @@ export function AvailabilityControl({
           disabled={busy || st.closed}
           aria-pressed={st.off}
           onClick={() => choose(true)}
-          className={cn("flex items-center justify-center gap-1 border-l px-2 transition", st.off ? "bg-destructive text-destructive-foreground" : "text-muted-foreground hover:bg-destructive-soft")}
+          className={cn(
+            "flex items-center justify-center gap-1 border-l px-2 transition",
+            st.off
+              ? "bg-destructive text-destructive-foreground"
+              : "text-muted-foreground hover:bg-destructive-soft",
+          )}
         >
           <X className="h-3.5 w-3.5 shrink-0" /> Indisponível
         </button>

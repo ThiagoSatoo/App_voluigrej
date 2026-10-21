@@ -17,7 +17,10 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { title: "Entrar — Sistema de escalas" },
-      { name: "description", content: "Acesse a escala de voluntários: disponibilidade, sorteio, escala e presença." },
+      {
+        name: "description",
+        content: "Acesse a escala de voluntários: disponibilidade, sorteio, escala e presença.",
+      },
       { property: "og:title", content: "Entrar — Sistema de escalas" },
       { property: "og:description", content: "Acesse a escala de voluntários da igreja." },
     ],
@@ -40,7 +43,13 @@ function Login() {
   useEffect(() => {
     if (!hydrated || !state.session) return;
     if (state.session.mustChangePassword) navigate({ to: "/trocar-senha" });
-    else navigate({ to: state.session.role === "admin" || state.session.role === "supervisor" ? "/supervisor" : "/voluntario/escala" });
+    else
+      navigate({
+        to:
+          state.session.role === "admin" || state.session.role === "supervisor"
+            ? "/supervisor"
+            : "/voluntario/escala",
+      });
   }, [hydrated, state.session, navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -64,12 +73,15 @@ function Login() {
           </div>
           <h1 className="font-display text-3xl font-semibold">{APP_TITLE}</h1>
           {org ? <p className="mt-1 text-base font-medium text-foreground/80">{org}</p> : null}
-          <p className="mt-2 text-sm text-muted-foreground">Entre com o acesso fornecido pela coordenação.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Entre com o acesso fornecido pela coordenação.
+          </p>
         </div>
 
         {!supabaseConfigured && (
           <p className="mb-4 rounded-2xl bg-destructive-soft p-4 text-sm text-destructive">
-            O app ainda não está configurado: defina VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.
+            O app ainda não está configurado: defina VITE_SUPABASE_URL e
+            VITE_SUPABASE_PUBLISHABLE_KEY.
           </p>
         )}
 
@@ -89,9 +101,17 @@ function Login() {
               />
             </div>
             <PasswordField value={pass} onChange={setPass} />
-            {error && <p role="alert" className="text-sm font-medium text-destructive">{error}</p>}
-            <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Entrando…" : "Entrar"}</Button>
-            <p className="text-center text-xs text-muted-foreground">No primeiro acesso, a senha é o seu CPF (somente números).</p>
+            {error && (
+              <p role="alert" className="text-sm font-medium text-destructive">
+                {error}
+              </p>
+            )}
+            <Button type="submit" size="lg" className="w-full" disabled={busy}>
+              {busy ? "Entrando…" : "Entrar"}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              No primeiro acesso, a senha é o seu CPF (somente números).
+            </p>
           </form>
         </div>
 
@@ -99,7 +119,8 @@ function Login() {
 
         <p className="mt-6 flex items-start gap-2 px-1 text-xs text-muted-foreground">
           <KeyRound className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Esqueceu a senha? Peça à coordenação para redefini-la. Ela volta a ser o seu CPF e você cria uma nova no próximo acesso.
+          Esqueceu a senha? Peça à coordenação para redefini-la. Ela volta a ser o seu CPF e você
+          cria uma nova no próximo acesso.
         </p>
       </div>
     </div>
@@ -110,7 +131,15 @@ function PasswordField({ value, onChange }: { value: string; onChange: (v: strin
   return (
     <div className="space-y-1.5">
       <Label htmlFor="pass">Senha</Label>
-      <Input id="pass" name="password" autoComplete="current-password" type="password" className="h-12 rounded-xl" value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input
+        id="pass"
+        name="password"
+        autoComplete="current-password"
+        type="password"
+        className="h-12 rounded-xl"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 }

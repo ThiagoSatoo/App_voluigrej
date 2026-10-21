@@ -24,15 +24,37 @@ const toneClass: Record<Tone, string> = {
   destructive: "bg-destructive-soft text-destructive",
 };
 
-export function Pill({ tone = "muted", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
+export function Pill({
+  tone = "muted",
+  children,
+  className,
+}: {
+  tone?: Tone;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap", toneClass[tone], className)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap",
+        toneClass[tone],
+        className,
+      )}
+    >
       {children}
     </span>
   );
 }
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: string;
+  subtitle?: ReactNode;
+  actions?: ReactNode;
+}) {
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
@@ -45,10 +67,26 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 }
 
 export function Panel({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("min-w-0 rounded-2xl border bg-card p-4 shadow-soft sm:p-5", className)}>{children}</div>;
+  return (
+    <div className={cn("min-w-0 rounded-2xl border bg-card p-4 shadow-soft sm:p-5", className)}>
+      {children}
+    </div>
+  );
 }
 
-export function StatCard({ icon: Icon, label, value, hint, tone = "primary" }: { icon: LucideIcon; label: string; value: ReactNode; hint?: string; tone?: Tone }) {
+export function StatCard({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  tone = "primary",
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: ReactNode;
+  hint?: string;
+  tone?: Tone;
+}) {
   return (
     <Panel className="p-4">
       <div className={cn("mb-3 grid h-9 w-9 place-items-center rounded-xl", toneClass[tone])}>
@@ -61,7 +99,17 @@ export function StatCard({ icon: Icon, label, value, hint, tone = "primary" }: {
   );
 }
 
-export function EmptyState({ icon: Icon, title, text, action }: { icon: LucideIcon; title: string; text?: string; action?: ReactNode }) {
+export function EmptyState({
+  icon: Icon,
+  title,
+  text,
+  action,
+}: {
+  icon: LucideIcon;
+  title: string;
+  text?: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center rounded-2xl border border-dashed bg-card/60 px-6 py-10 text-center">
       <div className="mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-accent-soft text-accent-foreground">
@@ -74,9 +122,22 @@ export function EmptyState({ icon: Icon, title, text, action }: { icon: LucideIc
   );
 }
 
-export function Notice({ tone = "warning", icon: Icon, children }: { tone?: Tone; icon?: LucideIcon; children: ReactNode }) {
+export function Notice({
+  tone = "warning",
+  icon: Icon,
+  children,
+}: {
+  tone?: Tone;
+  icon?: LucideIcon;
+  children: ReactNode;
+}) {
   return (
-    <div className={cn("flex items-start gap-3 rounded-2xl px-4 py-3 text-sm font-medium", toneClass[tone])}>
+    <div
+      className={cn(
+        "flex items-start gap-3 rounded-2xl px-4 py-3 text-sm font-medium",
+        toneClass[tone],
+      )}
+    >
       {Icon && <Icon className="mt-0.5 h-4 w-4 shrink-0" />}
       <div>{children}</div>
     </div>
@@ -134,9 +195,16 @@ export function DateBadge({ date, className }: { date: string; className?: strin
   const d = new Date(`${date}T12:00:00`);
   const mon = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
   return (
-    <div className={cn("grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary", className)}>
+    <div
+      className={cn(
+        "grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary-soft text-primary",
+        className,
+      )}
+    >
       <div className="text-center leading-none">
-        <div className="font-display text-xl font-semibold">{String(d.getDate()).padStart(2, "0")}</div>
+        <div className="font-display text-xl font-semibold">
+          {String(d.getDate()).padStart(2, "0")}
+        </div>
         <div className="mt-0.5 text-[10px] font-bold tracking-wider">{mon}</div>
       </div>
     </div>

@@ -4,10 +4,24 @@ import { Plus, Repeat } from "lucide-react";
 import { useStore } from "@/data/store";
 import { repo } from "@/data/repository";
 import { act } from "@/lib/act";
-import { fixedDayStatus, fixedLabel, isFixedMember, nextDates, personName, sortFixed } from "@/data/selectors";
+import {
+  fixedDayStatus,
+  fixedLabel,
+  isFixedMember,
+  nextDates,
+  personName,
+  sortFixed,
+} from "@/data/selectors";
 import { AvailabilityControl } from "@/components/app/AvailabilityControl";
 import type { FixedSchedule } from "@/data/types";
-import { ConfirmDialog, DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
+import {
+  ConfirmDialog,
+  DateBadge,
+  EmptyState,
+  PageHeader,
+  Panel,
+  Pill,
+} from "@/components/app/common";
 import { Button } from "@/components/ui/button";
 import { fmtWeekday, today } from "@/lib/format";
 import type { Tone } from "@/lib/format";
@@ -16,7 +30,10 @@ export const Route = createFileRoute("/voluntario/disponibilidade")({
   head: () => ({
     meta: [
       { title: "Minhas escalas — Área do Voluntário" },
-      { name: "description", content: "Escolha as escalas fixas em que você serve e avise quando não puder." },
+      {
+        name: "description",
+        content: "Escolha as escalas fixas em que você serve e avise quando não puder.",
+      },
     ],
   }),
   component: MyFixedSchedules,
@@ -38,29 +55,60 @@ function MyFixedSchedules() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Minhas escalas" subtitle="Escolha os horários em que você pode servir toda semana. Se não puder em algum dia, toque em “Indisponível”; se mudar de ideia, toque em “Disponível”." />
+      <PageHeader
+        title="Minhas escalas"
+        subtitle="Escolha os horários em que você pode servir toda semana. Se não puder em algum dia, toque em “Indisponível”; se mudar de ideia, toque em “Disponível”."
+      />
 
       <section className="space-y-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Participo</h2>
-        {mine.length === 0 && <EmptyState icon={Repeat} title="Você ainda não participa de nenhuma escala fixa" text="Escolha abaixo os horários em que você pode servir." />}
-        {mine.map((f) => <MyFixedCard key={f.id} fixed={f} meId={meId} />)}
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          Participo
+        </h2>
+        {mine.length === 0 && (
+          <EmptyState
+            icon={Repeat}
+            title="Você ainda não participa de nenhuma escala fixa"
+            text="Escolha abaixo os horários em que você pode servir."
+          />
+        )}
+        {mine.map((f) => (
+          <MyFixedCard key={f.id} fixed={f} meId={meId} />
+        ))}
       </section>
 
       {others.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Outros horários</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Outros horários
+          </h2>
           {others.map((f) => (
             <Panel key={f.id} className="flex items-center gap-3 p-3">
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{fixedLabel(f)}</div>
-                <div className="text-xs text-muted-foreground">{f.note ? `${f.note} · ` : ""}{f.slots} {f.slots === 1 ? "pessoa" : "pessoas"} por vez</div>
+                <div className="text-xs text-muted-foreground">
+                  {f.note ? `${f.note} · ` : ""}
+                  {f.slots} {f.slots === 1 ? "pessoa" : "pessoas"} por vez
+                </div>
               </div>
-              <Button size="sm" onClick={() => act(repo.joinFixed(f.id, meId), "Pronto! Você entra nos próximos sorteios.")}><Plus /> Participar</Button>
+              <Button
+                size="sm"
+                onClick={() =>
+                  act(repo.joinFixed(f.id, meId), "Pronto! Você entra nos próximos sorteios.")
+                }
+              >
+                <Plus /> Participar
+              </Button>
             </Panel>
           ))}
         </section>
       )}
-      {active.length === 0 && <EmptyState icon={Repeat} title="Nenhuma escala fixa criada" text="Quando a coordenação criar os horários, eles aparecem aqui." />}
+      {active.length === 0 && (
+        <EmptyState
+          icon={Repeat}
+          title="Nenhuma escala fixa criada"
+          text="Quando a coordenação criar os horários, eles aparecem aqui."
+        />
+      )}
     </div>
   );
 }
@@ -84,7 +132,9 @@ function MyFixedCard({ fixed: f, meId }: { fixed: FixedSchedule; meId: string })
       <div className="min-w-0">
         <div className="font-display text-lg font-semibold">{fixedLabel(f)}</div>
         <div className="text-xs text-muted-foreground">
-          {f.note ? `${f.note} · ` : ""}{f.slots} {f.slots === 1 ? "pessoa" : "pessoas"} por vez{f.responsavelId ? ` · Responsável: ${personName(state, f.responsavelId) ?? "—"}` : ""}
+          {f.note ? `${f.note} · ` : ""}
+          {f.slots} {f.slots === 1 ? "pessoa" : "pessoas"} por vez
+          {f.responsavelId ? ` · Responsável: ${personName(state, f.responsavelId) ?? "—"}` : ""}
         </div>
       </div>
       <div className="mt-3 divide-y">
@@ -103,7 +153,12 @@ function MyFixedCard({ fixed: f, meId }: { fixed: FixedSchedule; meId: string })
           );
         })}
       </div>
-      <button className="mt-2 text-xs text-muted-foreground underline-offset-2 hover:underline" onClick={() => setLeaving(true)}>Sair desta escala fixa</button>
+      <button
+        className="mt-2 text-xs text-muted-foreground underline-offset-2 hover:underline"
+        onClick={() => setLeaving(true)}
+      >
+        Sair desta escala fixa
+      </button>
 
       <ConfirmDialog
         open={leaving}
@@ -111,7 +166,9 @@ function MyFixedCard({ fixed: f, meId }: { fixed: FixedSchedule; meId: string })
         title="Sair desta escala fixa?"
         description="Você deixa de entrar nos próximos sorteios deste horário. Datas em que você já está escalado continuam valendo; marque “Indisponível” nelas se não puder ir."
         confirmLabel="Sair"
-        onConfirm={() => { act(repo.leaveFixed(f.id, meId), "Você saiu da escala fixa"); }}
+        onConfirm={() => {
+          act(repo.leaveFixed(f.id, meId), "Você saiu da escala fixa");
+        }}
       />
     </Panel>
   );

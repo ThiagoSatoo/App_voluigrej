@@ -124,7 +124,7 @@ Também existem:
 - `bun run dev`: desenvolvimento em http://localhost:8080.
 - `bun run build`: build de produção + `scripts/postbuild.mjs` (CSP e versão do service worker).
 - `bun run test`: testes (Vitest, em `src/test/`).
-- `bun run lint`: ESLint (hoje só tem avisos de formatação).
+- `bun run lint`: ESLint + Prettier (limpo; mantenha assim: rode `bunx eslint . --fix` antes de enviar).
 - `bun audit`: falhas conhecidas em pacotes (hoje limpo).
 - `e2e/`: teste visual no Chromium (360px, 390px e 1280px), com largura, CSP e PWA. Veja `e2e/README.md`.
 
@@ -189,7 +189,7 @@ Também existem:
 ## Antes de entregar uma mudança
 
 1. `bun run build` sem erros.
-2. `bun run test` passando.
+2. `bun run test` passando e `bun run lint` limpo (`bunx eslint . --fix` arruma a formatação).
 3. Se mexeu em tela: rode o teste de `e2e/` (nenhum problema em 360px).
 4. Se mexeu em permissão: teste no banco como admin, coordenador, responsável, voluntário, inativo e anônimo.
 5. Rode os avisos de segurança do Supabase (advisors).

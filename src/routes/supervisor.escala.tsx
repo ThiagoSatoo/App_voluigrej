@@ -1,7 +1,26 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarCheck, CalendarDays, ChevronLeft, ChevronRight, Clock, LayoutGrid, List, Repeat, UserCheck, UserCog } from "lucide-react";
-import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from "date-fns";
+import {
+  CalendarCheck,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  LayoutGrid,
+  List,
+  Repeat,
+  UserCheck,
+  UserCog,
+} from "lucide-react";
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useStore } from "@/data/store";
 import { agendaItems, backupsOf, personName, type AgendaItem } from "@/data/selectors";
@@ -19,7 +38,10 @@ export const Route = createFileRoute("/supervisor/escala")({
   head: () => ({
     meta: [
       { title: "Agenda — Painel da Coordenação" },
-      { name: "description", content: "Todos os horários criados, com escalados, candidatos e vagas livres." },
+      {
+        name: "description",
+        content: "Todos os horários criados, com escalados, candidatos e vagas livres.",
+      },
     ],
   }),
   component: AgendaPage,
@@ -46,52 +68,116 @@ function AgendaPage() {
   const [view, setView] = useState<"calendario" | "lista">("calendario");
   const [kind, setKind] = useState<"todos" | "escala" | "vaga">("todos");
   // Abre já no dia de hoje quando há horários, para marcar a presença mais rápido.
-  const [day, setDay] = useState<string | null>(() => (items.some((i) => i.date === today()) ? today() : null));
+  const [day, setDay] = useState<string | null>(() =>
+    items.some((i) => i.date === today()) ? today() : null,
+  );
   const name = (id: string) => personName(state, id) ?? "—";
 
   const mk = format(month, "yyyy-MM");
-  const monthItems = items.filter((i) => i.date.startsWith(mk) && (kind === "todos" || i.kind === kind));
-  const byDay = monthItems.reduce<Record<string, AgendaItem[]>>((acc, i) => ((acc[i.date] ??= []).push(i), acc), {});
+  const monthItems = items.filter(
+    (i) => i.date.startsWith(mk) && (kind === "todos" || i.kind === kind),
+  );
+  const byDay = monthItems.reduce<Record<string, AgendaItem[]>>(
+    (acc, i) => ((acc[i.date] ??= []).push(i), acc),
+    {},
+  );
   const totals = monthItems.reduce(
     (t, i) => ({ slots: t.slots + i.slots, filled: t.filled + Math.min(i.filled.length, i.slots) }),
     { slots: 0, filled: 0 },
   );
-  const days = eachDayOfInterval({ start: startOfWeek(month, { weekStartsOn: 0 }), end: endOfWeek(endOfMonth(month), { weekStartsOn: 0 }) });
+  const days = eachDayOfInterval({
+    start: startOfWeek(month, { weekStartsOn: 0 }),
+    end: endOfWeek(endOfMonth(month), { weekStartsOn: 0 }),
+  });
   const shown = day ? (byDay[day] ?? []) : monthItems;
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Agenda" subtitle="Todos os horários, com escalados, candidatos e vagas livres. Abra um turno de hoje ou passado para marcar a presença." />
+      <PageHeader
+        title="Agenda"
+        subtitle="Todos os horários, com escalados, candidatos e vagas livres. Abra um turno de hoje ou passado para marcar a presença."
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1">
-          <Button size="icon" variant="outline" onClick={() => { setMonth(addMonths(month, -1)); setDay(null); }} aria-label="Mês anterior"><ChevronLeft /></Button>
-          <span className="min-w-36 text-center font-display text-lg font-semibold capitalize">{format(month, "MMMM yyyy", { locale: ptBR })}</span>
-          <Button size="icon" variant="outline" onClick={() => { setMonth(addMonths(month, 1)); setDay(null); }} aria-label="Próximo mês"><ChevronRight /></Button>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => {
+              setMonth(addMonths(month, -1));
+              setDay(null);
+            }}
+            aria-label="Mês anterior"
+          >
+            <ChevronLeft />
+          </Button>
+          <span className="min-w-36 text-center font-display text-lg font-semibold capitalize">
+            {format(month, "MMMM yyyy", { locale: ptBR })}
+          </span>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => {
+              setMonth(addMonths(month, 1));
+              setDay(null);
+            }}
+            aria-label="Próximo mês"
+          >
+            <ChevronRight />
+          </Button>
         </div>
         <Tabs value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
           <TabsList className="rounded-xl">
-            <TabsTrigger value="todos" className="rounded-lg">Todos</TabsTrigger>
-            <TabsTrigger value="escala" className="rounded-lg">Escalas</TabsTrigger>
-            <TabsTrigger value="vaga" className="rounded-lg">Vagas avulsas</TabsTrigger>
+            <TabsTrigger value="todos" className="rounded-lg">
+              Todos
+            </TabsTrigger>
+            <TabsTrigger value="escala" className="rounded-lg">
+              Escalas
+            </TabsTrigger>
+            <TabsTrigger value="vaga" className="rounded-lg">
+              Vagas avulsas
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="ml-auto flex gap-1">
-          <Button size="sm" variant={view === "calendario" ? "default" : "outline"} onClick={() => setView("calendario")}><LayoutGrid /> Calendário</Button>
-          <Button size="sm" variant={view === "lista" ? "default" : "outline"} onClick={() => { setView("lista"); setDay(null); }}><List /> Lista</Button>
+          <Button
+            size="sm"
+            variant={view === "calendario" ? "default" : "outline"}
+            onClick={() => setView("calendario")}
+          >
+            <LayoutGrid /> Calendário
+          </Button>
+          <Button
+            size="sm"
+            variant={view === "lista" ? "default" : "outline"}
+            onClick={() => {
+              setView("lista");
+              setDay(null);
+            }}
+          >
+            <List /> Lista
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
         <Total label="Horários" value={monthItems.length} />
         <Total label="Vagas preenchidas" value={totals.filled} tone="text-success" />
-        <Total label="Vagas vazias" value={totals.slots - totals.filled} tone={totals.slots - totals.filled > 0 ? "text-destructive" : undefined} />
+        <Total
+          label="Vagas vazias"
+          value={totals.slots - totals.filled}
+          tone={totals.slots - totals.filled > 0 ? "text-destructive" : undefined}
+        />
       </div>
 
       {view === "calendario" && (
         <Panel className="p-2 sm:p-3">
           <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase text-muted-foreground">
-            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => <div key={d} className="py-1">{d}</div>)}
+            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
+              <div key={d} className="py-1">
+                {d}
+              </div>
+            ))}
           </div>
           <div className="grid grid-cols-7 gap-1">
             {days.map((d) => {
@@ -114,11 +200,17 @@ function AgendaPage() {
                     <div key={i.key} className="w-full overflow-hidden">
                       <Pill tone={fillTone(i)} className="w-full justify-between px-1 text-[10px]">
                         <span className="hidden sm:inline">{i.start}</span>
-                        <span>{i.filled.length}/{i.slots}</span>
+                        <span>
+                          {i.filled.length}/{i.slots}
+                        </span>
                       </Pill>
                       {/* Em telas maiores, todos os nomes aparecem direto no calendário. */}
                       <div className="hidden text-[10px] leading-tight text-muted-foreground sm:block">
-                        {i.filled.map((id) => <div key={id} className="truncate">{firstName(name(id))}</div>)}
+                        {i.filled.map((id) => (
+                          <div key={id} className="truncate">
+                            {firstName(name(id))}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -126,7 +218,10 @@ function AgendaPage() {
               );
             })}
           </div>
-          <p className="mt-2 px-1 text-xs text-muted-foreground">Toque em um dia para ver os detalhes. Cores: vermelho = ninguém, laranja = faltam pessoas, azul = mínimo atingido, verde = completo.</p>
+          <p className="mt-2 px-1 text-xs text-muted-foreground">
+            Toque em um dia para ver os detalhes. Cores: vermelho = ninguém, laranja = faltam
+            pessoas, azul = mínimo atingido, verde = completo.
+          </p>
         </Panel>
       )}
 
@@ -134,14 +229,26 @@ function AgendaPage() {
         {day && (
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold">{fmtLong(day)}</h2>
-            <Button size="sm" variant="ghost" onClick={() => setDay(null)}>Ver o mês todo</Button>
+            <Button size="sm" variant="ghost" onClick={() => setDay(null)}>
+              Ver o mês todo
+            </Button>
           </div>
         )}
         {shown.length === 0 ? (
-          <EmptyState icon={CalendarDays} title="Nenhum horário" text={day ? "Não há horários neste dia." : "Crie escalas fixas e sorteie o mês na tela Escalas, ou crie vagas avulsas."} />
+          <EmptyState
+            icon={CalendarDays}
+            title="Nenhum horário"
+            text={
+              day
+                ? "Não há horários neste dia."
+                : "Crie escalas fixas e sorteie o mês na tela Escalas, ou crie vagas avulsas."
+            }
+          />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {shown.map((i) => <AgendaCard key={i.key} item={i} name={name} open={!!day} />)}
+            {shown.map((i) => (
+              <AgendaCard key={i.key} item={i} name={name} open={!!day} />
+            ))}
           </div>
         )}
       </div>
@@ -158,19 +265,32 @@ function Total({ label, value, tone }: { label: string; value: number; tone?: st
   );
 }
 
-function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: string) => string; open: boolean }) {
+function AgendaCard({
+  item: i,
+  name,
+  open,
+}: {
+  item: AgendaItem;
+  name: (id: string) => string;
+  open: boolean;
+}) {
   const { state } = useStore();
   const empty = Math.max(0, i.slots - i.filled.length);
   const backups = i.needId ? backupsOf(state, i.needId) : [];
   const waiting = i.candidates.filter((id) => !i.filled.includes(id) && !backups.includes(id));
   // Presença: só em turno publicado de hoje ou de antes.
-  const canMark = i.kind === "escala" && !!i.published && !!i.periodId && !!i.needId && i.date <= today();
+  const canMark =
+    i.kind === "escala" && !!i.published && !!i.periodId && !!i.needId && i.date <= today();
   const [marking, setMarking] = useState(open);
   // Disponível/Indisponível por pessoa: turnos de escala fixa que ainda não começaram.
-  const fixed = i.fixedId && i.date >= today() ? state.fixedSchedules.find((f) => f.id === i.fixedId) : undefined;
+  const fixed =
+    i.fixedId && i.date >= today()
+      ? state.fixedSchedules.find((f) => f.id === i.fixedId)
+      : undefined;
   const [availOpen, setAvailOpen] = useState(false);
   // Turno publicado e futuro: a troca é manual (alguém ficou indisponível ou a coordenação quer trocar).
-  const canSwap = i.kind === "escala" && !!i.published && !!i.periodId && !!i.needId && i.date > today();
+  const canSwap =
+    i.kind === "escala" && !!i.published && !!i.periodId && !!i.needId && i.date > today();
   const [swapping, setSwapping] = useState(false);
   return (
     <Panel className="p-4">
@@ -178,10 +298,14 @@ function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: stri
         <DateBadge date={i.date} />
         <div className="min-w-0 flex-1">
           <div className="font-semibold">{fmtLong(i.date)}</div>
-          <div className="flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3.5 w-3.5" /> {i.start} – {i.end}</div>
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" /> {i.start} – {i.end}
+          </div>
           {i.note && <div className="truncate text-xs text-muted-foreground">{i.note}</div>}
           <div className="mt-1 flex flex-wrap gap-1.5">
-            <Pill tone={i.kind === "vaga" ? "accent" : "primary"}>{i.kind === "vaga" ? "Vaga avulsa" : i.fixedId ? "Escala fixa" : "Escala mensal"}</Pill>
+            <Pill tone={i.kind === "vaga" ? "accent" : "primary"}>
+              {i.kind === "vaga" ? "Vaga avulsa" : i.fixedId ? "Escala fixa" : "Escala mensal"}
+            </Pill>
             <Pill tone="muted">{statusLabel(i)}</Pill>
           </div>
         </div>
@@ -191,40 +315,81 @@ function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: stri
         <Box label="Vazias" value={empty} tone={empty > 0 ? "text-destructive" : undefined} />
         <Box label={i.kind === "vaga" ? "Candidatos" : "Disponíveis"} value={i.candidates.length} />
       </div>
-      {i.min !== undefined && <p className="mt-1 text-xs text-muted-foreground">Mínimo {i.min} · máximo {i.slots}</p>}
+      {i.min !== undefined && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Mínimo {i.min} · máximo {i.slots}
+        </p>
+      )}
       <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-        <UserCog className="h-3.5 w-3.5" /> Responsável: {i.responsavelId ? name(i.responsavelId) : "equipe"}
+        <UserCog className="h-3.5 w-3.5" /> Responsável:{" "}
+        {i.responsavelId ? name(i.responsavelId) : "equipe"}
       </div>
 
       {canMark && marking ? (
         <div className="mt-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Presença</p>
-            <Button size="sm" variant="ghost" onClick={() => setMarking(false)}>Fechar</Button>
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Presença
+            </p>
+            <Button size="sm" variant="ghost" onClick={() => setMarking(false)}>
+              Fechar
+            </Button>
           </div>
           <ShiftAttendance periodId={i.periodId!} needId={i.needId!} compact />
         </div>
       ) : (
         <>
-          <Section title={i.kind === "vaga" ? (i.status === "confirmada" ? "Selecionados" : "Candidatos ativos") : "Escalados"} ids={i.filled} name={name}
-            empty={i.kind === "escala" ? "Ainda não há escala publicada para este turno." : "Ninguém ainda."} />
-          {canMark && <Button size="sm" className="mt-2 w-full" onClick={() => setMarking(true)}><UserCheck /> Marcar presença</Button>}
+          <Section
+            title={
+              i.kind === "vaga"
+                ? i.status === "confirmada"
+                  ? "Selecionados"
+                  : "Candidatos ativos"
+                : "Escalados"
+            }
+            ids={i.filled}
+            name={name}
+            empty={
+              i.kind === "escala"
+                ? "Ainda não há escala publicada para este turno."
+                : "Ninguém ainda."
+            }
+          />
+          {canMark && (
+            <Button size="sm" className="mt-2 w-full" onClick={() => setMarking(true)}>
+              <UserCheck /> Marcar presença
+            </Button>
+          )}
           {canSwap && !swapping && (
-            <Button size="sm" variant={empty > 0 ? "default" : "outline"} className="mt-2 w-full" onClick={() => setSwapping(true)}>
+            <Button
+              size="sm"
+              variant={empty > 0 ? "default" : "outline"}
+              className="mt-2 w-full"
+              onClick={() => setSwapping(true)}
+            >
               <Repeat /> {empty > 0 ? "Escolher substituto" : "Substituir alguém"}
             </Button>
           )}
           {canSwap && swapping && (
             <div className="mt-3">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Substituir</p>
-                <Button size="sm" variant="ghost" onClick={() => setSwapping(false)}>Fechar</Button>
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Substituir
+                </p>
+                <Button size="sm" variant="ghost" onClick={() => setSwapping(false)}>
+                  Fechar
+                </Button>
               </div>
               <ShiftAttendance periodId={i.periodId!} needId={i.needId!} compact substituteOnly />
             </div>
           )}
           {fixed && (
-            <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => setAvailOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2 w-full"
+              onClick={() => setAvailOpen(true)}
+            >
               <CalendarCheck /> Disponibilidade (quem pode e quem não pode)
             </Button>
           )}
@@ -234,24 +399,53 @@ function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: stri
         <Section title="Backup (pode entrar no lugar de alguém)" ids={backups} name={name} />
       )}
       {waiting.length > 0 && (
-        <Section title={i.kind === "vaga" ? "Outros candidatos" : "Disponíveis (não escalados)"} ids={waiting} name={name} muted />
+        <Section
+          title={i.kind === "vaga" ? "Outros candidatos" : "Disponíveis (não escalados)"}
+          ids={waiting}
+          name={name}
+          muted
+        />
       )}
-      {fixed && availOpen && <FixedAvailabilityDialog fixed={fixed} dates={[i.date]} onClose={() => setAvailOpen(false)} />}
+      {fixed && availOpen && (
+        <FixedAvailabilityDialog
+          fixed={fixed}
+          dates={[i.date]}
+          onClose={() => setAvailOpen(false)}
+        />
+      )}
     </Panel>
   );
 }
 
-function Section({ title, ids, name, empty, muted }: { title: string; ids: string[]; name: (id: string) => string; empty?: string; muted?: boolean }) {
+function Section({
+  title,
+  ids,
+  name,
+  empty,
+  muted,
+}: {
+  title: string;
+  ids: string[];
+  name: (id: string) => string;
+  empty?: string;
+  muted?: boolean;
+}) {
   const { state } = useStore();
   return (
     <div className={cn("mt-3", muted && "opacity-80")}>
-      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{title} ({ids.length})</p>
+      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        {title} ({ids.length})
+      </p>
       {ids.length === 0 ? (
         <p className="py-1 text-sm text-muted-foreground">{empty}</p>
       ) : (
         <div className="divide-y">
           {ids.map((id) => (
-            <PersonRow key={id} name={name(id)} photoUrl={state.volunteers.find((v) => v.id === id)?.photoUrl} />
+            <PersonRow
+              key={id}
+              name={name(id)}
+              photoUrl={state.volunteers.find((v) => v.id === id)?.photoUrl}
+            />
           ))}
         </div>
       )}
