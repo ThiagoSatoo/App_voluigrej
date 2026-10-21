@@ -12,8 +12,9 @@
 | 07 | Equipe unificada e troca de perfil; nome da instituição na tela de login. |
 | 08 | Abas do menu por perfil (tela Admin). |
 | 09–11 | Escalas fixas: tabelas, sorteio por escala fixa e mês (`draw_fixed`), publicação por escala, botão Indisponível (`mark_unavailable`). |
-| 12–16 | Botão Disponível (`mark_available`), Fixar (`set_fixed_pins`), backup e substituto automático. Versão em vigor de cada função: `draw_fixed` (13), `mark_available` e `substitute` (15), `mark_unavailable` (16). |
+| 12–16 | Botão Disponível (`mark_available`), Fixar (`set_fixed_pins`), backup e substituto automático. Versão em vigor: `draw_fixed` (13) e `mark_available` (15); `mark_unavailable` e `substitute` foram refeitas na 18. |
 | 17 | Índices de desempenho. |
+| 18 | Troca manual: `mark_unavailable` tira a pessoa do turno e só sugere o substituto no aviso; `substitute` avisa quem entrou. Versão em vigor das duas. |
 
 ## Criar a conta do administrador
 

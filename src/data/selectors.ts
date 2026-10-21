@@ -92,6 +92,8 @@ export interface ScheduleItem {
   /** Pessoas que o usuário logado pode ver neste turno (o banco já filtrou pela política). */
   people: string[];
   responsavelId?: string;
+  /** Turno de escala fixa: data e escala para os botões Disponível/Indisponível. */
+  fixedId?: string;
 }
 
 /** Todos os turnos publicados e vagas confirmadas que o usuário consegue ver. */
@@ -114,6 +116,7 @@ export function scheduleItems(s: AppState): ScheduleItem[] {
           slots: n.slots,
           people: slot.picks.map((p) => p.volunteerId).filter((id) => !out_.includes(id)),
           responsavelId: n.responsavelId,
+          fixedId: n.fixedId,
         });
       });
     });
@@ -357,4 +360,28 @@ export function backupsOf(s: AppState, needId: string): string[] {
         s.fixedReleased.some((e) => e.fixedId === n.fixedId && e.volunteerId === id && e.date === n.date) &&
         !isUnavailable(s, n.fixedId!, id, n.date),
     );
+}
+
+/** Situação de uma pessoa numa data de uma escala fixa (para os botões Disponível/Indisponível). */
+export function fixedDayStatus(s: AppState, fixedId: string, volunteerId: string, date: string) {
+  const need = fixedNeed(s, fixedId, date)?.n;
+  const slot = need ? publishedSlotFor(s, need.id)?.slot : undefined;
+  const removed = !!need && s.attendance.some((a) => a.needId === need.id && a.volunteerId === volunteerId && (a.status === "cancelado" || a.status === "substituido"));
+  return {
+    need,
+    /** Já houve sorteio publicado para esta data. */
+    published: !!slot,
+    /** Está escalado (publicado) e não saiu. */
+    picked: !!slot?.picks.some((p) => p.volunteerId === volunteerId) && !removed,
+    off: isUnavailable(s, fixedId, volunteerId, date),
+    backup: !!need && backupsOf(s, need.id).includes(volunteerId),
+    /** O turno já começou ou passou: não dá mais para mudar. */
+    closed: !!need && `${need.date}T${need.start}` <= nowLocal(),
+  };
+}
+
+/** Data e hora de agora em São Paulo, no formato "YYYY-MM-DDTHH:mm". */
+function nowLocal() {
+  const parts = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
+  return parts.replace(" ", "T");
 }

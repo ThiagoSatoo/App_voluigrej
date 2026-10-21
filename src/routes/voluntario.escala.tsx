@@ -7,6 +7,7 @@ import { useStore } from "@/data/store";
 import { myScheduleItems, personName, scheduleItems, type ScheduleItem } from "@/data/selectors";
 import { DateBadge, EmptyState, Notice, Panel, Pill } from "@/components/app/common";
 import { VolunteerAvatar } from "@/components/app/VolunteerAvatar";
+import { AvailabilityControl } from "@/components/app/AvailabilityControl";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { firstName, fmtLong, fmtWeekday, today, toDate } from "@/lib/format";
@@ -198,6 +199,12 @@ function ShiftCard({ item: a, meId, showPeople }: { item: ScheduleItem; meId: st
       {showPeople && others.length > 0 && <People ids={others} title={isMine ? "Com você" : "Escalados"} />}
       {a.responsavelId && a.responsavelId !== meId && (
         <p className="mt-2 text-xs text-muted-foreground">Responsável: {personName(state, a.responsavelId) ?? "—"}</p>
+      )}
+      {isMine && a.fixedId && a.date >= today() && (
+        <div className="mt-3 border-t pt-3">
+          <AvailabilityControl fixedId={a.fixedId} date={a.date} />
+          <p className="mt-1.5 text-[11px] text-muted-foreground">Não pode ir? Marque “Indisponível”. Mudou de ideia? Use a aba Escalas.</p>
+        </div>
       )}
     </Panel>
   );

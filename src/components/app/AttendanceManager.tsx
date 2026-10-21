@@ -56,7 +56,7 @@ export function AttendanceManager({ scope = "all" }: { scope?: "all" | "mine" })
  * Usado na Agenda da coordenação, na lista acima e na aba Turnos do responsável.
  * Quem pode gravar é decidido pelo banco (RLS e a função substitute).
  */
-export function ShiftAttendance({ periodId, needId, compact }: { periodId: string; needId: string; compact?: boolean }) {
+export function ShiftAttendance({ periodId, needId, compact, substituteOnly }: { periodId: string; needId: string; compact?: boolean; substituteOnly?: boolean }) {
   const { state } = useStore();
   const [subOut, setSubOut] = useState<string | null>(null);
   const slot = publishedSlotFor(state, needId)?.slot;
@@ -72,6 +72,7 @@ export function ShiftAttendance({ periodId, needId, compact }: { periodId: strin
         const v = state.volunteers.find((x) => x.id === pk.volunteerId);
         if (!v) return null;
         const rec = attendanceFor(state, needId, v.id);
+        if (substituteOnly && rec?.status === "substituido") return null;
         return (
           <div key={v.id} className={cn("min-w-0", compact ? "rounded-xl border p-3" : "rounded-2xl border bg-card p-4 shadow-soft")}>
             <div className="flex items-center gap-3">
@@ -86,12 +87,21 @@ export function ShiftAttendance({ periodId, needId, compact }: { periodId: strin
               </div>
               {rec && <Pill tone={ATTENDANCE_STATUS[rec.status].tone}>{ATTENDANCE_STATUS[rec.status].label}</Pill>}
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <Button size="sm" variant={rec?.status === "presente" ? "success" : "outline"} onClick={() => mark(v.id, "presente")}>Presente</Button>
-              <Button size="sm" variant={rec?.status === "faltou" ? "destructive" : "outline"} onClick={() => mark(v.id, "faltou")}>Faltou</Button>
-              <Button size="sm" variant="outline" className="px-2" onClick={() => setSubOut(v.id)}><Repeat /> Substituir</Button>
-            </div>
-            <button className="mt-2 text-xs text-muted-foreground underline-offset-2 hover:underline" onClick={() => mark(v.id, "cancelado")}>Marcar como cancelado</button>
+            {substituteOnly ? (
+              // Turno futuro: só a troca (a presença é marcada no dia).
+              <Button size="sm" variant={rec?.status === "cancelado" ? "default" : "outline"} className="mt-3 w-full" onClick={() => setSubOut(v.id)}>
+                <Repeat /> {rec?.status === "cancelado" ? "Escolher substituto" : "Substituir"}
+              </Button>
+            ) : (
+              <>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <Button size="sm" variant={rec?.status === "presente" ? "success" : "outline"} onClick={() => mark(v.id, "presente")}>Presente</Button>
+                  <Button size="sm" variant={rec?.status === "faltou" ? "destructive" : "outline"} onClick={() => mark(v.id, "faltou")}>Faltou</Button>
+                  <Button size="sm" variant="outline" className="px-2" onClick={() => setSubOut(v.id)}><Repeat /> Substituir</Button>
+                </div>
+                <button className="mt-2 text-xs text-muted-foreground underline-offset-2 hover:underline" onClick={() => mark(v.id, "cancelado")}>Marcar como cancelado</button>
+              </>
+            )}
           </div>
         );
       })}
@@ -142,9 +152,13 @@ function SubstituteDialog({ outId, periodId, needId, assigned, onClose }: { outI
         </p>
         <div className="max-h-64 divide-y overflow-y-auto">
           {eligible.length === 0 && <p className="py-3 text-sm text-muted-foreground">Nenhum voluntário elegível disponível.</p>}
-          {eligible.map((v) => (
+          {eligible.map((v, idx) => (
             <button key={v.id} onClick={() => setInId(v.id)} className={cn("w-full rounded-xl px-2 text-left", inId === v.id && "bg-primary-soft")}>
-              <PersonRow name={v.name} photoUrl={v.photoUrl} sub={`${backups.includes(v.id) ? "Backup · " : ""}${v.recent3m} recentes · ${v.last12m} em 12 meses`} />
+              <PersonRow
+                name={v.name}
+                photoUrl={v.photoUrl}
+                sub={`${idx === 0 ? "Sugerido · " : ""}${backups.includes(v.id) ? "Backup · " : ""}${v.recent3m} recentes · ${v.last12m} em 12 meses`}
+              />
             </button>
           ))}
         </div>

@@ -14,19 +14,19 @@ atualize as seções afetadas (principalmente "Situação atual" e "O que falta"
 ## Situação atual
 
 - No ar na Vercel, publicado a partir da branch `main` (cada push na `main` publica).
-- Banco no Supabase com 17 migrations aplicadas (`supabase/migrations/`, iguais às do banco).
+- Banco no Supabase com 18 migrations aplicadas (`supabase/migrations/`, iguais às do banco).
 - Edge Function `manage-users` publicada (contas e senhas).
 - Admin já entrou, tem CPF e senha definitiva. Nome da instituição: "Paróquia Nossa Senhora do Monte Claro". Já existe 1 escala fixa criada.
 - Ainda **não houve o teste real** com voluntários usando no celular.
 
 ## O que falta
 
-Feito pelo dono, no painel do Supabase (não dá pelo código):
-- Authentication: desligar "Allow new users to sign up" e, em Email, desligar "Confirm email".
-- Authentication → Passwords: mínimo de 8 caracteres, **sem** exigir letras (a senha inicial é o CPF, só números). Ligar "Leaked password protection", se o plano permitir.
-- Apagar as contas de teste `52601815906@cpf…` (coordenador) e `08301661305@cpf…` (voluntário). Já estão desativadas.
-- Desligar a extensão `pg_net` (Database → Extensions). Foi usada só em testes.
-- Conferir a política "Quem vê a escala" (está `mesmo_turno`).
+Com o dono:
+- **Teste real**: cadastrar alguns voluntários e usar no celular (escolher escalas, sortear, publicar, Indisponível/Disponível, presença).
+- Desligar a extensão `pg_net` no painel do Supabase: Database → Extensions → buscar "pg_net" → desligar. Foi usada só em testes.
+- Conferir a política "Quem vê a escala" (está `mesmo_turno`); o dono vai retornar.
+- Já feito pelo dono: configurações de Authentication (cadastro público e confirmação de e-mail desligados, regra de senha). O aviso do Supabase ainda mostra "Leaked password protection" desligada; esse recurso só existe nos planos pagos.
+- As contas de teste `52601815906@cpf…` e `08301661305@cpf…` ficam por decisão do dono (testes). Estão desativadas.
 
 Feito por quem programa:
 - Definir o segredo `ALLOWED_ORIGINS` da Edge Function com o endereço da Vercel (hoje aceita qualquer origem; o risco é baixo porque exige login e confere o perfil).
@@ -35,7 +35,6 @@ Feito por quem programa:
 Opcionais (precisam de aprovação do dono, porque a ferramenta do Supabase pede confirmação para `drop`/`delete`):
 - Separar as regras de escrita de `periods` e `needs`: trocar `periods_write`/`needs_write` ("for all") por políticas `*_insert`, `*_update` e `*_delete` com `is_staff()`. Ganho pequeno de desempenho.
 - Limpeza mensal do histórico do agendador (`cron.job_run_details`, cerca de 50 mil linhas por ano).
-- Formatação: o ESLint aponta cerca de 900 avisos só de Prettier. Rodar `bunx eslint . --fix` numa mudança separada (mexe em quase todos os arquivos).
 
 Ideias já sugeridas ao dono, ainda não pedidas:
 - Política "mesmo dia" (o voluntário vê todos que servem no mesmo dia).
@@ -65,14 +64,15 @@ Ideias já sugeridas ao dono, ainda não pedidas:
    - depois os participantes pela prioridade: quem serviu menos nos últimos 3 meses, depois em 12 meses (contando o que já saiu no mês), e desempate aleatório. Assim todos se igualam; a tela avisa se a diferença passar de 3 dias;
    - nunca escala quem marcou Indisponível na data nem a mesma pessoa duas vezes no mesmo dia.
 5. O sorteio sai como **rascunho**. A coordenação confere ("Ver datas") e **publica**. Só então os voluntários veem. Cada escala fixa tem a própria publicação (`draws.fixed_id`).
-6. **Indisponível** (`mark_unavailable`): o voluntário avisa que não pode numa data.
+6. **Indisponível** (`mark_unavailable`): a pessoa não pode numa data. O voluntário marca para si; a coordenação (ou o responsável da escala) pode marcar por ele.
    - Não estava escalado: só registra e avisa a coordenação/responsável.
-   - Estava escalado e o turno fica incompleto: o banco escolhe o substituto sozinho (primeiro quem está de backup, depois os participantes pela prioridade). Sem ninguém livre, vira alerta vermelho no Dashboard.
+   - Estava escalado: sai do turno. **A troca é sempre manual** (decisão do dono): se o turno fica incompleto, coordenação e responsável recebem um alerta (vermelho no Dashboard) com a **sugestão** do próximo (backup primeiro, depois a prioridade do sorteio), mas ninguém é colocado sozinho. A coordenação escolhe em Agenda → Substituir (o sugerido aparece primeiro, marcado "Sugerido"), e quem entra recebe um aviso.
 7. **Disponível** (`mark_available`): desfaz o Indisponível sem apagar nada (`fixed_exceptions.cancelled_at`).
    - Não estava escalado: só volta a contar para o sorteio, sem aviso.
-   - Saiu e o turno ficou sem substituto: volta direto para a escala (presença `escalado`).
+   - Saiu e ninguém ocupou o lugar: volta direto para a escala (presença `escalado`).
    - Saiu e o lugar foi ocupado: fica de **backup** daquele turno. A coordenação pode trocar alguém pelo backup em "Substituir" (backups aparecem primeiro).
-8. **Presença**: na Agenda da coordenação, ao abrir um turno publicado de hoje ou passado, cada escalado tem Presente / Faltou / Substituir. O responsável faz o mesmo na aba Turnos, só nos turnos dele.
+   - **Onde fica o botão** (`AvailabilityControl`, botão de dois lados: Disponível em verde claro | Indisponível em vermelho forte; o lado preenchido é a situação atual): para o voluntário, na aba Escalas (cada data) e na Agenda (nos turnos dele); para a coordenação, na janela "Disponibilidade" (`FixedAvailabilityDialog`), aberta pelo cartão da escala fixa (aba Escalas, qualquer data futura) ou pelo turno na Agenda.
+8. **Presença e trocas na Agenda da coordenação**: turno publicado de hoje ou passado → Presente / Faltou / Substituir para cada escalado. Turno publicado futuro → "Substituir alguém" (ou "Escolher substituto", em destaque, quando falta gente). O responsável marca presença na aba Turnos, só nos turnos dele.
 
 Também existem:
 - **Vagas avulsas**: dias extras com mínimo e máximo de pessoas. O voluntário se candidata e o responsável/coordenação confirma quem vai.
@@ -132,9 +132,9 @@ Também existem:
 
 - `src/routes/`: telas, roteamento por arquivo (`supervisor.*` = coordenação, `voluntario.*` = voluntário). `__root.tsx` é a casca do app.
   - `supervisor.periodos.tsx`: aba Escalas (escalas fixas, participantes, Fixar, sorteio, publicar) + vagas avulsas.
-  - `supervisor.escala.tsx`: Agenda da coordenação (calendário, presença, backup).
+  - `supervisor.escala.tsx`: Agenda da coordenação (calendário, presença, substituição, backup, Disponibilidade).
   - `voluntario.escala.tsx`: Agenda do voluntário. `voluntario.disponibilidade.tsx`: Escalas do voluntário.
-- `src/components/app/`: componentes do app (`AttendanceManager` = presença e substituição, `OpportunityManager` = vagas, avatar, avisos, senha etc.).
+- `src/components/app/`: componentes do app (`AttendanceManager` = presença e substituição, `AvailabilityControl` = botão Disponível/Indisponível, `FixedAvailabilityDialog` = disponibilidade por pessoa para a coordenação, `OpportunityManager` = vagas, avatar, avisos, senha etc.).
 - `src/data/types.ts`: tipos. `loader.ts`: lê do Supabase o que o usuário pode ver. `store.ts`: cache em memória e `useStore()`.
 - `src/data/repository.ts`: **todas** as alterações de dados passam por aqui (`repo`).
 - `src/data/selectors.ts`: consultas sobre os dados (agenda, escala, backup, datas das escalas fixas).

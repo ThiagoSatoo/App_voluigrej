@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, CalendarPlus, ChevronLeft, ChevronRight, Pencil, Pin, Repeat, Search, Send, Shuffle, Trash2, Users } from "lucide-react";
+import { AlertTriangle, CalendarCheck, CalendarPlus, ChevronLeft, ChevronRight, Pencil, Pin, Repeat, Search, Send, Shuffle, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { addMonths, format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,6 +21,7 @@ import {
 } from "@/data/selectors";
 import type { FixedSchedule } from "@/data/types";
 import { ResponsavelSelect } from "@/components/app/ResponsavelSelect";
+import { FixedAvailabilityDialog } from "@/components/app/FixedAvailabilityDialog";
 import { OpportunityManager } from "@/components/app/OpportunityManager";
 import { TimeRangeFields } from "@/components/app/TimeRangeFields";
 import { ConfirmDialog, DateBadge, EmptyState, Notice, PageHeader, Panel, Pill } from "@/components/app/common";
@@ -102,6 +103,7 @@ function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; ye
   const { state } = useStore();
   const [members, setMembers] = useState(false);
   const [pinning, setPinning] = useState(false);
+  const [availability, setAvailability] = useState(false);
   const [open, setOpen] = useState(false);
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -166,6 +168,7 @@ function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; ye
       <div className="mt-2 grid grid-cols-2 gap-2">
         <Button size="sm" variant="outline" onClick={() => setMembers(true)}><Users /> Participantes</Button>
         <Button size="sm" variant="outline" disabled={!f.active || dates.length === 0} onClick={() => setPinning(true)}><Pin /> Fixar</Button>
+        <Button size="sm" variant="outline" disabled={!f.active} onClick={() => setAvailability(true)}><CalendarCheck /> Disponibilidade</Button>
         <Button size="sm" variant={shown ? "outline" : "default"} disabled={!f.active || busy || memberIds.length === 0} onClick={draw}>
           <Shuffle /> {busy ? "Sorteando…" : shown ? "Sortear de novo" : "Sortear"}
         </Button>
@@ -217,6 +220,7 @@ function FixedCard({ fixed: f, year, month, onEdit }: { fixed: FixedSchedule; ye
       )}
 
       <MembersDialog fixed={f} open={members} onClose={() => setMembers(false)} />
+      {availability && <FixedAvailabilityDialog fixed={f} dates={nextDates(f, today(), 8)} onClose={() => setAvailability(false)} />}
       {pinning && <PinDialog fixed={f} year={year} month={month} dates={dates} onClose={() => setPinning(false)} />}
       {draft && (
         <ConfirmDialog

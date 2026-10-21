@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emptyState } from "@/data/store";
-import { agendaItems, backupsOf, fixedCandidates, fixedLabel, nextDates, publishedSlotFor } from "@/data/selectors";
+import { agendaItems, backupsOf, fixedCandidates, fixedDayStatus, fixedLabel, nextDates, publishedSlotFor } from "@/data/selectors";
 import type { AppState, Volunteer } from "@/data/types";
 
 const vol = (id: string, status: Volunteer["status"] = "ativo"): Volunteer => ({
@@ -69,5 +69,13 @@ describe("Escalas fixas", () => {
     const s = base();
     s.attendance = [];
     expect(backupsOf(s, "n1")).toEqual([]);
+  });
+
+  it("situação do dia para os botões Disponível/Indisponível", () => {
+    const s = base();
+    expect(fixedDayStatus(s, "f1", "c", "2099-03-01")).toMatchObject({ picked: true, off: false, backup: false, published: true });
+    expect(fixedDayStatus(s, "f1", "a", "2099-03-01")).toMatchObject({ picked: false, off: false, backup: true });
+    expect(fixedDayStatus(s, "f1", "d", "2099-03-01")).toMatchObject({ picked: false, off: true });
+    expect(fixedDayStatus(s, "f1", "b", "2099-03-08")).toMatchObject({ published: false, closed: false });
   });
 });

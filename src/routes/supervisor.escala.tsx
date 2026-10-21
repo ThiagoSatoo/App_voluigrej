@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, LayoutGrid, List, UserCheck, UserCog } from "lucide-react";
+import { CalendarCheck, CalendarDays, ChevronLeft, ChevronRight, Clock, LayoutGrid, List, Repeat, UserCheck, UserCog } from "lucide-react";
 import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useStore } from "@/data/store";
@@ -8,6 +8,7 @@ import { agendaItems, backupsOf, personName, type AgendaItem } from "@/data/sele
 import { DateBadge, EmptyState, PageHeader, Panel, Pill } from "@/components/app/common";
 import { PersonRow } from "@/components/app/VolunteerAvatar";
 import { ShiftAttendance } from "@/components/app/AttendanceManager";
+import { FixedAvailabilityDialog } from "@/components/app/FixedAvailabilityDialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PERIOD_STATUS, firstName, fmtLong, today, toDate } from "@/lib/format";
@@ -165,6 +166,12 @@ function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: stri
   // Presença: só em turno publicado de hoje ou de antes.
   const canMark = i.kind === "escala" && !!i.published && !!i.periodId && !!i.needId && i.date <= today();
   const [marking, setMarking] = useState(open);
+  // Disponível/Indisponível por pessoa: turnos de escala fixa que ainda não começaram.
+  const fixed = i.fixedId && i.date >= today() ? state.fixedSchedules.find((f) => f.id === i.fixedId) : undefined;
+  const [availOpen, setAvailOpen] = useState(false);
+  // Turno publicado e futuro: a troca é manual (alguém ficou indisponível ou a coordenação quer trocar).
+  const canSwap = i.kind === "escala" && !!i.published && !!i.periodId && !!i.needId && i.date > today();
+  const [swapping, setSwapping] = useState(false);
   return (
     <Panel className="p-4">
       <div className="flex items-start gap-3">
@@ -202,6 +209,25 @@ function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: stri
           <Section title={i.kind === "vaga" ? (i.status === "confirmada" ? "Selecionados" : "Candidatos ativos") : "Escalados"} ids={i.filled} name={name}
             empty={i.kind === "escala" ? "Ainda não há escala publicada para este turno." : "Ninguém ainda."} />
           {canMark && <Button size="sm" className="mt-2 w-full" onClick={() => setMarking(true)}><UserCheck /> Marcar presença</Button>}
+          {canSwap && !swapping && (
+            <Button size="sm" variant={empty > 0 ? "default" : "outline"} className="mt-2 w-full" onClick={() => setSwapping(true)}>
+              <Repeat /> {empty > 0 ? "Escolher substituto" : "Substituir alguém"}
+            </Button>
+          )}
+          {canSwap && swapping && (
+            <div className="mt-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Substituir</p>
+                <Button size="sm" variant="ghost" onClick={() => setSwapping(false)}>Fechar</Button>
+              </div>
+              <ShiftAttendance periodId={i.periodId!} needId={i.needId!} compact substituteOnly />
+            </div>
+          )}
+          {fixed && (
+            <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => setAvailOpen(true)}>
+              <CalendarCheck /> Disponibilidade (quem pode e quem não pode)
+            </Button>
+          )}
         </>
       )}
       {backups.length > 0 && (
@@ -210,6 +236,7 @@ function AgendaCard({ item: i, name, open }: { item: AgendaItem; name: (id: stri
       {waiting.length > 0 && (
         <Section title={i.kind === "vaga" ? "Outros candidatos" : "Disponíveis (não escalados)"} ids={waiting} name={name} muted />
       )}
+      {fixed && availOpen && <FixedAvailabilityDialog fixed={fixed} dates={[i.date]} onClose={() => setAvailOpen(false)} />}
     </Panel>
   );
 }
