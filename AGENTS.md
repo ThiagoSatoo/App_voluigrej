@@ -23,7 +23,6 @@ atualize as seções afetadas (principalmente "Situação atual" e "O que falta"
 
 Com o dono:
 - **Teste real**: cadastrar alguns voluntários e usar no celular (escolher escalas, sortear, publicar, Indisponível/Disponível, presença).
-- Desligar a extensão `pg_net` no painel do Supabase: Database → Extensions → buscar "pg_net" → desligar. Foi usada só em testes.
 - Conferir a política "Quem vê a escala" (está `mesmo_turno`); o dono vai retornar.
 - Já feito pelo dono: configurações de Authentication (cadastro público e confirmação de e-mail desligados, regra de senha). O aviso do Supabase ainda mostra "Leaked password protection" desligada; esse recurso só existe nos planos pagos.
 - As contas de teste `52601815906@cpf…` e `08301661305@cpf…` ficam por decisão do dono (testes). Estão desativadas.
@@ -183,7 +182,7 @@ Também existem:
 - No banco, o nome das migrations é o mesmo do arquivo, mas a numeração (versão) é a data em que foram aplicadas; isso é normal.
 - **Testar permissões no banco**: dentro de um bloco `do $$ ... $$`, crie pessoas de teste, use `set local role authenticated` e `set_config('request.jwt.claims', '{"sub": "<id>"}', true)` para agir como cada perfil e termine com `raise exception` mostrando o resultado. Assim tudo é desfeito e nada fica gravado.
 - O ambiente de nuvem das IAs pode não acessar `*.supabase.co` por HTTP; use as ferramentas do MCP.
-- Depois de mudar o banco, rode os avisos de segurança e de desempenho do Supabase. Avisos esperados: funções `security definer` liberadas para `authenticated` (de propósito; cada uma confere o perfil), `public_app_name` para `anon`, `pg_net` e "leaked password protection" (pendências do dono).
+- Depois de mudar o banco, rode os avisos de segurança e de desempenho do Supabase. Avisos esperados: funções `security definer` liberadas para `authenticated` (de propósito; cada uma confere o perfil), `public_app_name` para `anon` e "leaked password protection" (só nos planos pagos).
 
 ## Antes de entregar uma mudança
 
