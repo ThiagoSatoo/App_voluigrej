@@ -1,11 +1,23 @@
 # Supabase
 
-- `migrations/`: estrutura do banco, regras de acesso (RLS), funções seguras e avisos agendados.
+- `migrations/`: estrutura do banco, regras de acesso (RLS), funções seguras e avisos agendados. Aplicadas em ordem; nunca edite uma já aplicada, crie uma nova.
 - `functions/manage-users/`: Edge Function que cria contas, redefine senhas, ativa/desativa acessos e troca CPF.
+
+## Mapa das migrations
+
+| Arquivos | O que fazem |
+| --- | --- |
+| 01–05 | Base: tabelas, regras de acesso, funções seguras (candidaturas, substituição, sorteio mensal antigo), avisos agendados e fotos. |
+| 06 | Política "Quem vê a escala". |
+| 07 | Equipe unificada e troca de perfil; nome da instituição na tela de login. |
+| 08 | Abas do menu por perfil (tela Admin). |
+| 09–11 | Escalas fixas: tabelas, sorteio por escala fixa e mês (`draw_fixed`), publicação por escala, botão Indisponível (`mark_unavailable`). |
+| 12–16 | Botão Disponível (`mark_available`), Fixar (`set_fixed_pins`), backup e substituto automático. Versão em vigor de cada função: `draw_fixed` (13), `mark_available` e `substitute` (15), `mark_unavailable` (16). |
+| 17 | Índices de desempenho. |
 
 ## Criar a conta do administrador
 
-As demais contas são criadas pelo próprio app, na página **Equipe** (o perfil Supervisor só o admin pode criar). Só a primeira, a do administrador, precisa ser criada à mão. No painel do Supabase, abra o **SQL Editor** e rode o trecho abaixo, trocando o nome e o CPF (só números). A senha inicial é o próprio CPF.
+As demais contas são criadas pelo próprio app, na página **Equipe** (coordenadores, só o admin pode criar). Só a primeira, a do administrador, precisa ser criada à mão. No painel do Supabase, abra o **SQL Editor** e rode o trecho abaixo, trocando o nome e o CPF (só números). A senha inicial é o próprio CPF.
 
 ```sql
 do $$

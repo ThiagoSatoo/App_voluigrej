@@ -1,227 +1,197 @@
 # AGENTS.md — leia primeiro
 
-Este é o único arquivo de contexto do projeto, para pessoas e IAs.
-Ele diz o objetivo, onde paramos, o que falta e as regras.
-Leia tudo antes de mudar qualquer coisa.
-Ao terminar uma tarefa, atualize as seções "Onde paramos" e "O que falta".
+Este é o arquivo de contexto do projeto, para pessoas e IAs. Leia tudo antes de mudar qualquer coisa.
+Ele descreve o app **como ele é hoje**, o que falta e as regras. Não é um diário: ao terminar uma tarefa,
+atualize as seções afetadas (principalmente "Situação atual" e "O que falta") em vez de acrescentar histórico.
 
 ## Objetivo
 
-- Colocar no ar um app seguro para os voluntários instalarem no celular.
-- O link da Vercel será enviado a todos os voluntários.
-- Por isso, a segurança não pode depender de esconder o endereço: ela fica no banco.
-- O app precisa ser simples de usar no celular, por pessoas sem conhecimento técnico.
+- App seguro, instalável no celular (PWA), para organizar a escala de cerca de 60 voluntários de uma paróquia.
+- O link da Vercel vai para todos os voluntários. Por isso a segurança **não** depende de esconder o endereço: ela fica no banco.
+- Usado por pessoas sem conhecimento técnico, quase sempre no celular.
+- O dono do projeto é o **admin**. Ele não é programador: responda em português, com frases simples, e explique o que ele precisa testar.
 
-## Onde paramos (20/10/2026)
+## Situação atual
 
-- O app está pronto e publicado na Vercel a partir da branch `main`.
-- O banco no Supabase está criado, com as regras de acesso aplicadas (migrations 1 a 17).
-- A Edge Function `manage-users` está publicada.
-- O login é por CPF para todos; a senha inicial é o CPF.
-- As telas passaram no teste do `e2e/` (em 360px, 390px e 1280px).
-- O PWA funciona: instala, abre sem internet, se atualiza sozinho e não guarda dados pessoais no aparelho.
-- **Falta o teste real**: entrar no app publicado, criar usuários e usar no celular.
-- 20/10: a primeira tela do voluntário e do responsável é a **Agenda** (a aba "Início" saiu; `/voluntario` redireciona).
-- 20/10: a aba "Presença" saiu do menu do supervisor; a presença é marcada na **Agenda** (`/supervisor/presenca` redireciona). O responsável continua marcando em "Turnos".
-- 20/10: **atualização automática** (`src/lib/pwa.ts`). Ao abrir o app ou voltar para ele, o app confere se há versão nova e recarrega sozinho. Com o app em uso, mostra "Nova versão do app disponível" e atualiza na próxima vez que a pessoa voltar. Tela de versão antiga que sumiu do servidor também recarrega. Os dados já se atualizavam ao voltar ao app e a cada 2 minutos.
-- 20/10: revisão de saúde. O app carrega só os sorteios em uso (publicados e rascunhos). Saíram 30 componentes visuais, 27 pacotes e o código do fluxo mensal antigo que não eram usados. Pacotes com falhas conhecidas foram atualizados (`bun audit` limpo). Testes novos em `src/test/fixed.test.ts`. Índices novos (migration 17).
-- 20/10: "Supervisor" virou **Coordenador** nas telas (no banco o perfil continua `supervisor`). Botões **Disponível** (voluntário) e **Fixar** (coordenação) nas escalas fixas.
-- 20/10: **Escalas fixas** no ar. "Períodos e necessidades", "Disponibilidades" e "Sorteio" viraram a aba **Escalas** (escalas fixas + vagas avulsas). O voluntário escolhe suas escalas fixas e usa o botão "Indisponível" na aba **Escalas**. Os períodos e sorteios antigos continuam no banco e aparecem na Agenda, no Histórico e nos Relatórios.
+- No ar na Vercel, publicado a partir da branch `main` (cada push na `main` publica).
+- Banco no Supabase com 17 migrations aplicadas (`supabase/migrations/`, iguais às do banco).
+- Edge Function `manage-users` publicada (contas e senhas).
+- Admin já entrou, tem CPF e senha definitiva. Nome da instituição: "Paróquia Nossa Senhora do Monte Claro". Já existe 1 escala fixa criada.
+- Ainda **não houve o teste real** com voluntários usando no celular.
 
 ## O que falta
 
-Feito pelo dono, no painel do Supabase (não dá para fazer pelo código):
-- Authentication: desligar "Allow new users to sign up".
-- Authentication → Email: desligar "Confirm email".
-- Authentication → Passwords: mínimo de 8 caracteres, **sem** exigir letras (a senha inicial é o CPF, só números).
-- Ligar "Leaked password protection", se o plano permitir.
-- Apagar as contas de teste `52601815906@cpf…` e `08301661305@cpf…` (já estão bloqueadas).
-- Desligar a extensão `pg_net` (Database → Extensions); ela foi usada só para testes.
+Feito pelo dono, no painel do Supabase (não dá pelo código):
+- Authentication: desligar "Allow new users to sign up" e, em Email, desligar "Confirm email".
+- Authentication → Passwords: mínimo de 8 caracteres, **sem** exigir letras (a senha inicial é o CPF, só números). Ligar "Leaked password protection", se o plano permitir.
+- Apagar as contas de teste `52601815906@cpf…` (coordenador) e `08301661305@cpf…` (voluntário). Já estão desativadas.
+- Desligar a extensão `pg_net` (Database → Extensions). Foi usada só em testes.
+- Conferir a política "Quem vê a escala" (está `mesmo_turno`).
 
-Feito pelo dono, no app:
-- Entrar com o usuário `admin` (senha provisória combinada com o dono) e criar a senha definitiva.
-- Em Configurações → Minha conta, cadastrar o CPF do admin.
-- Em Configurações, trocar o "Nome da instituição" (hoje está "Minha Igreja").
-- Escolher a política "Quem vê a escala" (hoje está `mesmo_turno`).
-
-Feito por quem programa, depois que houver o link da Vercel:
-- Definir o segredo `ALLOWED_ORIGINS` da Edge Function com o endereço da Vercel.
+Feito por quem programa:
+- Definir o segredo `ALLOWED_ORIGINS` da Edge Function com o endereço da Vercel (hoje aceita qualquer origem; o risco é baixo porque exige login e confere o perfil).
 - Corrigir o que aparecer no teste real.
 
+Opcionais (precisam de aprovação do dono, porque a ferramenta do Supabase pede confirmação para `drop`/`delete`):
+- Separar as regras de escrita de `periods` e `needs`: trocar `periods_write`/`needs_write` ("for all") por políticas `*_insert`, `*_update` e `*_delete` com `is_staff()`. Ganho pequeno de desempenho.
+- Limpeza mensal do histórico do agendador (`cron.job_run_details`, cerca de 50 mil linhas por ano).
+- Formatação: o ESLint aponta cerca de 900 avisos só de Prettier. Rodar `bunx eslint . --fix` numa mudança separada (mexe em quase todos os arquivos).
 
-Respostas do dono sobre escalas fixas (20/10), já aplicadas:
-- Sorteio por escala fixa, um mês por vez, em rascunho e depois publicado.
-- Prioridade igual à antiga (3 meses, 12 meses, aleatório), contando o que já foi sorteado no mês: assim todos se igualam. A tela avisa se a diferença passar de 3 dias.
-- Várias escalas fixas no mesmo dia, quantas a coordenação quiser.
-- "Indisponível" numa data avisa a coordenação; se a pessoa estava escalada e o turno fica incompleto, o sistema escolhe o substituto sozinho entre os participantes. Sem ninguém livre, a coordenação recebe um alerta.
-- O voluntário entra direto numa escala fixa (sem aprovação).
-- Pedido de 20/10 (2ª parte), já aplicado: no lugar de "Desfazer", o botão **Disponível**; o botão **Fixar** da coordenação; "Supervisor" passa a se chamar **Coordenador** nas telas.
-
-Melhorias opcionais que pedem aprovação do dono no Supabase (a ferramenta pede confirmação por apagar algo):
-- Separar as regras de escrita de `periods` e `needs` (hoje `*_write` "for all" também conta como regra de leitura; ganho pequeno de desempenho). SQL pronto: `drop policy periods_write/needs_write` + políticas `*_insert`, `*_update`, `*_delete` com `is_staff()`.
-- Limpeza mensal do histórico do agendador (`cron.job_run_details`), que cresce cerca de 50 mil linhas por ano.
-
-Manutenção sem urgência:
-- O ESLint aponta cerca de 900 problemas só de formatação (Prettier). Rodar `bunx eslint . --fix` numa mudança separada (mexe em quase todos os arquivos).
-
-Ideias sugeridas ao dono, ainda não pedidas:
-- Política "mesmo dia" (vê todos que servem no mesmo dia).
-- Mostrar só o primeiro nome e esconder fotos dos colegas.
+Ideias já sugeridas ao dono, ainda não pedidas:
+- Política "mesmo dia" (o voluntário vê todos que servem no mesmo dia).
+- Mostrar só o primeiro nome e esconder as fotos dos colegas.
 - Esconder escalas passadas dos colegas.
 - Fazer a tela Admin também tirar a permissão no banco, além de esconder a aba.
 
-## O que é
+## Perfis
 
-- Nome: **Sistema de escalas**.
-- É um PWA (app web instalável) para organizar a escala de voluntários de uma instituição (uma igreja).
-- O foco é o celular. Também funciona no computador.
-- São cerca de 60 voluntários.
-- O idioma da interface é português do Brasil.
-- O fuso horário é America/Sao_Paulo.
-- O dono do projeto é o admin. Ele não é programador: explique em linguagem simples e em português.
+| No banco | Nas telas | O que faz |
+| --- | --- | --- |
+| `admin` | Administrador | Tudo. Único que gerencia coordenadores e a tela **Admin**. Não pode ser desativado nem rebaixado. |
+| `supervisor` | **Coordenador** | Cuida do dia a dia: equipe (voluntários e responsáveis), escalas, sorteio, presença, vagas, relatórios. Não mexe em coordenadores nem no admin. |
+| `responsavel` | Responsável | Voluntário que cuida de turnos/vagas atribuídos a ele: vê a equipe e os contatos só desses turnos, marca presença, substitui e gerencia essas vagas. |
+| `voluntario` | Voluntário | Vê a própria escala, escolhe escalas fixas, marca Indisponível/Disponível, candidata-se a vagas, altera foto e senha. |
 
-## O que o app faz
+- "Coordenação" ou "staff" = `admin` + `supervisor` (`is_staff()` no banco).
+- O nome técnico continua `supervisor` no banco, nas rotas (`/supervisor/...`) e no código. Só o texto das telas diz "Coordenador" (`friendlyError` também troca a palavra nas mensagens do servidor).
 
-- A coordenação cria **escalas fixas**: horários que se repetem toda semana (dia da semana, início, fim, quantidade de pessoas, responsável opcional, ativa/desativada). Pode haver várias no mesmo dia.
-- Cada voluntário escolhe de quais escalas fixas **participa** (aba Escalas). A coordenação também inscreve ou remove pessoas.
-- O **sorteio** é feito por escala fixa, um mês por vez (`draw_fixed`): o banco cria os turnos do mês (`needs.fixed_id`) e escolhe quem vai. Prioridade: quem serviu menos nos últimos 3 meses, depois 12 meses (contando o que já foi sorteado no mês), desempate aleatório. A tela avisa se a diferença entre participantes passar de 3 dias.
-- O sorteio nunca escala quem marcou "Indisponível" na data nem a mesma pessoa duas vezes no mesmo dia.
-- A escala sai como rascunho e só os voluntários a veem depois de **publicada** (por escala fixa).
-- **Fixar** (`set_fixed_pins`, só a coordenação): escolhe 1 ou mais pessoas para uma escala fixa, numa data ou no mês inteiro. Elas entram garantidas no sorteio (se não marcaram "Indisponível"); o resto das vagas é sorteado. Vale só para o mês: todo mês a coordenação fixa de novo. Ao salvar, o sorteio do mês é refeito em rascunho.
-- **Disponível** (`mark_available`): desfaz o "Indisponível" sem apagar nada (a exceção ganha `cancelled_at`).
-  - Não estava escalado: só volta a contar para o sorteio (sem aviso).
-  - Saiu e o turno ficou sem substituto: volta direto para a escala (presença `escalado`).
-  - Saiu e o lugar foi ocupado (ou o turno seguiu completo): fica de **backup** daquele turno. A coordenação recebe aviso e pode trocar alguém pelo backup em "Substituir" (backups aparecem primeiro). Se outra pessoa ficar indisponível, o substituto automático chama o backup antes dos demais.
-- **Indisponível** (`mark_unavailable`): o voluntário avisa que não pode numa data. A coordenação/responsável recebe aviso. Se ele já estava escalado e o turno fica incompleto, o banco escolhe o substituto sozinho entre os participantes; sem ninguém livre, vira alerta no Dashboard.
-- Antes das escalas fixas existiam períodos mensais com disponibilidade por turno; esses dados antigos continuam no banco e aparecem no histórico.
-- A coordenação registra **presença**, falta e **substituição**.
-- Existem **vagas avulsas**: dias extras com mínimo e máximo de pessoas. O voluntário se candidata e o responsável confirma quem vai.
-- **Avisos automáticos**: candidatura, cancelamento, mínimo/máximo atingido, abaixo do mínimo a 24h, aniversários e lembretes de 24h, 12h, 6h, 3h e 1h antes.
-- **Agenda**: calendário do mês com todos os horários, escalados, candidatos e vagas vazias. Ao abrir um turno publicado de hoje ou passado, a coordenação marca Presente / Faltou / Substituir ali mesmo.
-- **Agenda do voluntário** (primeira tela): próximo turno e aviso de disponibilidade pendente no topo, calendário do mês e lista dos próximos turnos, conforme a política "Quem vê a escala".
+## Como funciona a escala (fluxo principal)
+
+1. **Escalas fixas** (aba Escalas da coordenação): horários que se repetem toda semana, com dia da semana, início, fim, quantidade de pessoas, responsável opcional e ativa/desativada. Pode haver várias no mesmo dia.
+2. **Participantes**: cada voluntário escolhe de quais escalas fixas participa (aba Escalas dele), sem aprovação. A coordenação também inscreve ou remove pessoas.
+3. **Fixar** (só a coordenação, `set_fixed_pins`): escolhe pessoas que entram garantidas numa escala fixa, **numa data** ou **no mês inteiro**. Vale só para aquele mês; todo mês a coordenação fixa de novo. Ao salvar, o sorteio do mês é refeito.
+4. **Sorteio** (`draw_fixed`): por escala fixa, **um mês por vez**. O banco cria os turnos do mês (`needs.fixed_id`) e escolhe quem vai:
+   - primeiro os fixados;
+   - depois os participantes pela prioridade: quem serviu menos nos últimos 3 meses, depois em 12 meses (contando o que já saiu no mês), e desempate aleatório. Assim todos se igualam; a tela avisa se a diferença passar de 3 dias;
+   - nunca escala quem marcou Indisponível na data nem a mesma pessoa duas vezes no mesmo dia.
+5. O sorteio sai como **rascunho**. A coordenação confere ("Ver datas") e **publica**. Só então os voluntários veem. Cada escala fixa tem a própria publicação (`draws.fixed_id`).
+6. **Indisponível** (`mark_unavailable`): o voluntário avisa que não pode numa data.
+   - Não estava escalado: só registra e avisa a coordenação/responsável.
+   - Estava escalado e o turno fica incompleto: o banco escolhe o substituto sozinho (primeiro quem está de backup, depois os participantes pela prioridade). Sem ninguém livre, vira alerta vermelho no Dashboard.
+7. **Disponível** (`mark_available`): desfaz o Indisponível sem apagar nada (`fixed_exceptions.cancelled_at`).
+   - Não estava escalado: só volta a contar para o sorteio, sem aviso.
+   - Saiu e o turno ficou sem substituto: volta direto para a escala (presença `escalado`).
+   - Saiu e o lugar foi ocupado: fica de **backup** daquele turno. A coordenação pode trocar alguém pelo backup em "Substituir" (backups aparecem primeiro).
+8. **Presença**: na Agenda da coordenação, ao abrir um turno publicado de hoje ou passado, cada escalado tem Presente / Faltou / Substituir. O responsável faz o mesmo na aba Turnos, só nos turnos dele.
+
+Também existem:
+- **Vagas avulsas**: dias extras com mínimo e máximo de pessoas. O voluntário se candidata e o responsável/coordenação confirma quem vai.
+- **Avisos automáticos**: candidatura, cancelamento, mínimo/máximo atingido, abaixo do mínimo a 24h, aniversários, indisponibilidade, substituto escalado e lembretes 24h/12h/6h/3h/1h antes. O `pg_cron` roda `run_scheduled_notifications()` a cada 10 minutos.
 - **Relatórios** em PDF e histórico.
+- **Dados antigos**: antes das escalas fixas havia períodos mensais com disponibilidade por turno (`availabilities`, `save_draw`). Esses dados continuam no banco e aparecem na Agenda, no Histórico e nos Relatórios, mas não há mais telas para criá-los.
 
-## Perfis (papéis)
+## Telas (abas do menu)
 
-- `admin`: dono do app. Faz tudo. É o único que gerencia supervisores e a tela **Admin**. Não pode ser desativado nem rebaixado.
-- `supervisor` (nas telas: **Coordenador**): cuida do app no dia a dia. Gerencia voluntários e responsáveis. Não mexe em coordenadores nem no admin.
-- `responsavel`: é um voluntário que cuida de turnos e vagas atribuídos a ele. Vê a equipe e os contatos só desses turnos. Marca presença, substitui e gerencia as vagas desses turnos.
-- `voluntario`: vê a própria escala, informa disponibilidade, candidata-se a vagas e altera a foto e a senha.
-- "Coordenação" ou "staff" = `admin` + `supervisor`.
-
-## Login e contas
-
-- O login de todos é o **CPF, só com números**.
-- A **senha inicial é o próprio CPF**.
-- No primeiro acesso, a troca de senha é obrigatória (`must_change_password`).
-- A senha pessoal precisa ter 8 ou mais caracteres, com letras e números, e não pode ser o CPF.
-- O Supabase Auth exige um e-mail, então o login vira `<cpf>@cpf.escala-voluntarios.app`. Esse e-mail é interno e nunca recebe mensagens.
-- Contas antigas da coordenação usam `<usuario>@equipe.escala-voluntarios.app` até cadastrar o CPF.
-- Não há cadastro público. Só a coordenação cria contas, na página **Equipe**.
-- A coordenação altera a senha de alguém de duas formas: voltar para o CPF ou digitar uma senha nova.
-- O app valida os dígitos verificadores do CPF (`validCpf` em `src/lib/format.ts`).
-
-## Tecnologia
-
-- Frontend: React 19, TanStack Router/Start em **modo SPA**, Tailwind CSS 4, componentes Radix (shadcn/ui em `src/components/ui`).
-- Backend: **Supabase** (Postgres + RLS, Auth, Storage, Edge Functions, pg_cron).
-- Hospedagem: **Vercel**, com site estático em `dist/client`.
-- Gerenciador de pacotes: **Bun** (`bun.lock`). O Node 22+ também funciona.
-- Projeto Supabase: `fkjbtxsjqdgywfgccqzo` (us-east-1).
-- Repositório: `ThiagoSatoo/App_voluigrej`. A branch publicada é `main`.
-- O projeto **não** usa mais o Lovable. Não reintroduza `@lovable.dev/*`.
-
-## Comandos
-
-- `bun install`: instala as dependências.
-- `bun run dev`: modo de desenvolvimento em http://localhost:8080.
-- `bun run build`: build de produção + `scripts/postbuild.mjs` (CSP e versão do service worker).
-- `bun run test`: testes (Vitest, em `src/test/`).
-- `bun run lint`: ESLint.
-- `e2e/`: teste visual no Chromium (360px, 390px e 1280px), com largura, CSP e PWA. Veja `e2e/README.md`.
-
-## Estrutura de pastas
-
-- `src/routes/`: telas. O roteamento é por arquivo (`supervisor.*` = coordenação, `voluntario.*` = voluntário).
-- `src/routes/__root.tsx`: casca do app, `<head>` e registro do service worker.
-- `src/components/app/`: componentes do app (avatar, notificações, presença, vagas, senha etc.).
-- `src/data/types.ts`: tipos de domínio.
-- `src/data/loader.ts`: lê do Supabase tudo o que o usuário logado pode ver.
-- `src/data/store.ts`: cache em memória e `useStore()`.
-- `src/data/repository.ts`: **todas** as alterações de dados passam por aqui (`repo`).
-- `src/data/selectors.ts`: consultas sobre os dados carregados (agenda, equipe, escala etc.).
-- `src/lib/nav.ts`: abas do menu de cada área e as regras de ligar/desligar.
-- `src/lib/supabase.ts`: cliente Supabase e mensagens de erro em português.
-- `src/lib/format.ts`: datas, `today()`, `APP_TITLE`, CPF.
-- `supabase/migrations/`: estrutura do banco, em ordem. **É a fonte da verdade das permissões.**
-- `supabase/functions/manage-users/`: Edge Function de contas (criar, senha, ativar/desativar, trocar CPF).
-- `public/`: `manifest.webmanifest`, `sw.js` e ícones.
-- `vercel.json`: build, rotas da SPA e cabeçalhos de segurança.
-
-## Regras que não podem ser quebradas
-
-- **Toda permissão fica no banco** (RLS + funções `security definer`). Esconder algo na tela não é segurança.
-- Toda regra nova de acesso precisa de uma migration nova em `supabase/migrations/`.
-- Nunca use a chave `service_role` / secret no frontend nem em variáveis `VITE_*`.
-- Ações sensíveis passam por RPC: sorteio (`draw_fixed`, `publish_draw`; `save_draw` é o mensal antigo), indisponibilidade (`mark_unavailable`, `mark_available`), fixar (`set_fixed_pins`), `substitute`, candidaturas (`apply_to_opportunity`, `cancel_application`, `confirm_selection`) e perfil (`set_user_role`).
-- Contas e senhas só pela Edge Function `manage-users`.
-- O usuário anônimo não lê nada. A única exceção é `public_app_name()`, que devolve só o nome da instituição.
-- Funções novas: rode `revoke execute ... from public, anon` e dê `grant` só a `authenticated`, quando for o caso.
-- As telas só alteram dados por `repo`. Não chame `supabase.from(...).insert/update/delete` direto nas telas.
-- Dados pessoais (CPF, telefone, e-mail, nascimento) ficam em `volunteer_details`, separados de `profiles`.
-- As fotos ficam no bucket privado `avatars` (até 2 MB, JPG/PNG/WEBP) e aparecem por link assinado de 1 hora.
-- O service worker (`public/sw.js`) só guarda arquivos do app. **Nunca** guarde no cache respostas do Supabase.
-- A CSP é gerada no build com hashes dos scripts embutidos. Se o build falhar por CSP, corrija a causa. Não use `unsafe-inline` em `script-src`.
-- Não reescreva o histórico do Git já publicado (sem force push, amend ou rebase de commits enviados).
+- **Coordenação** (`/supervisor/...`): Dashboard, Equipe, Escalas (escalas fixas + vagas avulsas), Agenda (calendário + presença), Histórico, Relatórios, Configurações, Admin (só o admin).
+- **Voluntário e responsável** (`/voluntario/...`): Agenda (primeira tela: próximo turno, calendário e próximos turnos), Escalas (escalas fixas, Indisponível/Disponível), Vagas, Turnos (só responsável), Histórico, Perfil.
+- Endereços antigos que redirecionam: `/voluntario` → Agenda; `/supervisor/presenca` → Agenda; `/supervisor/sorteio` e `/supervisor/disponibilidades` → Escalas. Nas rotas, a aba Escalas da coordenação é `/supervisor/periodos` e a do voluntário é `/voluntario/disponibilidade` (nomes antigos mantidos para não quebrar links).
+- Abas sempre ligadas: Dashboard, Agenda e Configurações (coordenação); Agenda e Perfil (voluntário). As demais o admin liga/desliga na tela Admin (`nav_config`). Desligar uma aba esconde e bloqueia a tela, mas **não** muda a permissão no banco.
 
 ## Configurações que a coordenação controla
 
-- **Nome da instituição** (`app_settings.church_name`): aparece abaixo de "Sistema de escalas".
+- **Nome da instituição** (`app_settings.church_name`): aparece abaixo de "Sistema de escalas" e na tela de login.
 - **Quem vê a escala** (`app_settings.visibility_policy`), aplicada pelo banco:
   - `privado`: o voluntário vê só a própria escala.
   - `mesmo_turno`: vê quem está no mesmo turno ou vaga que ele.
   - `escala_geral`: vê todos os turnos com os nomes. Não existe tela de agenda individual de outra pessoa.
-- **Abas do menu** (`nav_config`, tela Admin, só o admin altera): liga e desliga abas do supervisor e do voluntário.
-  - Aba desligada some do menu e fica bloqueada pela URL.
-  - Abas do supervisor: Dashboard, Equipe, Escalas (escalas fixas e vagas avulsas), Agenda, Histórico, Relatórios, Configurações e Admin (só o admin).
-  - Abas do voluntário: Agenda (primeira), Escalas (escalas fixas e "Indisponível"), Vagas, Turnos (só responsável), Histórico e Perfil.
-  - Endereços antigos que redirecionam: `/voluntario` → Agenda; `/supervisor/presenca` → Agenda; `/supervisor/sorteio` e `/supervisor/disponibilidades` → Escalas.
-  - Abas travadas (sempre ligadas): Dashboard, Agenda e Configurações do supervisor; Agenda e Perfil do voluntário.
-  - Desligar uma aba não remove a permissão no banco.
 
-## Banco de dados (tabelas principais)
+## Login e contas
 
-- `profiles`: pessoa, papel, status e foto. O `id` é o mesmo de `auth.users`.
-- `volunteer_details`: CPF, telefone, e-mail e nascimento.
-- `fixed_schedules`, `fixed_members` e `fixed_exceptions`: escalas fixas, participantes e "não posso nesse dia" (`cancelled_at` = desfeito pelo botão Disponível).
-- `fixed_pins`: pessoas fixadas pela coordenação numa data de uma escala fixa.
-- Backup não tem tabela própria: é quem tem presença `cancelado`/`substituido` no turno e um "Indisponível" desfeito (`cancelled_at`) na data (`_is_backup` no banco, `backupsOf` no app).
-- `periods` e `needs`: mês e turnos. `needs.responsavel_id` é quem cuida do turno; `needs.fixed_id` liga o turno à escala fixa.
-- `availabilities`: disponibilidade por turno (fluxo mensal antigo; só histórico).
-- `draws`, `draw_slots` e `draw_picks`: sorteios e escalados. `draws.fixed_id`: um sorteio por escala fixa e mês.
-- `attendance` e `substitutions`: presença e trocas.
-- `opportunities`, `applications` e `day_availability`: vagas avulsas e candidaturas.
-- `notifications` e `notif_prefs`: avisos e preferências.
-- `app_settings`: nome da instituição e política de visibilidade.
-- `nav_config`: abas do menu por perfil.
-- Agendamento: `pg_cron` roda `run_scheduled_notifications()` a cada 10 minutos.
+- Login de todos: **CPF, só números**. Senha inicial: **o próprio CPF**. No primeiro acesso a troca é obrigatória (`must_change_password`).
+- Senha pessoal: 8 ou mais caracteres, com letras e números, e não pode ser o CPF.
+- O Supabase Auth exige e-mail, então o login vira `<cpf>@cpf.escala-voluntarios.app` (interno, nunca recebe mensagens).
+- Não há cadastro público. Só a coordenação cria contas, na página **Equipe**. Ela também pode voltar a senha para o CPF ou definir uma nova.
+- O app valida os dígitos do CPF (`validCpf` em `src/lib/format.ts`).
+- A primeira conta (admin) é criada à mão, pelo SQL em `supabase/README.md`.
+
+## Atualização do app no celular
+
+- `public/sw.js` + `src/lib/pwa.ts`. Ao abrir o app ou voltar para ele, o app confere se há versão nova e recarrega sozinho. Com o app em uso, mostra "Nova versão do app disponível" e atualiza na próxima volta. Se uma tela antiga sumiu do servidor, recarrega na versão nova.
+- Os dados recarregam ao abrir, ao voltar para o app e a cada 2 minutos (`src/data/store.ts`). Depois de cada ação, `repo` recarrega tudo.
+- O app lê só os sorteios em uso (publicados e rascunhos); versões trocadas não são carregadas (`src/data/loader.ts`).
+
+## Tecnologia
+
+- Frontend: React 19, TanStack Router/Start em **modo SPA**, Tailwind CSS 4, componentes Radix (shadcn/ui em `src/components/ui`; só os que o app usa).
+- Backend: **Supabase** (Postgres + RLS, Auth, Storage, Edge Functions, pg_cron). Projeto `fkjbtxsjqdgywfgccqzo` (us-east-1).
+- Hospedagem: **Vercel**, site estático em `dist/client`.
+- Pacotes: **Bun** (`bun.lock`; a Vercel usa `bun install --frozen-lockfile`).
+- Repositório: `ThiagoSatoo/App_voluigrej`. Não usa mais o Lovable: não reintroduza `@lovable.dev/*`.
+
+## Comandos
+
+- `bun install`: instala as dependências.
+- `bun run dev`: desenvolvimento em http://localhost:8080.
+- `bun run build`: build de produção + `scripts/postbuild.mjs` (CSP e versão do service worker).
+- `bun run test`: testes (Vitest, em `src/test/`).
+- `bun run lint`: ESLint (hoje só tem avisos de formatação).
+- `bun audit`: falhas conhecidas em pacotes (hoje limpo).
+- `e2e/`: teste visual no Chromium (360px, 390px e 1280px), com largura, CSP e PWA. Veja `e2e/README.md`.
+
+## Estrutura de pastas
+
+- `src/routes/`: telas, roteamento por arquivo (`supervisor.*` = coordenação, `voluntario.*` = voluntário). `__root.tsx` é a casca do app.
+  - `supervisor.periodos.tsx`: aba Escalas (escalas fixas, participantes, Fixar, sorteio, publicar) + vagas avulsas.
+  - `supervisor.escala.tsx`: Agenda da coordenação (calendário, presença, backup).
+  - `voluntario.escala.tsx`: Agenda do voluntário. `voluntario.disponibilidade.tsx`: Escalas do voluntário.
+- `src/components/app/`: componentes do app (`AttendanceManager` = presença e substituição, `OpportunityManager` = vagas, avatar, avisos, senha etc.).
+- `src/data/types.ts`: tipos. `loader.ts`: lê do Supabase o que o usuário pode ver. `store.ts`: cache em memória e `useStore()`.
+- `src/data/repository.ts`: **todas** as alterações de dados passam por aqui (`repo`).
+- `src/data/selectors.ts`: consultas sobre os dados (agenda, escala, backup, datas das escalas fixas).
+- `src/lib/`: `nav.ts` (abas), `supabase.ts` (cliente e `friendlyError`), `format.ts` (datas, `today()`, CPF), `time.ts`, `pwa.ts`, `report.ts` (PDF).
+- `supabase/migrations/`: estrutura do banco em ordem. **É a fonte da verdade das permissões.** O mapa do que cada uma faz (e onde está a versão em vigor de cada função) fica em `supabase/README.md`.
+- `supabase/functions/manage-users/`: Edge Function de contas.
+- `public/`: `manifest.webmanifest`, `sw.js` e ícones. `vercel.json`: build, rotas da SPA e cabeçalhos de segurança.
+
+## Banco de dados
+
+- `profiles` (pessoa, papel, status, foto; `id` = `auth.users`) e `volunteer_details` (CPF, telefone, e-mail, nascimento).
+- `fixed_schedules` (escalas fixas), `fixed_members` (participantes), `fixed_exceptions` ("não posso nesse dia"; `cancelled_at` = desfeito), `fixed_pins` (fixados por data).
+- `periods` e `needs`: mês e turnos. `needs.fixed_id` liga o turno à escala fixa; `needs.responsavel_id` é quem cuida.
+- `draws`, `draw_slots`, `draw_picks`: sorteios e escalados (status `rascunho`, `publicado` ou `substituido`).
+- `attendance` (presença: `presente`, `faltou`, `cancelado`, `substituido`, `escalado`) e `substitutions` (trocas).
+- **Backup** não tem tabela: é quem tem presença `cancelado`/`substituido` no turno e um Indisponível desfeito na data (`_is_backup` no banco, `backupsOf` no app).
+- `opportunities`, `applications`, `day_availability`: vagas avulsas e candidaturas.
+- `notifications`, `notif_prefs`: avisos e preferências. `app_settings`: nome da instituição e política de visibilidade. `nav_config`: abas do menu.
+- `availabilities`: disponibilidade do fluxo mensal antigo (só histórico).
+- Funções que o app chama (RPC): `draw_fixed`, `publish_draw`, `set_fixed_pins`, `mark_unavailable`, `mark_available`, `substitute`, `apply_to_opportunity`, `cancel_application`, `confirm_selection`, `set_user_role`, `staff_update_volunteer`, `password_changed`, `scale_counts`, `opportunity_counts`, `public_app_name`. As que começam com `_` são internas e não podem ser chamadas pelo app.
+
+## Regras que não podem ser quebradas
+
+- **Toda permissão fica no banco** (RLS + funções `security definer` que conferem o perfil). Esconder algo na tela não é segurança.
+- Toda regra nova de acesso precisa de uma **migration nova** em `supabase/migrations/` (nunca edite uma migration já aplicada).
+- Nunca use a chave `service_role`/secret no frontend nem em variáveis `VITE_*`.
+- Ações sensíveis passam por RPC (lista acima). Contas e senhas só pela Edge Function `manage-users`.
+- O usuário anônimo não lê nada. A única exceção é `public_app_name()` (só o nome da instituição).
+- Funções novas: `revoke execute ... from public, anon` e `grant` só a `authenticated` quando o app precisar chamar.
+- As telas só alteram dados por `repo`. Não chame `supabase.from(...).insert/update/delete` direto nas telas.
+- Dados pessoais ficam em `volunteer_details`, separados de `profiles`.
+- Fotos no bucket privado `avatars` (até 2 MB, JPG/PNG/WEBP), exibidas por link assinado de 1 hora.
+- O service worker só guarda arquivos do app. **Nunca** guarde no cache respostas do Supabase.
+- A CSP é gerada no build com hashes dos scripts. Se o build falhar por CSP, corrija a causa. Nada de `unsafe-inline` em `script-src`.
+- Não reescreva o histórico do Git publicado (sem force push, amend ou rebase de commits enviados).
 
 ## Convenções de código
 
-- TypeScript estrito.
-- Textos da interface em português, curtos e claros.
-- Comentários em português.
-- Horários no formato `HH:mm`. Os turnos guardam início e fim explícitos. Use `src/lib/time.ts`.
-- Datas como `YYYY-MM-DD`. Use `today()` (fuso de São Paulo), nunca `new Date()` puro para o "hoje".
-- Erros do servidor viram mensagens amigáveis em `friendlyError()`.
-- Ações na tela usam `act(repo.algo(), "mensagem de sucesso")`.
-- Layout mobile-first. Nenhuma tela pode ter rolagem lateral em 360px (confira com `e2e/`).
-- Cartões em grade precisam de `min-w-0` (o `Panel` já tem).
+- TypeScript estrito. Textos da interface e comentários em português, curtos e claros.
+- Horários `HH:mm` (use `src/lib/time.ts`). Datas `YYYY-MM-DD`; use `today()` (fuso de São Paulo), nunca `new Date()` puro para o "hoje".
+- Erros do servidor viram mensagens amigáveis em `friendlyError()`. Ações na tela usam `act(repo.algo(), "mensagem de sucesso")`.
+- Layout mobile-first. Nenhuma tela pode ter rolagem lateral em 360px. Cartões em grade precisam de `min-w-0` (o `Panel` já tem).
+
+## Dicas para quem for mexer (armadilhas conhecidas)
+
+- **Migrations pelo MCP do Supabase**: chamadas grandes (mais de ~12 KB de SQL) estouram o tempo; divida em migrations menores. SQL com `delete` ou `drop` pede confirmação do dono e, sem resposta, expira: não contorne, deixe anotado em "O que falta".
+- No banco, o nome das migrations é o mesmo do arquivo, mas a numeração (versão) é a data em que foram aplicadas; isso é normal.
+- **Testar permissões no banco**: dentro de um bloco `do $$ ... $$`, crie pessoas de teste, use `set local role authenticated` e `set_config('request.jwt.claims', '{"sub": "<id>"}', true)` para agir como cada perfil e termine com `raise exception` mostrando o resultado. Assim tudo é desfeito e nada fica gravado.
+- O ambiente de nuvem das IAs pode não acessar `*.supabase.co` por HTTP; use as ferramentas do MCP.
+- Depois de mudar o banco, rode os avisos de segurança e de desempenho do Supabase. Avisos esperados: funções `security definer` liberadas para `authenticated` (de propósito; cada uma confere o perfil), `public_app_name` para `anon`, `pg_net` e "leaked password protection" (pendências do dono).
 
 ## Antes de entregar uma mudança
 
 1. `bun run build` sem erros.
 2. `bun run test` passando.
-3. Se mexeu em tela: rode o teste de `e2e/`.
-4. Se mexeu em permissão: teste no banco como cada perfil (admin, supervisor, responsável, voluntário, inativo, anônimo).
+3. Se mexeu em tela: rode o teste de `e2e/` (nenhum problema em 360px).
+4. Se mexeu em permissão: teste no banco como admin, coordenador, responsável, voluntário, inativo e anônimo.
 5. Rode os avisos de segurança do Supabase (advisors).
+6. Atualize este arquivo (Situação atual / O que falta / seções afetadas).
+7. Envie para a `main` e explique ao dono, em poucas frases, o que mudou e o que ele precisa testar no celular.
