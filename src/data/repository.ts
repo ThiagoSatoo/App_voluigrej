@@ -330,6 +330,11 @@ export const repo = {
     }
   },
 
+  /** "Estou presente": o próprio voluntário, de 1 hora antes do início até o fim do turno (regra no banco). */
+  async checkIn(needId: string): Promise<Result> {
+    return run(() => supabase.rpc("check_in", { p_need: needId }));
+  },
+
   /** "Disponível": desfaz o "Indisponível". Se o lugar ainda estiver vago, a pessoa volta para a escala. */
   async markAvailable(
     fixedId: string,

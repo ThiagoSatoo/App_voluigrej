@@ -148,7 +148,9 @@ export function ShiftAttendance({
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold">{v.name}</div>
                 <div className="text-xs text-muted-foreground">
-                  {rec ? `${rec.supervisor} · ${fmtDateTime(rec.recordedAt)}` : "Escalado"}
+                  {rec
+                    ? `${rec.status === "presente" && rec.supervisor === v.name ? "Marcou pelo app" : rec.supervisor} · ${fmtDateTime(rec.recordedAt)}`
+                    : "Escalado"}
                 </div>
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
                   {v.phone && (

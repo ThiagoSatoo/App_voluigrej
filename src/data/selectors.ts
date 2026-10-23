@@ -127,6 +127,8 @@ export interface ScheduleItem {
   responsavelId?: string;
   /** Turno de escala fixa: data e escala para os botões Disponível/Indisponível. */
   fixedId?: string;
+  /** Turno de escala (não vaga): usado no "Estou presente". */
+  needId?: string;
 }
 
 /** Todos os turnos publicados e vagas confirmadas que o usuário consegue ver. */
@@ -154,6 +156,7 @@ export function scheduleItems(s: AppState): ScheduleItem[] {
           people: slot.picks.map((p) => p.volunteerId).filter((id) => !out_.includes(id)),
           responsavelId: n.responsavelId,
           fixedId: n.fixedId,
+          needId: n.id,
         });
       });
     });

@@ -14,7 +14,7 @@ atualize as seções afetadas (principalmente "Situação atual" e "O que falta"
 ## Situação atual
 
 - No ar em **https://paroquiasjpapp.vercel.app** (Vercel), publicado a partir da branch `main` (cada push na `main` publica).
-- Banco no Supabase com 18 migrations aplicadas (`supabase/migrations/`, iguais às do banco).
+- Banco no Supabase com 19 migrations aplicadas (`supabase/migrations/`, iguais às do banco).
 - Edge Function `manage-users` publicada (contas e senhas). Só aceita pedidos do endereço do app (segredo `ALLOWED_ORIGINS` = `https://paroquiasjpapp.vercel.app`, no painel do Supabase → Edge Functions → Secrets; se o endereço mudar, atualize o segredo).
 - Admin já entrou, tem CPF e senha definitiva. Nome da instituição: "Paróquia Nossa Senhora do Monte Claro". Já existe 1 escala fixa criada.
 - Ainda **não houve o teste real** com voluntários usando no celular.
@@ -22,7 +22,7 @@ atualize as seções afetadas (principalmente "Situação atual" e "O que falta"
 ## O que falta
 
 Com o dono:
-- **Teste real**: cadastrar alguns voluntários e usar no celular (escolher escalas, sortear, publicar, Indisponível/Disponível, presença).
+- **Teste real**: cadastrar alguns voluntários e usar no celular (escolher escalas, sortear, publicar, Indisponível/Disponível, "Estou presente" e presença pela coordenação).
 - Conferir a política "Quem vê a escala" (está `mesmo_turno`); o dono vai retornar.
 - Já feito pelo dono: configurações de Authentication (cadastro público e confirmação de e-mail desligados, regra de senha). O aviso do Supabase ainda mostra "Leaked password protection" desligada; esse recurso só existe nos planos pagos.
 - As contas de teste `52601815906@cpf…` e `08301661305@cpf…` ficam por decisão do dono (testes). Estão desativadas.
@@ -47,7 +47,7 @@ Ideias já sugeridas ao dono, ainda não pedidas:
 | `admin` | Administrador | Tudo. Único que gerencia coordenadores e a tela **Admin**. Não pode ser desativado nem rebaixado. |
 | `supervisor` | **Coordenador** | Cuida do dia a dia: equipe (voluntários e responsáveis), escalas, sorteio, presença, vagas, relatórios. Não mexe em coordenadores nem no admin. |
 | `responsavel` | Responsável | Voluntário que cuida de turnos/vagas atribuídos a ele: vê a equipe e os contatos só desses turnos, marca presença, substitui e gerencia essas vagas. |
-| `voluntario` | Voluntário | Vê a própria escala, escolhe escalas fixas, marca Indisponível/Disponível, candidata-se a vagas, altera foto e senha. |
+| `voluntario` | Voluntário | Vê a própria escala, escolhe escalas fixas, marca Indisponível/Disponível e "Estou presente", candidata-se a vagas, altera foto e senha. |
 
 - "Coordenação" ou "staff" = `admin` + `supervisor` (`is_staff()` no banco).
 - O nome técnico continua `supervisor` no banco, nas rotas (`/supervisor/...`) e no código. Só o texto das telas diz "Coordenador" (`friendlyError` também troca a palavra nas mensagens do servidor).
@@ -70,7 +70,8 @@ Ideias já sugeridas ao dono, ainda não pedidas:
    - Saiu e ninguém ocupou o lugar: volta direto para a escala (presença `escalado`).
    - Saiu e o lugar foi ocupado: fica de **backup** daquele turno. A coordenação pode trocar alguém pelo backup em "Substituir" (backups aparecem primeiro).
    - **Onde fica o botão** (`AvailabilityControl`, botão de dois lados: Disponível em verde claro | Indisponível em vermelho forte; o lado preenchido é a situação atual): para o voluntário, na aba Escalas (cada data) e na Agenda (nos turnos dele); para a coordenação, na janela "Disponibilidade" (`FixedAvailabilityDialog`), aberta pelo cartão da escala fixa (aba Escalas, qualquer data futura) ou pelo turno na Agenda.
-8. **Presença e trocas na Agenda da coordenação**: turno publicado de hoje ou passado → Presente / Faltou / Substituir para cada escalado. Turno publicado futuro → "Substituir alguém" (ou "Escolher substituto", em destaque, quando falta gente). O responsável marca presença na aba Turnos, só nos turnos dele.
+8. **Presença e trocas na Agenda da coordenação**: turno publicado de hoje ou passado → Presente / Faltou / Substituir para cada escalado. Turno publicado futuro → "Substituir alguém" (ou "Escolher substituto", em destaque, quando falta gente). O responsável marca presença na aba Turnos, só nos turnos dele. A coordenação pode marcar a qualquer hora (no dia ou depois); presença marcada pelo próprio voluntário aparece como "Marcou pelo app".
+9. **"Estou presente"** (`check_in`, `CheckInButton`): o próprio voluntário/responsável escalado confirma a presença na Agenda dele (no destaque "Próximo turno" e no cartão do turno), só no dia, de **1 hora antes do início até o fim** do turno (horário de São Paulo; regra no banco). Fora disso aparece "a partir das HH:mm" ou "peça à coordenação". Só para turnos de escala (vagas avulsas não têm presença).
 
 Também existem:
 - **Vagas avulsas**: dias extras com mínimo e máximo de pessoas. O voluntário se candidata e o responsável/coordenação confirma quem vai.
@@ -132,7 +133,7 @@ Também existem:
   - `supervisor.periodos.tsx`: aba Escalas (escalas fixas, participantes, Fixar, sorteio, publicar) + vagas avulsas.
   - `supervisor.escala.tsx`: Agenda da coordenação (calendário, presença, substituição, backup, Disponibilidade).
   - `voluntario.escala.tsx`: Agenda do voluntário. `voluntario.disponibilidade.tsx`: Escalas do voluntário.
-- `src/components/app/`: componentes do app (`AttendanceManager` = presença e substituição, `AvailabilityControl` = botão Disponível/Indisponível, `FixedAvailabilityDialog` = disponibilidade por pessoa para a coordenação, `OpportunityManager` = vagas, avatar, avisos, senha etc.).
+- `src/components/app/`: componentes do app (`AttendanceManager` = presença e substituição, `AvailabilityControl` = botão Disponível/Indisponível, `CheckInButton` = "Estou presente", `FixedAvailabilityDialog` = disponibilidade por pessoa para a coordenação, `OpportunityManager` = vagas, avatar, avisos, senha etc.).
 - `src/data/types.ts`: tipos. `loader.ts`: lê do Supabase o que o usuário pode ver. `store.ts`: cache em memória e `useStore()`.
 - `src/data/repository.ts`: **todas** as alterações de dados passam por aqui (`repo`).
 - `src/data/selectors.ts`: consultas sobre os dados (agenda, escala, backup, datas das escalas fixas).
@@ -152,7 +153,7 @@ Também existem:
 - `opportunities`, `applications`, `day_availability`: vagas avulsas e candidaturas.
 - `notifications`, `notif_prefs`: avisos e preferências. `app_settings`: nome da instituição e política de visibilidade. `nav_config`: abas do menu.
 - `availabilities`: disponibilidade do fluxo mensal antigo (só histórico).
-- Funções que o app chama (RPC): `draw_fixed`, `publish_draw`, `set_fixed_pins`, `mark_unavailable`, `mark_available`, `substitute`, `apply_to_opportunity`, `cancel_application`, `confirm_selection`, `set_user_role`, `staff_update_volunteer`, `password_changed`, `scale_counts`, `opportunity_counts`, `public_app_name`. As que começam com `_` são internas e não podem ser chamadas pelo app.
+- Funções que o app chama (RPC): `draw_fixed`, `publish_draw`, `set_fixed_pins`, `mark_unavailable`, `mark_available`, `substitute`, `check_in`, `apply_to_opportunity`, `cancel_application`, `confirm_selection`, `set_user_role`, `staff_update_volunteer`, `password_changed`, `scale_counts`, `opportunity_counts`, `public_app_name`. As que começam com `_` são internas e não podem ser chamadas pelo app.
 
 ## Regras que não podem ser quebradas
 

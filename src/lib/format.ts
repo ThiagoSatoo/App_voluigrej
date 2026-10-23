@@ -8,6 +8,14 @@ export const APP_TITLE = "Sistema de escalas";
 /** Data de hoje (YYYY-MM-DD) no fuso de São Paulo. */
 export const today = () =>
   new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+/** Hora atual em São Paulo, "HH:mm". */
+export const nowHM = () =>
+  new Date().toLocaleTimeString("en-GB", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export const toDate = (d: string) => new Date(`${d}T12:00:00`);

@@ -15,6 +15,7 @@
 | 12–16 | Botão Disponível (`mark_available`), Fixar (`set_fixed_pins`), backup e substituto automático. Versão em vigor: `draw_fixed` (13) e `mark_available` (15); `mark_unavailable` e `substitute` foram refeitas na 18. |
 | 17 | Índices de desempenho. |
 | 18 | Troca manual: `mark_unavailable` tira a pessoa do turno e só sugere o substituto no aviso; `substitute` avisa quem entrou. Versão em vigor das duas. |
+| 19 | "Estou presente" (`check_in`): o próprio escalado marca presença de 1 hora antes do início até o fim do turno. |
 
 ## Criar a conta do administrador
 

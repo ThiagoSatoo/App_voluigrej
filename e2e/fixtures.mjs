@@ -136,6 +136,17 @@ export function makeFixtures(today = new Date()) {
       responsavel_id: null,
     });
   }
+  // Turno de hoje o dia todo: o voluntário de teste vê o botão "Estou presente".
+  const todayNeed = {
+    id: randomUUID(),
+    period_id: period.id,
+    date: iso(today),
+    start_time: "00:00",
+    end_time: "23:59",
+    slots: 2,
+    responsavel_id: null,
+  };
+  needs.push(todayNeed);
   const availabilities = [];
   needs.forEach((n, ni) =>
     vols.forEach((v, vi) => {
@@ -177,6 +188,15 @@ export function makeFixtures(today = new Date()) {
         });
       }
     });
+  draw_picks.push({
+    draw_id: draw.id,
+    need_id: todayNeed.id,
+    volunteer_id: vols[3].id,
+    priority: 1,
+    recent3m: 0,
+    last12m: 0,
+    tiebreak: "Aleatório",
+  });
   // O voluntário de teste (vols[3]) aparece em alguns turnos
   draw_picks.push({
     draw_id: draw.id,

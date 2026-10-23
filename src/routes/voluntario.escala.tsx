@@ -12,13 +12,20 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useStore } from "@/data/store";
-import { myScheduleItems, personName, scheduleItems, type ScheduleItem } from "@/data/selectors";
+import {
+  attendanceFor,
+  myScheduleItems,
+  personName,
+  scheduleItems,
+  type ScheduleItem,
+} from "@/data/selectors";
 import { DateBadge, EmptyState, Notice, Panel, Pill } from "@/components/app/common";
 import { VolunteerAvatar } from "@/components/app/VolunteerAvatar";
 import { AvailabilityControl } from "@/components/app/AvailabilityControl";
+import { CheckInButton } from "@/components/app/CheckInButton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { firstName, fmtLong, fmtWeekday, today, toDate } from "@/lib/format";
+import { ATTENDANCE_STATUS, firstName, fmtLong, fmtWeekday, today, toDate } from "@/lib/format";
 import { visibleNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
@@ -93,20 +100,32 @@ function MyAgenda() {
       {/* Resumo compacto: próximo turno e disponibilidade pendente. */}
       <div className="space-y-2">
         {next ? (
-          <div className="flex items-center gap-3 rounded-2xl bg-gradient-hero p-3 text-primary-foreground shadow-elegant">
-            <DateBadge
-              date={next.date}
-              className="h-12 w-12 bg-primary-foreground/15 text-primary-foreground"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-wider opacity-80">
-                Próximo turno
-              </p>
-              <p className="truncate font-semibold">{fmtLong(next.date)}</p>
-              <p className="flex items-center gap-1 text-sm opacity-90">
-                <Clock className="h-3.5 w-3.5" /> {next.start} – {next.end}
-              </p>
+          <div className="rounded-2xl bg-gradient-hero p-3 text-primary-foreground shadow-elegant">
+            <div className="flex items-center gap-3">
+              <DateBadge
+                date={next.date}
+                className="h-12 w-12 bg-primary-foreground/15 text-primary-foreground"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider opacity-80">
+                  Próximo turno
+                </p>
+                <p className="truncate font-semibold">{fmtLong(next.date)}</p>
+                <p className="flex items-center gap-1 text-sm opacity-90">
+                  <Clock className="h-3.5 w-3.5" /> {next.start} – {next.end}
+                </p>
+              </div>
             </div>
+            {next.needId && (
+              <CheckInButton
+                needId={next.needId}
+                date={next.date}
+                start={next.start}
+                end={next.end}
+                onDark
+                className="mt-3"
+              />
+            )}
           </div>
         ) : (
           <Panel className="p-3 text-sm text-muted-foreground">
@@ -250,7 +269,14 @@ function MyAgenda() {
           />
         )}
         {upcoming.map((a) => (
-          <ShiftCard key={a.key} item={a} meId={meId} showPeople={showPeople} />
+          <ShiftCard
+            key={a.key}
+            item={a}
+            meId={meId}
+            showPeople={showPeople}
+            // O botão de presença do próximo turno já fica no destaque do topo.
+            checkIn={a.key !== next?.key}
+          />
         ))}
       </section>
 
@@ -269,6 +295,7 @@ function MyAgenda() {
                     {a.start} – {a.end}
                   </div>
                 </div>
+                <PastPresence item={a} meId={meId} />
               </Panel>
             ))}
           </div>
@@ -289,10 +316,12 @@ function ShiftCard({
   item: a,
   meId,
   showPeople,
+  checkIn = true,
 }: {
   item: ScheduleItem;
   meId: string;
   showPeople: boolean;
+  checkIn?: boolean;
 }) {
   const { state } = useStore();
   const isMine = a.people.includes(meId);
@@ -324,6 +353,15 @@ function ShiftCard({
           Responsável: {personName(state, a.responsavelId) ?? "—"}
         </p>
       )}
+      {checkIn && isMine && a.needId && a.date === today() && (
+        <CheckInButton
+          needId={a.needId}
+          date={a.date}
+          start={a.start}
+          end={a.end}
+          className="mt-3"
+        />
+      )}
       {isMine && a.fixedId && a.date >= today() && (
         <div className="mt-3 border-t pt-3">
           <AvailabilityControl fixedId={a.fixedId} date={a.date} />
@@ -333,6 +371,16 @@ function ShiftCard({
         </div>
       )}
     </Panel>
+  );
+}
+
+/** Presença registrada num turno passado (se houver). */
+function PastPresence({ item: a, meId }: { item: ScheduleItem; meId: string }) {
+  const { state } = useStore();
+  const rec = a.needId ? attendanceFor(state, a.needId, meId) : undefined;
+  if (!rec || (rec.status !== "presente" && rec.status !== "faltou")) return null;
+  return (
+    <Pill tone={ATTENDANCE_STATUS[rec.status].tone}>{ATTENDANCE_STATUS[rec.status].label}</Pill>
   );
 }
 
